@@ -248,6 +248,18 @@ function setupIpcHandlers() {
       viewManager.selectView(viewManager.activeViewId);
     }
   });
+
+  ipcMain.handle('tab:getSuggestions', async (event, query) => {
+    try {
+      const response = await fetch(`https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      // Returns format: ["query", ["suggestion1", "suggestion2", ...], ["description1", ...], ...]
+      return data[1] || [];
+    } catch (error) {
+      console.error('Failed to fetch suggestions:', error);
+      return [];
+    }
+  });
 }
 
 app.whenReady().then(() => {

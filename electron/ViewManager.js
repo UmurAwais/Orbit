@@ -50,21 +50,26 @@ export class ViewManager {
       let displayTitle = wc.getTitle();
       
       // If title is missing or still says 'New Tab' but we have a real URL, ignore it
-      const isTitleInvalid = !displayTitle || displayTitle === 'about:blank' || displayTitle === 'New Tab' || displayTitle === '';
+      const isTitleInvalid = !displayTitle || 
+                            displayTitle === 'about:blank' || 
+                            displayTitle === 'New Tab' || 
+                            displayTitle === 'Loading...' || 
+                            displayTitle === '';
       const isActuallyNewTab = urlToSend === 'about:blank';
 
-      if (isTitleInvalid && !isActuallyNewTab) {
+      if (isActuallyNewTab) {
+        displayTitle = 'New Tab';
+      } else if (isTitleInvalid) {
         if (urlToSend && urlToSend !== 'about:blank') {
           try {
-            displayTitle = new URL(urlToSend).hostname.replace('www.', '');
+            const hostname = new URL(urlToSend).hostname.replace('www.', '');
+            displayTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1);
           } catch (e) {
             displayTitle = 'Loading...';
           }
         } else {
-          displayTitle = 'New Tab';
+          displayTitle = 'Loading...';
         }
-      } else if (!displayTitle) {
-        displayTitle = 'New Tab';
       }
 
       this.sendToUI('tab:update', { 
@@ -72,6 +77,7 @@ export class ViewManager {
         isLoading: tabState?.isLoading ?? false,
         url: urlToSend, 
         title: displayTitle,
+        favicon: tabState?.favicon,
         canGoBack: wc.navigationHistory?.canGoBack() ?? false,
         canGoForward: wc.navigationHistory?.canGoForward() ?? false,
       });
@@ -111,6 +117,7 @@ export class ViewManager {
     
     wc.on('did-navigate', () => sendStatus());
     wc.on('did-navigate-in-page', () => sendStatus());
+    wc.on('did-commit-navigation', () => sendStatus());
     
     wc.on('did-start-navigation', (e, url) => {
       const state = this.tabStates.get(id);
@@ -143,6 +150,14 @@ export class ViewManager {
     wc.on('page-title-updated', (e, title) => {
       const state = this.tabStates.get(id);
       if (state) state.isLoading = false;
+      sendStatus();
+    });
+
+    wc.on('page-favicon-updated', (e, favicons) => {
+      const state = this.tabStates.get(id);
+      if (state && favicons && favicons.length > 0) {
+        state.favicon = favicons[0];
+      }
       sendStatus();
     });
   }
@@ -212,8 +227,8 @@ export class ViewManager {
         }
       } catch (e) {}
       
-      // Triple Layer Header Height (Tabs: 44px + Address: 48px + Bookmarks: 40px = 132px)
-      view.setBounds({ x: 0, y: 132, width, height: Math.max(0, height - 132) });
+      // Dual Layer Header Height (Tabs: 44px + Address Bar: 48px = 92px)
+      view.setBounds({ x: 0, y: 92, width, height: Math.max(0, height - 92) });
     } else {
       // Show the React NewTab page
       try {

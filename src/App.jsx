@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+
 import AppleHeader from './components/AppleHeader';
 import NewTab from './components/NewTab';
 import OrbitLogo from './components/OrbitLogo';
@@ -62,14 +62,14 @@ const App = () => {
     };
   }, []);
 
-  const handleSelectTab = useCallback(async (id) => {
+  const handleSelectTab = useCallback((id) => {
     setActiveTabId(id);
     setIsOverview(false);
-    await window.orbit.tabs.select({ id });
+    window.orbit.tabs.select({ id });
     window.orbit.ipcRenderer.send('ui:toggle-overview', false);
   }, []);
 
-  const handleAddTab = useCallback(async (initialUrl = 'about:blank') => {
+  const handleAddTab = useCallback((initialUrl = 'about:blank') => {
     const id = Date.now().toString();
     const newTab = {
       id,
@@ -81,7 +81,7 @@ const App = () => {
     };
 
     setTabs(prev => [...prev, newTab]);
-    await window.orbit.tabs.create({ id, url: initialUrl });
+    window.orbit.tabs.create({ id, url: initialUrl });
     handleSelectTab(id);
   }, [handleSelectTab]);
 
@@ -110,7 +110,9 @@ const App = () => {
     if (!url.startsWith('http') && url !== 'about:blank') {
        const isUrl = url.includes('.');
        url = isUrl ? `https://${url}` : `https://www.google.com/search?q=${encodeURIComponent(url)}&sourceid=chrome&ie=UTF-8`;
-       title = isUrl ? url : query;
+       title = isUrl ? 'Loading...' : query;
+    } else {
+       title = 'Loading...';
     }
     
     // 1. Fire IPC FIRST
@@ -190,12 +192,8 @@ const App = () => {
         )}
 
         {/* Tab Overview (Grid) */}
-        <AnimatePresence>
           {isOverview && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <div 
               className="absolute inset-0 z-50 overflow-y-auto bg-slate-100/90 backdrop-blur-3xl p-12"
             >
               <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -205,12 +203,12 @@ const App = () => {
                     onClick={() => handleSelectTab(tab.id)}
                     className={`
                       aspect-4/3 bg-white rounded-3xl shadow-sm border border-black/5 overflow-hidden group 
-                      transition-all hover:-translate-y-1 hover:shadow-xl
+                      transition-all hover:shadow-xl
                       ${tab.id === activeTabId ? 'ring-4 ring-blue-500/30 border-blue-500/50' : ''}
                     `}
                   >
                     <div className="h-12 flex items-center px-4 gap-4 bg-slate-50 border-b border-black/3">
-                      <OrbitLogo size={12} className="mr-2 text-slate-400" />
+                      <OrbitLogo size={12} variant="icon" className="mr-2 text-slate-400" />
                       <span className="text-[11px] font-bold text-slate-600 truncate flex-1 uppercase tracking-tighter">
                         {tab.url === 'about:blank' ? 'New Tab' : tab.title}
                       </span>
@@ -227,9 +225,9 @@ const App = () => {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+
       </main>
     </div>
   );
