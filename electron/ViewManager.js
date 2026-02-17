@@ -6,12 +6,21 @@ export class ViewManager {
     this.views = new Map(); // id -> WebContentsView
     this.activeViewId = null;
     this.tabStates = new Map(); // id -> { lastActive: timestamp, isHibernated: bool, isLoading: bool }
+    this.isOverview = false;
     
     this.HIBERNATE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
     this.setupHibernation();
   }
 
   createView(id, url) {
+    // Prevent duplicate views for the same ID - this is a primary source of memory leaks
+    if (this.views.has(id)) {
+      console.warn(`[Orbit Engine] View ${id} already exists. Reusing existing view.`);
+      const existing = this.views.get(id);
+      if (url && url !== 'about:blank') existing.webContents.loadURL(url);
+      return existing;
+    }
+
     const view = new WebContentsView({
       webPreferences: {
         sandbox: true,
@@ -27,7 +36,7 @@ export class ViewManager {
     } catch (e) {
       console.warn('Failed to set background color on view', e);
     }
-    this.tabStates.set(id, { lastActive: Date.now(), isHibernated: false, isLoading: false, lastUrl: url });
+    this.tabStates.set(id, { lastActive: Date.now(), isHibernated: false, isLoading: false, lastUrl: url || 'about:blank' });
 
     this.setupEvents(id, view);
     this.injectContextMenu(view.webContents); // Inject Safari-style context menu
@@ -37,11 +46,111 @@ export class ViewManager {
     return view;
   }
 
+  sendStatus(id) {
+    const view = this.views.get(id);
+    if (!view) return;
+    const wc = view.webContents;
+    const tabState = this.tabStates.get(id);
+    const currentUrl = wc.getURL();
+    
+    // Robust URL reporting: during navigation transitions, currentUrl can be empty.
+    // We use the most recent intended URL (lastUrl) to prevent the UI from 
+    // flickering back to the 'New Tab' state while a page is still loading.
+    let urlToSend = currentUrl;
+    const isCurrentlyEmpty = !currentUrl || currentUrl === 'about:blank';
+    
+    if (isCurrentlyEmpty && tabState?.lastUrl && tabState.lastUrl !== 'about:blank') {
+      urlToSend = tabState.lastUrl;
+    } else if (!isCurrentlyEmpty) {
+      // Sync the known lastUrl with reality
+      if (tabState) tabState.lastUrl = currentUrl;
+    } else if (tabState?.lastUrl) {
+      urlToSend = tabState.lastUrl;
+    } else {
+      urlToSend = 'about:blank';
+    }
+    
+    let displayTitle = wc.getTitle();
+    const isTitleInvalid = !displayTitle || 
+                          displayTitle === 'about:blank' || 
+                          displayTitle === 'New Tab' || 
+                          displayTitle === 'Loading...' || 
+                          displayTitle === '';
+
+    if (urlToSend === 'about:blank') {
+      displayTitle = 'New Tab';
+    } else if (isTitleInvalid) {
+      if (urlToSend && urlToSend !== 'about:blank') {
+        try {
+          const hostname = new URL(urlToSend).hostname.replace('www.', '');
+          displayTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1);
+        } catch (e) {
+          displayTitle = 'Loading...';
+        }
+      } else {
+        displayTitle = 'New Tab';
+      }
+    }
+
+    this.sendToUI('tab:update', { 
+      id, 
+      isLoading: tabState?.isLoading ?? false,
+      url: urlToSend, 
+      title: displayTitle,
+      favicon: tabState?.favicon,
+      preview: tabState?.preview,
+      canGoBack: wc.navigationHistory?.canGoBack() ?? wc.canGoBack() ?? false,
+      canGoForward: wc.navigationHistory?.canGoForward() ?? wc.canGoForward() ?? false,
+      zoomFactor: wc.getZoomFactor(),
+    });
+  }
+
+  captureThumbnail(id) {
+    const view = this.views.get(id);
+    if (!view || view.webContents.isDestroyed()) return;
+    
+    const wc = view.webContents;
+    // Don't capture about:blank or extremely small pages
+    if (!wc.getURL() || wc.getURL() === 'about:blank' || wc.isLoading()) return;
+
+    // Throttle captures to once every 2 seconds per tab to prevent heap corruption
+    const state = this.tabStates.get(id);
+    const now = Date.now();
+    if (state.lastCapture && now - state.lastCapture < 2000) return;
+    state.lastCapture = now;
+
+    // Small extra delay to ensure the page has painted at least once
+    setTimeout(async () => {
+      try {
+        if (wc.isDestroyed()) return;
+        const image = await wc.capturePage();
+        if (image.isEmpty()) return;
+
+        const state = this.tabStates.get(id);
+        if (state) {
+          // 400px width is perfect for the grid; preserves quality while keeping state size in check
+          state.preview = image.resize({ width: 400 }).toDataURL();
+          this.sendStatus(id);
+        }
+      } catch (e) {
+        console.error('[Orbit Engine] Thumbnail capture failed:', e);
+      }
+    }, 800);
+  }
+
   setupEvents(id, view) {
     const wc = view.webContents;
     
+    this.activeIntervals = this.activeIntervals || new Map();
+    if (this.activeIntervals.has(id)) clearInterval(this.activeIntervals.get(id));
+
     // Poll for Orbit actions (Context Menu commands)
     const checkOrbitActions = setInterval(() => {
+      if (wc.isDestroyed()) {
+        clearInterval(checkOrbitActions);
+        this.activeIntervals.delete(id);
+        return;
+      }
       wc.executeJavaScript(`
         (function() {
           const actions = window.__orbitActions || [];
@@ -54,131 +163,77 @@ export class ViewManager {
         })()
       `).then(actions => {
         if (!actions || !Array.isArray(actions)) return;
-        
         actions.forEach(item => {
           const { action, data } = item;
           switch (action) {
-            case 'back': 
-              if (wc.navigationHistory?.canGoBack() || wc.canGoBack()) {
-                if (wc.navigationHistory) wc.navigationHistory.goBack();
-                else wc.goBack();
-                setTimeout(() => { if (id === this.activeViewId) this.updateLayout(); }, 50);
-              }
-              break;
-            case 'forward': 
-              if (wc.navigationHistory?.canGoForward() || wc.canGoForward()) {
-                if (wc.navigationHistory) wc.navigationHistory.goForward();
-                else wc.goForward();
-                setTimeout(() => { if (id === this.activeViewId) this.updateLayout(); }, 50);
-              }
-              break;
-            case 'reload': 
-              wc.reload();
-              setTimeout(() => { if (id === this.activeViewId) this.updateLayout(); }, 50);
-              break;
-            case 'inspect':
-              wc.openDevTools({ mode: 'bottom' });
-              break;
-            case 'savePage':
-              wc.downloadURL(wc.getURL());
-              break;
-            case 'screenshot':
-              this.mainWindow.webContents.send('capture-page');
-              break;
-            case 'viewSource':
-              const sourceUrl = 'view-source:' + wc.getURL();
-              this.mainWindow.webContents.send('open-view-source', { url: sourceUrl });
-              break;
+            case 'back': wc.navigationHistory?.goBack(); break;
+            case 'forward': wc.navigationHistory?.goForward(); break;
+            case 'reload': wc.reload(); break;
+            case 'inspect': wc.openDevTools({ mode: 'bottom' }); break;
+            case 'savePage': wc.downloadURL(wc.getURL()); break;
+            case 'screenshot': this.mainWindow.webContents.send('capture-page'); break;
           }
         });
       }).catch(() => {});
-    }, 200); // Faster polling for snappier response
-    
-    // Clean up interval when view is destroyed
+    }, 200);
+
+    this.activeIntervals.set(id, checkOrbitActions);
+
     wc.on('destroyed', () => {
-      clearInterval(checkOrbitActions);
+      if (this.activeIntervals.has(id)) {
+        clearInterval(this.activeIntervals.get(id));
+        this.activeIntervals.delete(id);
+      }
     });
     
-    const sendStatus = () => {
-      const tabState = this.tabStates.get(id);
-      const currentUrl = wc.getURL();
-      
-      // Simple and reliable URL reporting
-      // If we are actually at about:blank, we MUST report it so the New Tab UI shows up.
-      const isActuallyAtNewTab = currentUrl === '' || currentUrl === 'about:blank';
-      
-      const urlToSend = isActuallyAtNewTab ? 'about:blank' : currentUrl;
-      
-      let displayTitle = wc.getTitle();
-      const isTitleInvalid = !displayTitle || 
-                            displayTitle === 'about:blank' || 
-                            displayTitle === 'New Tab' || 
-                            displayTitle === 'Loading...' || 
-                            displayTitle === '';
-
-      if (isActuallyAtNewTab) {
-        displayTitle = 'New Tab';
-      } else if (isTitleInvalid) {
-        if (urlToSend && urlToSend !== 'about:blank') {
-          try {
-            const hostname = new URL(urlToSend).hostname.replace('www.', '');
-            displayTitle = hostname.charAt(0).toUpperCase() + hostname.slice(1);
-          } catch (e) {
-            displayTitle = 'Loading...';
-          }
-        } else {
-          displayTitle = 'New Tab';
-        }
-      }
-
-      this.sendToUI('tab:update', { 
-        id, 
-        isLoading: tabState?.isLoading ?? false,
-        url: urlToSend, 
-        title: displayTitle,
-        favicon: tabState?.favicon,
-        canGoBack: wc.navigationHistory?.canGoBack() ?? wc.canGoBack() ?? false,
-        canGoForward: wc.navigationHistory?.canGoForward() ?? wc.canGoForward() ?? false,
-      });
-    };
-
     wc.on('did-start-loading', () => {
       const state = this.tabStates.get(id);
       if (state) state.isLoading = true;
-      sendStatus();
+      this.sendStatus(id);
     });
     
     wc.on('did-stop-loading', () => {
       const state = this.tabStates.get(id);
       if (state) state.isLoading = false;
-      sendStatus();
+      this.sendStatus(id);
+      this.captureThumbnail(id);
     });
     
     wc.on('did-finish-load', () => {
       const state = this.tabStates.get(id);
-      if (state) state.isLoading = false;
-      sendStatus();
-    });
-    
-    wc.on('dom-ready', () => {
-      const state = this.tabStates.get(id);
-      if (state) state.isLoading = false;
-      sendStatus();
-    });
-    
-    wc.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
-      if (isMainFrame) {
-        const state = this.tabStates.get(id);
-        if (state) state.isLoading = false;
-        sendStatus();
+      if (state) {
+        state.isLoading = false;
+        state.lastUrl = wc.getURL();
       }
+      this.sendStatus(id);
+      if (id === this.activeViewId) {
+        this.updateLayout();
+      }
+      this.captureThumbnail(id);
     });
     
-    wc.on('did-navigate', () => sendStatus());
-    wc.on('did-navigate-in-page', () => sendStatus());
-    wc.on('did-commit-navigation', () => sendStatus());
-    
-    // Exact Safari-style Link Preview (Status Bubble)
+    wc.on('did-start-navigation', (e, url) => {
+      const state = this.tabStates.get(id);
+      if (state) { state.isLoading = true; state.lastUrl = url; }
+      if (id === this.activeViewId) this.updateLayout();
+      this.sendStatus(id);
+    });
+
+    wc.on('did-navigate', (e, url) => {
+      const state = this.tabStates.get(id);
+      if (state) { state.isLoading = false; state.lastUrl = url; }
+      this.sendStatus(id);
+    });
+
+    wc.on('page-title-updated', () => this.sendStatus(id));
+    wc.on('page-favicon-updated', (e, favicons) => {
+      const state = this.tabStates.get(id);
+      if (state && favicons?.[0]) { state.favicon = favicons[0]; }
+      this.sendStatus(id);
+    });
+
+    wc.on('did-change-theme-color', () => this.sendStatus(id));
+
     wc.on('update-target-url', (event, url) => {
       const script = `
         (function() {
@@ -187,98 +242,23 @@ export class ViewManager {
             bubble = document.createElement('div');
             bubble.id = 'orbit-link-preview';
             Object.assign(bubble.style, {
-              position: 'fixed',
-              bottom: '0',
-              left: '0',
-              maxWidth: '600px',
-              padding: '2px 8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              position: 'fixed', bottom: '0', left: '0', maxWidth: '600px',
+              padding: '2px 8px', backgroundColor: 'rgba(255, 255, 255, 0.7)',
               backdropFilter: 'blur(60px) saturate(210%) brightness(1.05)',
-              webkitBackdropFilter: 'blur(60px) saturate(210%) brightness(1.05)',
-              borderTopRightRadius: '5px',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
-              borderBottom: 'none',
-              borderLeft: 'none',
-              color: '#1d1d1f',
-              fontSize: '11px',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif',
-              zIndex: '2147483647',
-              pointerEvents: 'none',
-              opacity: '0',
-              transition: 'opacity 0.1s ease-in-out',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.2)'
+              borderTopRightRadius: '5px', border: '1px solid rgba(255, 255, 255, 0.4)',
+              color: '#1d1d1f', fontSize: '11px', zIndex: '2147483647',
+              pointerEvents: 'none', opacity: '0', transition: 'opacity 0.1s ease-in-out'
             });
             document.body.appendChild(bubble);
           }
-
-          if ("${url}") {
-            bubble.textContent = "${url}";
-            bubble.style.opacity = '1';
-          } else {
-            bubble.style.opacity = '0';
-          }
+          if ("${url}") { bubble.textContent = "${url}"; bubble.style.opacity = '1'; }
+          else { bubble.style.opacity = '0'; }
         })();
       `;
       wc.executeJavaScript(script).catch(() => {});
     });
 
-    wc.on('did-start-navigation', (e, url) => {
-      const state = this.tabStates.get(id);
-      if (state) {
-        state.isLoading = true;
-        state.lastUrl = url; // Always track the intended target
-      }
-      if (id === this.activeViewId) this.updateLayout();
-      sendStatus();
-    });
-
-    wc.on('did-navigate', (e, url) => {
-      const state = this.tabStates.get(id);
-      if (state) {
-        state.isLoading = false;
-        state.lastUrl = url;
-      }
-      sendStatus();
-      if (id === this.activeViewId) this.updateLayout();
-    });
-
-    wc.on('did-navigate-in-page', (e, url) => {
-      const state = this.tabStates.get(id);
-      if (state) state.lastUrl = url;
-      sendStatus();
-      if (id === this.activeViewId) this.updateLayout();
-    });
-
-    wc.on('did-finish-load', () => {
-      const state = this.tabStates.get(id);
-      if (state) state.isLoading = false;
-      const currentUrl = wc.getURL();
-      if (state) state.lastUrl = currentUrl;
-      
-      sendStatus();
-      if (id === this.activeViewId) this.updateLayout();
-    });
-
-    wc.on('did-fail-load', () => {
-      const state = this.tabStates.get(id);
-      if (state) state.isLoading = false;
-      sendStatus();
-    });
-
-    wc.on('page-title-updated', (e, title) => {
-      sendStatus();
-    });
-
-    wc.on('page-favicon-updated', (e, favicons) => {
-      const state = this.tabStates.get(id);
-      if (state && favicons && favicons.length > 0) {
-        state.favicon = favicons[0];
-      }
-      sendStatus();
-    });
+    this.sendStatus(id);
   }
 
   // Inject Safari-style context menu into webpage
@@ -536,11 +516,12 @@ export class ViewManager {
 
     const [width, height] = this.mainWindow.getContentSize();
     const wc = view.webContents;
-    const currentUrl = wc.getURL();
+    const tabState = this.tabStates.get(this.activeViewId);
+    const targetUrl = tabState?.lastUrl || wc.getURL();
     
-    // Exact check for New Tab page
-    const isNewTab = currentUrl === '' || currentUrl === 'about:blank';
-    const shouldShowBrowser = !isNewTab;
+    // Exactly check for New Tab page OR Overview mode
+    const isNewTab = targetUrl === '' || targetUrl === 'about:blank';
+    const shouldShowBrowser = !isNewTab && !this.isOverview;
 
     if (shouldShowBrowser) {
       // Show the native browser view
@@ -551,8 +532,8 @@ export class ViewManager {
         }
       } catch (e) {}
       
-      // Dual Layer Header Height (Tabs: 44px + Address Bar: 48px = 92px)
-      view.setBounds({ x: 0, y: 92, width, height: Math.max(0, height - 92) });
+      // Calibrated Header Height (52px)
+      view.setBounds({ x: 0, y: 52, width, height: Math.max(0, height - 52) });
     } else {
       // Hide for New Tab page
       try {

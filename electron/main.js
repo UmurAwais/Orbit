@@ -51,7 +51,6 @@ function createWindow() {
   });
 
   setupIpcHandlers();
-  setupIpcHandlers();
   setupApplicationMenu();
 }
 
@@ -173,7 +172,7 @@ function setupIpcHandlers() {
   });
   
   ipcMain.handle('tab:goBack', (event, { id }) => {
-    console.log(`[IPC] tab:goBack requested for \${id}`);
+    console.log(`[IPC] tab:goBack requested for ${id}`);
     const wc = viewManager.views.get(id)?.webContents;
     if (wc) {
       if (wc.navigationHistory) wc.navigationHistory.goBack();
@@ -182,7 +181,7 @@ function setupIpcHandlers() {
   });
   
   ipcMain.handle('tab:goForward', (event, { id }) => {
-    console.log(`[IPC] tab:goForward requested for \${id}`);
+    console.log(`[IPC] tab:goForward requested for ${id}`);
     const wc = viewManager.views.get(id)?.webContents;
     if (wc) {
       if (wc.navigationHistory) wc.navigationHistory.goForward();
@@ -190,8 +189,11 @@ function setupIpcHandlers() {
     }
   });
   
-  ipcMain.on('ui:toggle-overview', (event, isOverview) => {
+   ipcMain.on('ui:toggle-overview', (event, isOverview) => {
+    viewManager.isOverview = isOverview;
     if (isOverview && viewManager.activeViewId) {
+      // Capture before hiding
+      viewManager.captureThumbnail(viewManager.activeViewId);
       try { mainWindow.contentView.removeChildView(viewManager.views.get(viewManager.activeViewId)); } catch(e) {}
     } else if (viewManager.activeViewId) {
       viewManager.selectView(viewManager.activeViewId);
@@ -199,14 +201,43 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('tab:getSuggestions', async (event, query) => {
+    if (!query) return [];
     try {
-      const response = await fetch(`https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`);
+      // Use a proper User-Agent to avoid being blocked or getting 405/403
+      const response = await fetch(`https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      // Returns format: ["query", ["suggestion1", "suggestion2", ...], ["description1", ...], ...]
-      return data[1] || [];
+      return Array.isArray(data?.[1]) ? data[1] : [];
     } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
+      console.error('[Orbit Engine] Suggestions fetch failed:', error.message);
       return [];
+    }
+  });
+
+  ipcMain.handle('tab:zoomIn', (event, { id }) => {
+    const wc = viewManager.views.get(id)?.webContents;
+    if (wc) {
+      const currentZoom = wc.getZoomLevel();
+      wc.setZoomLevel(currentZoom + 0.5);
+    }
+  });
+
+  ipcMain.handle('tab:zoomOut', (event, { id }) => {
+    const wc = viewManager.views.get(id)?.webContents;
+    if (wc) {
+      const currentZoom = wc.getZoomLevel();
+      wc.setZoomLevel(currentZoom - 0.5);
+    }
+  });
+
+  ipcMain.handle('tab:resetZoom', (event, { id }) => {
+    const wc = viewManager.views.get(id)?.webContents;
+    if (wc) {
+      wc.setZoomLevel(0);
     }
   });
 }
