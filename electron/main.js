@@ -44,6 +44,9 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    if (process.env.VITE_DEV_SERVER_URL) {
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    }
     if (viewManager) viewManager.updateLayout();
   });
 
@@ -192,14 +195,26 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('tab:navigate', (event, { id, url }) => {
+    console.log('[main.js] tab:navigate called:', { id, url });
     const view = viewManager.views.get(id);
     if (view) {
+      // Set target URL synchronously to prevent race condition in layout logic
+      const state = viewManager.tabStates.get(id);
+      if (state) {
+        console.log('[main.js] Setting lastUrl:', url);
+        state.lastUrl = url;
+      }
+
+      console.log('[main.js] Loading URL in webContents');
       view.webContents.loadURL(url);
-      // Ensure it is attached immediately even if getURL() hasn't updated yet
+      
       if (viewManager.activeViewId === id && url !== 'about:blank') {
-        mainWindow.contentView.addChildView(view);
+        console.log('[main.js] Attaching view and updating layout');
+        try { mainWindow.contentView.addChildView(view); } catch(e) {}
         viewManager.updateLayout();
       }
+    } else {
+      console.error('[main.js] View not found for id:', id);
     }
   });
 

@@ -81,7 +81,9 @@ const AppleHeader = ({
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
     const query = inputValue.trim();
+    console.log('[AppleHeader] handleSubmit called with query:', query);
     if (query) {
+      console.log('[AppleHeader] Calling onNavigate with:', query);
       onNavigate(query);
       setIsFocused(false);
       // Force immediate blur to prevent sync lag
@@ -275,11 +277,13 @@ const AppleHeader = ({
                 
                 <input
                   type="text"
-                  value={isFocused ? inputValue : (displayUrl || 'Ask Orbit or Type URL')}
+                  value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onFocus={() => {
                     setIsFocused(true);
-                    setInputValue(activeTab?.url === 'about:blank' ? '' : activeTab?.url || '');
+                    if (!inputValue || inputValue === displayUrl) {
+                      setInputValue(activeTab?.url === 'about:blank' ? '' : activeTab?.url || '');
+                    }
                   }}
                   onBlur={() => setIsFocused(false)}
                   className="w-full bg-transparent text-[13px] outline-none text-slate-900 font-medium placeholder:text-slate-400"

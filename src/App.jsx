@@ -38,11 +38,18 @@ const App = () => {
 
     // Initialize backend for the default tab
     window.orbit.tabs.create({ id: 'default', url: 'about:blank' });
+    window.orbit.tabs.select({ id: 'default' });
 
     const unsubscribe = window.orbit.tabs.onUpdate((data) => {
-      setTabs(prev => prev.map(t => 
-        t.id === data.id ? { ...t, ...data } : t
-      ));
+      setTabs(prev => prev.map(t => {
+        if (t.id === data.id) {
+          if (data.url === 'about:blank' && t.url && t.url !== 'about:blank') {
+            return { ...t, ...data, url: t.url }; 
+          }
+          return { ...t, ...data };
+        }
+        return t;
+      }));
     });
 
     const handleTabOpenRequest = (data) => {
@@ -53,6 +60,13 @@ const App = () => {
     return () => {
       if (typeof unsubscribe === 'function') unsubscribe();
     };
+  }, []);
+
+  const handleSelectTab = useCallback(async (id) => {
+    setActiveTabId(id);
+    setIsOverview(false);
+    await window.orbit.tabs.select({ id });
+    window.orbit.ipcRenderer.send('ui:toggle-overview', false);
   }, []);
 
   const handleAddTab = useCallback(async (initialUrl = 'about:blank') => {
@@ -69,15 +83,7 @@ const App = () => {
     setTabs(prev => [...prev, newTab]);
     await window.orbit.tabs.create({ id, url: initialUrl });
     handleSelectTab(id);
-    setIsOverview(false);
-  }, []);
-
-  const handleSelectTab = useCallback(async (id) => {
-    setActiveTabId(id);
-    setIsOverview(false);
-    await window.orbit.tabs.select({ id });
-    window.orbit.ipcRenderer.send('ui:toggle-overview', false);
-  }, []);
+  }, [handleSelectTab]);
 
   const handleCloseTab = useCallback(async (id, e) => {
     if (e) e.stopPropagation();
@@ -85,7 +91,8 @@ const App = () => {
     setTabs(prev => {
       const filtered = prev.filter(t => t.id !== id);
       if (activeTabId === id && filtered.length > 0) {
-        handleSelectTab(filtered[filtered.length - 1].id);
+        const nextId = filtered[filtered.length - 1].id;
+        handleSelectTab(nextId);
       } else if (filtered.length === 0) {
         handleAddTab('about:blank');
       }
@@ -98,17 +105,21 @@ const App = () => {
     if (!activeTabId || !query) return;
     
     let url = query;
+    let title = query;
+
     if (!url.startsWith('http') && url !== 'about:blank') {
-       url = url.includes('.') ? `https://${url}` : `https://www.google.com/search?q=${encodeURIComponent(url)}&sourceid=chrome&ie=UTF-8`;
+       const isUrl = url.includes('.');
+       url = isUrl ? `https://${url}` : `https://www.google.com/search?q=${encodeURIComponent(url)}&sourceid=chrome&ie=UTF-8`;
+       title = isUrl ? url : query;
     }
     
-    // 1. Fire IPC FIRST - Engine starts loading before React even begins re-rendering
+    // 1. Fire IPC FIRST
     window.orbit.tabs.navigate({ id: activeTabId, url }).catch(err => {
       console.error('Navigation error:', err);
     });
 
-    // 2. Instant state update to unmount NewTab
-    setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, url, isLoading: true } : t));
+    // 2. Instant state update: Update URL AND Title
+    setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, url, title, isLoading: true } : t));
   }, [activeTabId]);
 
   const handleReload = useCallback(() => {
@@ -169,15 +180,14 @@ const App = () => {
         onToggleBookmark={() => toggleBookmark(activeTab)}
       />
       
+      
       <main className="flex-1 relative overflow-hidden bg-white">
-          {/* New Tab Page rendered when URL is about:blank */}
-          {isNewTab && !isOverview && (
-            <div className="absolute inset-0 z-10">
-              <NewTab onNavigate={handleNavigate} />
-            </div>
-          )}
-
-          {/* Browser engine will sit on top of this container in Electron */}
+        {/* New Tab Page rendered when URL is about:blank */}
+        {isNewTab && !isOverview && (
+          <div className="absolute inset-0 z-10">
+            <NewTab onNavigate={handleNavigate} />
+          </div>
+        )}
 
         {/* Tab Overview (Grid) */}
         <AnimatePresence>
@@ -220,7 +230,6 @@ const App = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
       </main>
     </div>
   );

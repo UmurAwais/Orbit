@@ -22,7 +22,12 @@ export class ViewManager {
     });
 
     this.views.set(id, view);
-    this.tabStates.set(id, { lastActive: Date.now(), isHibernated: false, isLoading: false });
+    try {
+      view.setBackgroundColor('#ffffff'); // Set on the view object, not webContents
+    } catch (e) {
+      console.warn('Failed to set background color on view', e);
+    }
+    this.tabStates.set(id, { lastActive: Date.now(), isHibernated: false, isLoading: false, lastUrl: url });
 
     this.setupEvents(id, view);
     const targetUrl = url === 'about:blank' ? 'about:blank' : (url || 'https://www.google.com');
@@ -36,11 +41,37 @@ export class ViewManager {
     
     const sendStatus = () => {
       const tabState = this.tabStates.get(id);
+      const currentUrl = wc.getURL();
+      
+      const urlToSend = (currentUrl === '' || currentUrl === 'about:blank') && tabState?.lastUrl && tabState.lastUrl !== 'about:blank'
+        ? tabState.lastUrl
+        : currentUrl;
+      
+      let displayTitle = wc.getTitle();
+      
+      // If title is missing or still says 'New Tab' but we have a real URL, ignore it
+      const isTitleInvalid = !displayTitle || displayTitle === 'about:blank' || displayTitle === 'New Tab' || displayTitle === '';
+      const isActuallyNewTab = urlToSend === 'about:blank';
+
+      if (isTitleInvalid && !isActuallyNewTab) {
+        if (urlToSend && urlToSend !== 'about:blank') {
+          try {
+            displayTitle = new URL(urlToSend).hostname.replace('www.', '');
+          } catch (e) {
+            displayTitle = 'Loading...';
+          }
+        } else {
+          displayTitle = 'New Tab';
+        }
+      } else if (!displayTitle) {
+        displayTitle = 'New Tab';
+      }
+
       this.sendToUI('tab:update', { 
         id, 
         isLoading: tabState?.isLoading ?? false,
-        url: wc.getURL(), 
-        title: wc.getTitle(),
+        url: urlToSend, 
+        title: displayTitle,
         canGoBack: wc.navigationHistory?.canGoBack() ?? false,
         canGoForward: wc.navigationHistory?.canGoForward() ?? false,
       });
@@ -85,11 +116,14 @@ export class ViewManager {
       const state = this.tabStates.get(id);
       if (state) {
         state.isLoading = true;
-        state.lastUrl = url;
+        // Anti-Regression: Only set lastUrl to blank if it's the very first URL
+        if (url !== 'about:blank' || !state.lastUrl || state.lastUrl === '') {
+          state.lastUrl = url;
+        }
       }
       
-      if (url !== 'about:blank' && id === this.activeViewId) {
-        try { this.mainWindow.contentView.addChildView(view); } catch(e) {}
+      // If navigating to a real URL, show the view immediately
+      if (id === this.activeViewId) {
         this.updateLayout();
       }
       sendStatus();
@@ -97,8 +131,13 @@ export class ViewManager {
 
     wc.on('did-navigate', (e, url) => {
       const state = this.tabStates.get(id);
-      if (state) state.lastUrl = url;
+      if (state) {
+        if (url !== 'about:blank' || !state.lastUrl) {
+          state.lastUrl = url;
+        }
+      }
       sendStatus();
+      if (id === this.activeViewId) this.updateLayout();
     });
 
     wc.on('page-title-updated', (e, title) => {
@@ -110,41 +149,29 @@ export class ViewManager {
 
   selectView(id) {
     if (this.activeViewId === id) {
-       // If same view, check if we need to attach it (in case it just started navigating)
-       const view = this.views.get(id);
-       if (view && view.webContents.getURL() !== 'about:blank') {
-         this.mainWindow.contentView.addChildView(view);
-         this.updateLayout();
-       }
+       this.updateLayout();
        return;
     }
 
-    // Remove current active view from window
+    // Hide old view
     if (this.activeViewId && this.views.has(this.activeViewId)) {
-      try { this.mainWindow.contentView.removeChildView(this.views.get(this.activeViewId)); } catch(e) {}
+      try {
+        const oldView = this.views.get(this.activeViewId);
+        this.mainWindow.contentView.removeChildView(oldView);
+      } catch(e) {}
     }
 
     this.activeViewId = id;
     const view = this.views.get(id);
 
     if (view) {
-      // Check current URL. If it's the start page, keep view detached.
-      const wc = view.webContents;
-      const currentUrl = wc.getURL();
-      
-      if (currentUrl && currentUrl !== 'about:blank' && currentUrl !== '') {
-        this.mainWindow.contentView.addChildView(view);
-      } else {
-        // Ensure it is detached if it's about:blank
-        try { this.mainWindow.contentView.removeChildView(view); } catch(e) {}
-      }
-
-      this.tabStates.get(id).lastActive = Date.now();
+      const state = this.tabStates.get(id);
+      state.lastActive = Date.now();
       
       // Wake if hibernated
-      if (this.tabStates.get(id).isHibernated) {
+      if (state.isHibernated) {
         view.webContents.setAudioMuted(false);
-        this.tabStates.get(id).isHibernated = false;
+        state.isHibernated = false;
       }
       
       this.updateLayout();
@@ -170,20 +197,28 @@ export class ViewManager {
     if (!view) return;
 
     const [width, height] = this.mainWindow.getContentSize();
-    const currentUrl = view.webContents.getURL();
-    const lastUrl = this.tabStates.get(this.activeViewId)?.lastUrl || currentUrl;
+    const state = this.tabStates.get(this.activeViewId);
+    
+    // Show browser view if we have EVER navigated away from about:blank
+    // Once you navigate somewhere, keep showing the browser view
+    const shouldShowBrowser = state?.lastUrl && state.lastUrl !== 'about:blank';
 
-    // Use either current URL or the last known navigation target
-    const isBlank = (currentUrl === 'about:blank' || currentUrl === '') && 
-                    (lastUrl === 'about:blank' || lastUrl === '');
-
-    if (!isBlank) {
-      // If it's a real page (or navigating to one), attach and show it
-      try { this.mainWindow.contentView.addChildView(view); } catch(e) {}
-      view.setBounds({ x: 0, y: 92, width, height: height - 92 });
+    if (shouldShowBrowser) {
+      // Show the native browser view
+      try {
+        const children = this.mainWindow.contentView.children || [];
+        if (!children.includes(view)) {
+          this.mainWindow.contentView.addChildView(view);
+        }
+      } catch (e) {}
+      
+      // Triple Layer Header Height (Tabs: 44px + Address: 48px + Bookmarks: 40px = 132px)
+      view.setBounds({ x: 0, y: 132, width, height: Math.max(0, height - 132) });
     } else {
-      // It's the new tab page, ensure it's removed so React can show through
-      try { this.mainWindow.contentView.removeChildView(view); } catch (e) {}
+      // Show the React NewTab page
+      try {
+        this.mainWindow.contentView.removeChildView(view);
+      } catch (e) {}
     }
   }
 

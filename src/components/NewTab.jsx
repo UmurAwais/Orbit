@@ -59,7 +59,9 @@ const NewTab = ({ onNavigate }) => {
   const handleInternalSubmit = useCallback((e) => {
     if (e) e.preventDefault();
     const val = localQuery.trim();
+    console.log('[NewTab] handleInternalSubmit called with:', val);
     if (!val) return;
+    console.log('[NewTab] Calling onNavigate with:', val);
     onNavigate(val);
   }, [localQuery, onNavigate]);
 
