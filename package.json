@@ -1,0 +1,37 @@
+{
+  "name": "orbit",
+  "version": "1.0.0",
+  "description": "A custom desktop browser",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && nodemon --watch electron --ext js,cjs --exec cross-env VITE_DEV_SERVER_URL=http://localhost:3000 electron .\"",
+    "build": "vite build && electron-builder",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "framer-motion": "^12.34.0",
+    "lucide-react": "^0.564.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@vitejs/plugin-react": "^5.1.4",
+    "autoprefixer": "^10.4.24",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^40.4.1",
+    "jsdom": "^28.1.0",
+    "nodemon": "^3.1.11",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18",
+    "wait-on": "^9.0.4"
+  }
+}
