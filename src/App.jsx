@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 
-import AppleHeader from './components/AppleHeader';
+import SafariHeader from './components/SafariHeader';
 import NewTab from './components/NewTab';
 import OrbitLogo from './components/OrbitLogo';
 import { Globe, X } from 'lucide-react';
@@ -13,16 +13,23 @@ const App = () => {
     isLoading: false,
     canGoBack: false,
     canGoForward: false,
+    zoomFactor: 1,
   }]);
   const [activeTabId, setActiveTabId] = useState('default');
   const [isOverview, setIsOverview] = useState(false);
   const [bookmarks, setBookmarks] = useState(() => {
-    const saved = localStorage.getItem('orbit_bookmarks');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', title: 'Google', url: 'https://google.com' },
-      { id: '2', title: 'YouTube', url: 'https://youtube.com' },
-      { id: '3', title: 'GitHub', url: 'https://github.com' }
-    ];
+    try {
+      const saved = localStorage.getItem('orbit_bookmarks');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : [
+        { id: '1', title: 'Google', url: 'https://google.com' },
+        { id: '2', title: 'YouTube', url: 'https://youtube.com' },
+        { id: '3', title: 'GitHub', url: 'https://github.com' }
+      ];
+    } catch (e) {
+      console.error('Failed to parse bookmarks:', e);
+      return [];
+    }
   });
 
   const initialized = React.useRef(false);
@@ -168,7 +175,7 @@ const App = () => {
 
   return (
     <div className="flex flex-col w-full h-screen bg-white overflow-hidden">
-      <AppleHeader
+      <SafariHeader
         tabs={tabs}
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
