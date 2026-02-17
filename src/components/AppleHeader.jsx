@@ -288,7 +288,7 @@ const AppleHeader = ({
                 />
               </div>
 
-              {!isFocused && (
+              {!isFocused && activeTab?.url !== 'about:blank' && (
                 <div className="flex items-center gap-2">
                   <button 
                     type="button" 
