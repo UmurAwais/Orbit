@@ -82,13 +82,22 @@ export class ViewManager {
     wc.on('did-navigate-in-page', () => sendStatus());
     
     wc.on('did-start-navigation', (e, url) => {
-      // If we're navigating to a real page, make sure the view is attached instantly
+      const state = this.tabStates.get(id);
+      if (state) {
+        state.isLoading = true;
+        state.lastUrl = url;
+      }
+      
       if (url !== 'about:blank' && id === this.activeViewId) {
-        this.mainWindow.contentView.addChildView(view);
+        try { this.mainWindow.contentView.addChildView(view); } catch(e) {}
         this.updateLayout();
       }
+      sendStatus();
+    });
+
+    wc.on('did-navigate', (e, url) => {
       const state = this.tabStates.get(id);
-      if (state) state.isLoading = true;
+      if (state) state.lastUrl = url;
       sendStatus();
     });
 
@@ -161,14 +170,19 @@ export class ViewManager {
     if (!view) return;
 
     const [width, height] = this.mainWindow.getContentSize();
-    const url = view.webContents.getURL();
+    const currentUrl = view.webContents.getURL();
+    const lastUrl = this.tabStates.get(this.activeViewId)?.lastUrl || currentUrl;
 
-    // If it's a real page, attach and show it full-bleed
-    if (url && url !== 'about:blank' && url !== '') {
-      this.mainWindow.contentView.addChildView(view);
+    // Use either current URL or the last known navigation target
+    const isBlank = (currentUrl === 'about:blank' || currentUrl === '') && 
+                    (lastUrl === 'about:blank' || lastUrl === '');
+
+    if (!isBlank) {
+      // If it's a real page (or navigating to one), attach and show it
+      try { this.mainWindow.contentView.addChildView(view); } catch(e) {}
       view.setBounds({ x: 0, y: 92, width, height: height - 92 });
     } else {
-      // It's the start page, ensure it's removed so React can show through
+      // It's the new tab page, ensure it's removed so React can show through
       try { this.mainWindow.contentView.removeChildView(view); } catch (e) {}
     }
   }
