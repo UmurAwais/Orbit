@@ -9,7 +9,9 @@ import {
   Shield,
   Clock,
   ExternalLink,
-  Globe
+  Globe,
+  User,
+  LayoutGrid
 } from 'lucide-react';
 import OrbitLogo from './OrbitLogo';
 
@@ -76,8 +78,28 @@ const NewTab = ({ onNavigate }) => {
            <span className="text-[10px] font-semibold tracking-widest uppercase">72° / Clean Sky</span>
         </div>
         
-        <div className="flex items-center gap-3">
-           <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors"><Settings size={18} /></button>
+        <div className="flex items-center gap-2">
+           {/* Text Links */}
+           <div className="flex items-center gap-4">
+             <button className="text-[13px] font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-slate-100/50">Orbit Mail</button>
+             <button className="text-[13px] font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-slate-100/50">Images</button>
+           </div>
+
+           {/* Icons */}
+           <button className="p-2 text-slate-500 hover:text-slate-900 rounded-full transition-all cursor-pointer">
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+               <path d="M6,8c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S4.9,8,6,8z M12,8c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,8,12,8z M18,8 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S16.9,8,18,8z M6,14c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S4.9,14,6,14z M12,14 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,14,12,14z M18,14c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S16.9,14,18,14z M6,20 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S4.9,20,6,20z M12,20c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,20,12,20z M18,20 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S16.9,20,18,20z" />
+             </svg>
+           </button>
+
+           {/* Profile with Orbit Logo-style Metallic Ring */}
+           <div className="relative p-[2px] rounded-full bg-linear-to-tr from-[#2A2A2A] via-[#4A4A4A] to-[#666666] group cursor-pointer active:scale-95 transition-all shadow-lg hover:shadow-slate-300/50">
+             <div className="w-8 h-8 rounded-full bg-white p-[2px]">
+               <div className="w-full h-full rounded-full bg-linear-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white shadow-inner">
+                 <User size={14} fill="currentColor" />
+               </div>
+             </div>
+           </div>
         </div>
       </div>
 

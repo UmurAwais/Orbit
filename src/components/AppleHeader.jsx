@@ -316,14 +316,6 @@ const AppleHeader = ({
              <Download size={18} strokeWidth={2} />
            </button>
            <div className="mx-1 h-4 w-px bg-black/10" />
-           <div className="flex items-center pl-1">
-             <div className="w-7.5 h-7.5 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white border border-white shadow-sm cursor-pointer hover:shadow-md transition-shadow active:scale-95">
-               <User size={12} fill="currentColor" />
-             </div>
-             <button className="p-1 rounded-md hover:bg-black/5 text-slate-400 transition-all active:scale-95">
-               <ChevronDown size={14} />
-             </button>
-           </div>
            <button className="p-1.5 rounded-lg hover:bg-black/5 text-slate-600 transition-all active:scale-95 ml-1">
              <MoreVertical size={18} strokeWidth={2} />
            </button>
