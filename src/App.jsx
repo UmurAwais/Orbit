@@ -27,6 +27,8 @@ const App = () => {
 
   const initialized = React.useRef(false);
 
+  const [hoverUrl, setHoverUrl] = useState('');
+
   useEffect(() => {
     localStorage.setItem('orbit_bookmarks', JSON.stringify(bookmarks));
   }, [bookmarks]);
@@ -41,12 +43,11 @@ const App = () => {
     window.orbit.tabs.select({ id: 'default' });
 
     const unsubscribe = window.orbit.tabs.onUpdate((data) => {
+      // TRUST THE BACKEND: It sends the exact state we should display.
+      // Force update all properties including url, title, isLoading.
       setTabs(prev => prev.map(t => {
         if (t.id === data.id) {
-          if (data.url === 'about:blank' && t.url && t.url !== 'about:blank') {
-            return { ...t, ...data, url: t.url }; 
-          }
-          return { ...t, ...data };
+            return { ...t, ...data };
         }
         return t;
       }));
@@ -56,6 +57,7 @@ const App = () => {
        handleAddTab(data.url);
     };
     window.orbit.ipcRenderer.on('tab:open-request', handleTabOpenRequest);
+    window.orbit.ipcRenderer.on('tab:hover-update', ({ url }) => setHoverUrl(url));
 
     return () => {
       if (typeof unsubscribe === 'function') unsubscribe();
@@ -105,14 +107,9 @@ const App = () => {
     if (!activeTabId || !query) return;
     
     let url = query;
-    let title = query;
-
     if (!url.startsWith('http') && url !== 'about:blank') {
        const isUrl = url.includes('.');
        url = isUrl ? `https://${url}` : `https://www.google.com/search?q=${encodeURIComponent(url)}&sourceid=chrome&ie=UTF-8`;
-       title = isUrl ? 'Loading...' : query;
-    } else {
-       title = 'Loading...';
     }
     
     // 1. Fire IPC FIRST
@@ -120,8 +117,14 @@ const App = () => {
       console.error('Navigation error:', err);
     });
 
-    // 2. Instant state update: Update URL AND Title
-    setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, url, title, isLoading: true } : t));
+    // 2. Instant state update: Update URL AND set Loading state
+    // We set a temporary title to avoid showing 'New Tab' during navigation start
+    setTabs(prev => prev.map(t => t.id === activeTabId ? { 
+      ...t, 
+      url, 
+      title: url.includes('google.com/search') ? query : (url === 'about:blank' ? 'New Tab' : 'Loading...'),
+      isLoading: true 
+    } : t));
   }, [activeTabId]);
 
   const handleReload = useCallback(() => {
@@ -228,6 +231,12 @@ const App = () => {
             </div>
           )}
 
+        {/* Status Bar for Link Hover */}
+        {hoverUrl && !isOverview && (
+          <div className="absolute bottom-0 left-0 m-0 z-50 bg-[#efeeee]/95 backdrop-blur-md px-3 py-1 rounded-tr-xl border-t border-r border-black/5 text-[11px] font-medium text-slate-600 shadow-sm max-w-[50vw] truncate transition-all duration-200 pointer-events-none">
+            {hoverUrl}
+          </div>
+        )}
       </main>
     </div>
   );

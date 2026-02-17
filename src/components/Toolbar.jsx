@@ -22,7 +22,7 @@ const Toolbar = ({ url, onNavigate, onReload, onBack, onForward, canGoBack, canG
   };
 
   return (
-    <div className="h-[60px] flex items-center gap-3 px-4 bg-white/80 backdrop-blur-lg border-b border-slate-200 drag transition-all duration-300">
+    <div className="h-15 flex items-center gap-3 px-4 bg-white/80 backdrop-blur-lg border-b border-slate-200 drag transition-all duration-300">
       {/* Navigation Group (Clean UI) */}
       <div className="flex items-center gap-0.5 no-drag">
         <button 

@@ -93,8 +93,8 @@ const NewTab = ({ onNavigate }) => {
            </button>
 
            {/* Profile with Orbit Logo-style Metallic Ring */}
-           <div className="relative p-[2px] rounded-full bg-linear-to-tr from-[#2A2A2A] via-[#4A4A4A] to-[#666666] group cursor-pointer active:scale-95 shadow-lg hover:shadow-slate-300/50">
-             <div className="w-8 h-8 rounded-full bg-white p-[2px]">
+           <div className="relative p-0.5 rounded-full bg-linear-to-tr from-[#2A2A2A] via-[#4A4A4A] to-[#666666] group cursor-pointer active:scale-95 shadow-lg hover:shadow-slate-300/50">
+             <div className="w-8 h-8 rounded-full bg-white p-0.5">
                <div className="w-full h-full rounded-full bg-linear-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white shadow-inner">
                  <User size={14} fill="currentColor" />
                </div>

@@ -44,87 +44,15 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    if (process.env.VITE_DEV_SERVER_URL) {
-      mainWindow.webContents.openDevTools({ mode: 'detach' });
-    }
+    // if (process.env.VITE_DEV_SERVER_URL) {
+    //   mainWindow.webContents.openDevTools({ mode: 'detach' });
+    // }
     if (viewManager) viewManager.updateLayout();
   });
 
   setupIpcHandlers();
-  setupGlobalContextMenus();
-}
-
-function setupGlobalContextMenus() {
-  const createMenu = (webContents, params) => {
-    const menu = new Menu();
-
-    // Custom Identity
-    menu.append(new MenuItem({
-      label: '🚀 Send to Orbit Workspace',
-      click: () => console.log('Workspace feature coming soon...')
-    }));
-    menu.append(new MenuItem({ type: 'separator' }));
-
-    // Navigation
-    menu.append(new MenuItem({ 
-      label: 'Back', 
-      enabled: webContents.navigationHistory?.canGoBack() ?? false, 
-      click: () => webContents.navigationHistory.goBack(),
-      accelerator: 'Alt+Left'
-    }));
-    menu.append(new MenuItem({ 
-      label: 'Forward', 
-      enabled: webContents.navigationHistory?.canGoForward() ?? false, 
-      click: () => webContents.navigationHistory.goForward(),
-      accelerator: 'Alt+Right'
-    }));
-    menu.append(new MenuItem({ 
-      label: 'Reload', 
-      click: () => webContents.reload(),
-      accelerator: 'CmdOrCtrl+R'
-    }));
-    
-    menu.append(new MenuItem({ type: 'separator' }));
-
-    // Link/Image specific context
-    if (params.linkURL) {
-      menu.append(new MenuItem({
-        label: 'Open Link in New Orbit Window',
-        click: () => {
-          const newWin = new BrowserWindow({ width: 1400, height: 900 });
-          newWin.loadURL(params.linkURL);
-        }
-      }));
-      menu.append(new MenuItem({
-        label: 'Copy Link Address',
-        role: 'copyLink'
-      }));
-    }
-
-    if (params.hasImageContents) {
-      menu.append(new MenuItem({
-        label: 'Copy Image',
-        click: () => webContents.copyImageAt(params.x, params.y)
-      }));
-    }
-
-    // Inspect
-    menu.append(new MenuItem({ type: 'separator' }));
-    menu.append(new MenuItem({
-      label: 'Inspect Element',
-      click: () => webContents.inspectElement(params.x, params.y)
-    }));
-
-    return menu;
-  };
-
-  app.on('web-contents-created', (e, webContents) => {
-    webContents.on('context-menu', (event, params) => {
-      event.preventDefault();
-      const menu = createMenu(webContents, params);
-      menu.popup();
-    });
-  });
+  setupIpcHandlers();
+  setupApplicationMenu();
 }
 
 function setupApplicationMenu() {
@@ -218,8 +146,13 @@ function setupIpcHandlers() {
     }
   });
 
-  ipcMain.handle('tab:reload', (event, { id }) => viewManager.views.get(id)?.webContents.reload());
+  ipcMain.handle('tab:reload', (event, { id }) => {
+    console.log(`[IPC] tab:reload requested for ${id}`);
+    return viewManager.views.get(id)?.webContents.reload();
+  });
+  
   ipcMain.handle('tab:stop', (event, { id }) => {
+    console.log(`[IPC] tab:stop requested for ${id}`);
     const view = viewManager.views.get(id);
     if (view) {
       view.webContents.stop();
@@ -232,14 +165,30 @@ function setupIpcHandlers() {
           isLoading: false,
           url: view.webContents.getURL(),
           title: view.webContents.getTitle(),
-          canGoBack: view.webContents.navigationHistory?.canGoBack() ?? false,
-          canGoForward: view.webContents.navigationHistory?.canGoForward() ?? false,
+          canGoBack: view.webContents.navigationHistory?.canGoBack() ?? view.webContents.canGoBack() ?? false,
+          canGoForward: view.webContents.navigationHistory?.canGoForward() ?? view.webContents.canGoForward() ?? false,
         });
       }
     }
   });
-  ipcMain.handle('tab:goBack', (event, { id }) => viewManager.views.get(id)?.webContents.navigationHistory.goBack());
-  ipcMain.handle('tab:goForward', (event, { id }) => viewManager.views.get(id)?.webContents.navigationHistory.goForward());
+  
+  ipcMain.handle('tab:goBack', (event, { id }) => {
+    console.log(`[IPC] tab:goBack requested for \${id}`);
+    const wc = viewManager.views.get(id)?.webContents;
+    if (wc) {
+      if (wc.navigationHistory) wc.navigationHistory.goBack();
+      else if (wc.canGoBack()) wc.goBack();
+    }
+  });
+  
+  ipcMain.handle('tab:goForward', (event, { id }) => {
+    console.log(`[IPC] tab:goForward requested for \${id}`);
+    const wc = viewManager.views.get(id)?.webContents;
+    if (wc) {
+      if (wc.navigationHistory) wc.navigationHistory.goForward();
+      else if (wc.canGoForward()) wc.goForward();
+    }
+  });
   
   ipcMain.on('ui:toggle-overview', (event, isOverview) => {
     if (isOverview && viewManager.activeViewId) {

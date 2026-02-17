@@ -15,7 +15,7 @@ const TabItem = memo(({ tab, isActive, onSelect, onClose }) => {
       `}
     >
       <div className={`
-        flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md
+        shrink-0 w-6 h-6 flex items-center justify-center rounded-md
         ${isActive ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-slate-100 text-slate-400'}
         overflow-hidden
       `}>
@@ -51,7 +51,7 @@ const TabItem = memo(({ tab, isActive, onSelect, onClose }) => {
 
 const Sidebar = ({ tabs, activeTabId, onSelectTab, onAddTab, onCloseTab }) => {
   return (
-    <div className="w-[240px] h-full flex flex-col glass-sidebar">
+    <div className="w-60 h-full flex flex-col glass-sidebar">
       {/* Chrome/Edge Style Hybrid Header */}
       <div className="p-4 flex items-center justify-between drag">
         <div className="flex items-center gap-2 no-drag">

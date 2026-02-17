@@ -86,13 +86,32 @@ const AppleHeader = ({
   }, [history]);
 
 
+  // Compute the prettified URL for display (Chrome-style)
+  const displayUrl = useMemo(() => {
+    const url = activeTab?.url;
+    if (!url || url === 'about:blank') return '';
+    try {
+      // If it's a Google Search, just show the query
+      if (url.includes('google.com/search')) {
+        const params = new URLSearchParams(new URL(url).search);
+        const query = params.get('q');
+        return query || url;
+      }
+      
+      // For regular sites, show clean URL (strip https://www) but KEEP PATH
+      return url.replace(/^https?:\/\/(www\.)?/, '');
+    } catch {
+      return url;
+    }
+  }, [activeTab?.url]);
+
+
   // Robustly handle URL changes without clobbering user input
   useEffect(() => {
     if (!isFocused) {
-      const targetUrl = activeTab?.url === 'about:blank' ? '' : activeTab?.url || '';
-      setInputValue(targetUrl);
+      setInputValue(displayUrl);
     }
-  }, [activeTab?.url, isFocused]);
+  }, [displayUrl, isFocused]);
 
   // Close search on navigation
   useEffect(() => {
@@ -112,19 +131,7 @@ const AppleHeader = ({
     }
   }, [activeTab?.isLoading, activeTab?.id, onStop]);
 
-  const displayUrl = useMemo(() => {
-    const url = activeTab?.url;
-    if (!url || url === 'about:blank') return '';
-    try {
-      if (url.startsWith('https://www.google.com/search')) {
-        const params = new URLSearchParams(new URL(url).search);
-        return params.get('q') || url;
-      }
-      return new URL(url).hostname.replace('www.', '');
-    } catch {
-      return url;
-    }
-  }, [activeTab?.url]);
+
 
   const handleSubmit = useCallback((queryToSubmit) => {
     const query = (queryToSubmit || inputValue).trim();
@@ -192,8 +199,18 @@ const AppleHeader = ({
             {tabs.map((tab, index) => {
               const isActive = tab.id === activeTab?.id;
               const isNextActive = tabs[index + 1]?.id === activeTab?.id;
-              const faviconUrl = tab.favicon || (tab.url && tab.url !== 'about:blank' 
-                ? `https://www.google.com/s2/favicons?domain=${tab.url}&sz=64` 
+              
+              let hostname = null;
+              try {
+                if (tab.url && tab.url !== 'about:blank') {
+                   // Ensure it has a protocol
+                   const urlStr = tab.url.startsWith('http') ? tab.url : `https://${tab.url}`;
+                   hostname = new URL(urlStr).hostname;
+                }
+              } catch (e) {}
+
+              const faviconUrl = tab.favicon || (hostname 
+                ? `https://www.google.com/s2/favicons?domain=${hostname}&sz=64` 
                 : null);
 
               return (
@@ -219,7 +236,7 @@ const AppleHeader = ({
                         )}
                       </div>
                       <span className={`text-sm font-medium truncate tracking-tight ${isActive ? 'text-slate-800' : 'text-slate-500'}`}>
-                        {tab.url === 'about:blank' ? 'New Tab' : tab.title}
+                        {tab.url === 'about:blank' ? 'New Tab' : (tab.title || 'Loading...')}
                       </span>
                     </div>
                     
@@ -263,10 +280,10 @@ const AppleHeader = ({
       <div className={`relative h-12 flex items-center px-4 bg-slate-50 ${activeTab?.url !== 'about:blank' ? 'border-b border-slate-200' : ''}`}>
         
         {/* Navigation & AI Hub */}
-        <div className="flex items-center gap-1 no-drag h-full py-2 shrink-0 z-20">
+        <div className="flex items-center gap-1 no-drag h-full py-2 shrink-0 relative z-30">
           <div className="flex items-center gap-0.5 mr-1">
             <button 
-              onClick={onBack}
+              onClick={() => { console.log('UI: Back clicked'); onBack(); }}
               disabled={!activeTab?.canGoBack}
               className="p-1.5 rounded-lg text-slate-600 disabled:text-slate-200 hover:bg-black/5 active:scale-90 cursor-pointer disabled:cursor-not-allowed"
               title="Go back"
@@ -274,7 +291,7 @@ const AppleHeader = ({
               <ChevronLeft size={19} strokeWidth={2.2} />
             </button>
             <button 
-              onClick={onForward}
+              onClick={() => { console.log('UI: Forward clicked'); onForward(); }}
               disabled={!activeTab?.canGoForward}
               className="p-1.5 rounded-lg text-slate-600 disabled:text-slate-200 hover:bg-black/5 active:scale-90 cursor-pointer disabled:cursor-not-allowed"
               title="Go forward"
@@ -282,7 +299,15 @@ const AppleHeader = ({
               <ChevronRight size={19} strokeWidth={2.2} />
             </button>
             <button 
-              onClick={activeTab?.isLoading ? onStop : onReload} 
+              onClick={() => {
+                if (activeTab?.isLoading) {
+                  console.log('UI: Stop clicked');
+                  onStop();
+                } else {
+                  console.log('UI: Reload clicked');
+                  onReload();
+                }
+              }} 
               className="p-1.5 rounded-lg text-slate-600 hover:bg-black/5 active:scale-90 cursor-pointer"
               title={activeTab?.isLoading ? "Stop loading" : "Reload page"}
             >
@@ -302,7 +327,7 @@ const AppleHeader = ({
 
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 no-drag z-10">
+        <div className="absolute left-1/2 -translate-x-1/2 w-[calc(100%-300px)] max-w-3xl px-4 no-drag z-10">
           <form 
             onSubmit={(e) => {
               e.preventDefault();
