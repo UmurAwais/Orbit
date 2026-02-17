@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import AppleHeader from './components/AppleHeader';
-import StartPage from './components/StartPage';
+import NewTab from './components/NewTab';
 import OrbitLogo from './components/OrbitLogo';
 import { Globe, X } from 'lucide-react';
 
 const App = () => {
   const [tabs, setTabs] = useState([{
     id: 'default',
-    title: 'Start Page',
+    title: 'New Tab',
     url: 'about:blank',
     isLoading: false,
     canGoBack: false,
@@ -59,7 +59,7 @@ const App = () => {
     const id = Date.now().toString();
     const newTab = {
       id,
-      title: initialUrl === 'about:blank' ? 'Start Page' : 'Loading...',
+      title: initialUrl === 'about:blank' ? 'New Tab' : 'Loading...',
       url: initialUrl,
       isLoading: false,
       canGoBack: false,
@@ -107,7 +107,7 @@ const App = () => {
       console.error('Navigation error:', err);
     });
 
-    // 2. Instant state update to unmount StartPage
+    // 2. Instant state update to unmount NewTab
     setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, url, isLoading: true } : t));
   }, [activeTabId]);
 
@@ -148,7 +148,7 @@ const App = () => {
   }, []);
 
   const activeTab = React.useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
-  const isStartPage = activeTab?.url === 'about:blank';
+  const isNewTab = activeTab?.url === 'about:blank';
 
   return (
     <div className="flex flex-col w-full h-screen bg-white overflow-hidden">
@@ -170,10 +170,10 @@ const App = () => {
       />
       
       <main className="flex-1 relative overflow-hidden bg-white">
-          {/* Safari-style Start Page rendered when URL is about:blank */}
-          {isStartPage && !isOverview && (
+          {/* New Tab Page rendered when URL is about:blank */}
+          {isNewTab && !isOverview && (
             <div className="absolute inset-0 z-10">
-              <StartPage onNavigate={handleNavigate} />
+              <NewTab onNavigate={handleNavigate} />
             </div>
           )}
 
@@ -202,7 +202,7 @@ const App = () => {
                     <div className="h-12 flex items-center px-4 gap-4 bg-slate-50 border-b border-black/3">
                       <OrbitLogo size={12} className="mr-2 text-slate-400" />
                       <span className="text-[11px] font-bold text-slate-600 truncate flex-1 uppercase tracking-tighter">
-                        {tab.url === 'about:blank' ? 'Start Page' : tab.title}
+                        {tab.url === 'about:blank' ? 'New Tab' : tab.title}
                       </span>
                       <button 
                          onClick={(e) => handleCloseTab(tab.id, e)}

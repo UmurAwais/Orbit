@@ -53,7 +53,7 @@ const FAVORITES = [
   { title: 'Facebook', url: 'https://facebook.com' },
 ];
 
-const StartPage = ({ onNavigate }) => {
+const NewTab = ({ onNavigate }) => {
   const [localQuery, setLocalQuery] = useState('');
 
   const handleInternalSubmit = useCallback((e) => {
@@ -141,4 +141,4 @@ const StartPage = ({ onNavigate }) => {
   );
 };
 
-export default memo(StartPage);
+export default memo(NewTab);
