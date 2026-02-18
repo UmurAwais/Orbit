@@ -109,22 +109,24 @@ const App = () => {
       <div className="absolute top-0 left-0 right-0 h-16 drag-area z-0 pointer-events-none" />
       
       {/* Permanent Hub Layer */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 pt-3 pb-8 px-8 z-[1000] pointer-events-auto">
-        <SegmentedHub
-          activeTab={activeTab}
-          onNavigate={handleNavigate}
-          onReload={() => window.orbit.tabs.reload({ id: activeTabId })}
-          onStop={() => window.orbit.tabs.stop({ id: activeTabId })}
-          onBack={() => window.orbit.tabs.goBack({ id: activeTabId })}
-          onForward={() => window.orbit.tabs.goForward({ id: activeTabId })}
-          isVisible={true}
-          onToggleOverview={() => {
-            const nextState = !isOverview;
-            setIsOverview(nextState);
-            window.orbit.ipcRenderer.send('ui:toggle-overview', nextState);
-          }}
-          tabCount={tabs.length}
-        />
+      <div className="fixed top-0 left-0 right-0 h-[48px] z-[1000] flex items-center justify-center pointer-events-none">
+        <div className="pointer-events-auto">
+          <SegmentedHub
+            activeTab={activeTab}
+            onNavigate={handleNavigate}
+            onReload={() => window.orbit.tabs.reload({ id: activeTabId })}
+            onStop={() => window.orbit.tabs.stop({ id: activeTabId })}
+            onBack={() => window.orbit.tabs.goBack({ id: activeTabId })}
+            onForward={() => window.orbit.tabs.goForward({ id: activeTabId })}
+            isVisible={true}
+            onToggleOverview={() => {
+              const nextState = !isOverview;
+              setIsOverview(nextState);
+              window.orbit.ipcRenderer.send('ui:toggle-overview', nextState);
+            }}
+            tabCount={tabs.length}
+          />
+        </div>
       </div>
       
       <main className={`w-full h-full relative overflow-hidden flex flex-col items-center ${isHome || isOverview ? 'pointer-events-auto' : 'pointer-events-none'}`}>

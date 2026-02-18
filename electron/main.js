@@ -17,7 +17,7 @@ function createWindow() {
     titleBarOverlay: {
       color: '#FFFFFF',
       symbolColor: '#1a1a1a',
-      height: 32
+      height: 48
     },
     icon: path.join(__dirname, '../assets/orbit.png'),
     backgroundColor: '#FFFFFF',

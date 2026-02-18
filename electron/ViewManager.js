@@ -527,18 +527,17 @@ export class ViewManager {
     const shouldShowBrowser = !isNewTab && !this.isOverview;
 
     if (shouldShowBrowser) {
-      // Show the native browser view BEHIND the React UI (index 0)
+      // Force the view to be ON TOP of the React UI to prevent occlusion
       try {
         const children = this.mainWindow.contentView.children || [];
-        // Force view to index 0 (background) to ensure React UI always remains on top
-        if (children.indexOf(view) !== 0) {
-          this.mainWindow.contentView.insertChildView(view, 0);
+        if (!children.includes(view)) {
+          this.mainWindow.contentView.addChildView(view);
           view.setBackgroundColor('#ffffff');
         }
       } catch (e) {}
       
-      // Force bounds and focus
-      view.setBounds({ x: 0, y: 0, width, height });
+      // Offset by 48px to match the new centralized header height
+      view.setBounds({ x: 0, y: 48, width, height: height - 48 });
       if (this.mainWindow.isFocused()) {
         // Only focus webContents if the window itself is active to avoid hijacking
         // wc.focus() can sometimes trigger re-paints in certain GPU environments
