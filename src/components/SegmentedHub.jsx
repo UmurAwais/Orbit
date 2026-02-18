@@ -1,5 +1,5 @@
 import React, { memo, useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, Search, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, Search, Plus, DownloadCloud, Bookmark } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const COMMANDS = [
@@ -107,7 +107,7 @@ const SegmentedHub = memo(({
       isFocused ? 'w-225 h-12 bg-white shadow-2xl' : 'w-175 h-10'
     } ${!isVisible && !isFocused ? 'segmented-hub-hidden' : ''}`}>
       {activeTab?.isLoading && (
-        <div className="loading-line absolute top-0 left-0 w-full animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orbit-accent animate-pulse z-10 rounded-b-[10px]" />
       )}
       
       <div className="w-20 flex items-center gap-2 pl-2">
@@ -116,20 +116,20 @@ const SegmentedHub = memo(({
           disabled={!activeTab?.canGoBack}
           className="p-1.5 rounded-lg hover:bg-black/5 text-black/60 hover:text-black disabled:opacity-20 transition-colors"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={20} />
         </button>
         <button 
           onClick={onForward}
           disabled={!activeTab?.canGoForward}
           className="p-1.5 rounded-lg hover:bg-black/5 text-black/60 hover:text-black disabled:opacity-20 transition-colors"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={20} />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 flex items-center h-full px-4 relative">
         <div className="absolute left-4 opacity-40">
-          <Search size={14} className={isFocused ? 'text-orbit-accent opacity-100' : ''} />
+          <Search size={17} className={isFocused ? 'text-orbit-accent opacity-100' : ''} />
         </div>
         <input
           type="text"
@@ -167,6 +167,7 @@ const SegmentedHub = memo(({
           </AnimatePresence>
         </div>
 
+
         {/* Chromium-style Dropdown */}
         <AnimatePresence>
           {isFocused && suggestions.length > 0 && (
@@ -174,7 +175,7 @@ const SegmentedHub = memo(({
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="absolute top-[calc(100%+8px)] left-[-16px] right-[-16px] bg-white border border-black/5 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl z-[2000]"
+              className="absolute top-[calc(100%+8px)] -left-4 -right-4 bg-white border border-black/5 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl z-2000"
             >
               <div className="py-2">
                 {suggestions.map((item, index) => (
@@ -208,19 +209,29 @@ const SegmentedHub = memo(({
         </AnimatePresence>
       </form>
 
-      <div className="w-32 flex items-center justify-end gap-2">
+      <div className="flex items-center justify-end gap-3 px-2">
         <button 
           onClick={activeTab?.isLoading ? onStop : onReload}
           className="p-1.5 rounded-md hover:bg-black/5 text-black/60 hover:text-black transition-colors"
         >
-          <RefreshCw size={14} className={activeTab?.isLoading ? 'animate-spin' : ''} />
+          <RefreshCw size={17} className={activeTab?.isLoading ? 'animate-spin' : ''} />
         </button>
-        <div className="w-[1px] h-4 bg-black/10 mx-1" />
+        <div className="w-px h-4 bg-black/10 mx-1" />
+        {inputValue && (
+           <>
+             <button className="p-1.5 rounded-md hover:bg-black/5 text-black/60 hover:text-black transition-colors animate-in fade-in zoom-in duration-200" title="Download">
+                <DownloadCloud size={18} />
+             </button>
+             <button className="p-1.5 rounded-md hover:bg-black/5 text-black/60 hover:text-black transition-colors animate-in fade-in zoom-in duration-200" title="Save">
+                <Bookmark size={18} />
+             </button>
+           </>
+        )}
         <button 
           onClick={onToggleOverview}
           className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/5 text-black/60 hover:text-black transition-all relative"
         >
-          <div className="w-[18px] h-[18px] border-[1.5px] border-current rounded-[4px] flex items-center justify-center">
+          <div className="w-4.5 h-4.5 border-[1.5px] border-current rounded-sm flex items-center justify-center">
             <span className="text-[9px] font-bold leading-none translate-y-[0.5px]">
               {tabCount || 1}
             </span>

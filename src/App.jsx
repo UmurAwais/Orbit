@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import SegmentedHub from './components/SegmentedHub';
 import NewTab from './components/NewTab';
 import OrbitLogo from './components/OrbitLogo';
-import { Search, Sparkles, ArrowRight, Bookmark, Clock, X, Plus } from 'lucide-react';
+import { Search, ArrowRight, Bookmark, X, Plus, History, Puzzle, Settings, Wand2 } from 'lucide-react';
+import TabSearch from './components/TabSearch';
 
 const ResultCard = memo(({ title, snippet, onOpen }) => (
   <motion.div 
@@ -13,10 +15,10 @@ const ResultCard = memo(({ title, snippet, onOpen }) => (
     onClick={onOpen}
   >
     <div className="flex items-center gap-2 mb-4 opacity-40 group-hover:opacity-100 transition-opacity">
-      <Sparkles size={14} className="text-[#635BFF]" />
-      <span className="text-[10px] font-bold uppercase tracking-widest text-[#635BFF]">Verified Insight</span>
+      <Sparkles size={14} className="text-orbit-accent" />
+      <span className="text-[10px] font-bold uppercase tracking-widest text-orbit-accent">Verified Insight</span>
     </div>
-    <h3 className="text-[18px] font-bold text-[#635BFF] mb-2 leading-tight tracking-tight">
+    <h3 className="text-[18px] font-bold text-orbit-accent mb-2 leading-tight tracking-tight">
       {title}
     </h3>
     <p className="text-[14px] font-light text-black/60 leading-relaxed line-clamp-2">
@@ -37,6 +39,7 @@ const App = () => {
   const [activeTabId, setActiveTabId] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
   const [isOverview, setIsOverview] = useState(false);
+  const [recentlyClosed, setRecentlyClosed] = useState([]);
   
   const [bookmarks] = useState([
     { id: '1', title: 'Google', url: 'https://google.com' },
@@ -78,6 +81,12 @@ const App = () => {
   }, [handleSelectTab]);
 
   const handleCloseTab = useCallback(async (id) => {
+    // Save to recently closed
+    const tabToClose = tabs.find(t => t.id === id);
+    if (tabToClose) {
+      setRecentlyClosed(prev => [{...tabToClose, closedAt: Date.now()}, ...prev].slice(0, 20));
+    }
+
     await window.orbit.tabs.close({ id });
     setTabs(prev => {
       const filtered = prev.filter(t => t.id !== id);
@@ -88,7 +97,16 @@ const App = () => {
       }
       return filtered;
     });
-  }, [activeTabId, handleSelectTab, handleAddTab]);
+  }, [tabs, activeTabId, handleSelectTab, handleAddTab]);
+
+  const handleRestoreTab = useCallback((tab) => {
+    const newId = Date.now().toString();
+    const restoredTab = { ...tab, id: newId, isLoading: true };
+    setRecentlyClosed(prev => prev.filter(t => t.id !== tab.id));
+    setTabs(prev => [...prev, restoredTab]);
+    window.orbit.tabs.create({ id: newId, url: tab.url });
+    handleSelectTab(newId);
+  }, [handleSelectTab]);
 
   const handleNavigate = useCallback((input) => {
     const query = input?.trim();
@@ -109,7 +127,7 @@ const App = () => {
       <div className="absolute top-0 left-0 right-0 h-16 drag-area z-0 pointer-events-none" />
       
       {/* Permanent Hub Layer */}
-      <div className="fixed top-0 left-0 right-0 h-[48px] z-[1000] flex items-center justify-center pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 h-12 z-1000 flex items-center justify-center pointer-events-none">
         <div className="pointer-events-auto">
           <SegmentedHub
             activeTab={activeTab}
@@ -126,6 +144,35 @@ const App = () => {
             }}
             tabCount={tabs.length}
           />
+        </div>
+
+        {/* Orbit Tools - Left Aligned */}
+        {/* Tab Search Trigger - Separated */}
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-auto z-2000 drag-none">
+          <TabSearch 
+             tabs={tabs}
+             activeTabId={activeTabId}
+             onSelectTab={handleSelectTab}
+             onCloseTab={handleCloseTab}
+             recentlyClosed={recentlyClosed}
+             onRestoreTab={handleRestoreTab}
+           />
+        </div>
+
+        {/* Orbit Tools - Left Aligned Group */}
+        <div className="absolute left-16 top-1/2 -translate-y-1/2 pointer-events-auto flex items-center gap-1 z-2000 drag-none">
+          <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="History" style={{ WebkitAppRegion: 'no-drag' }}>
+            <History size={16} strokeWidth={1.5} />
+          </button>
+          <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="Bookmarks" style={{ WebkitAppRegion: 'no-drag' }}>
+            <Bookmark size={16} strokeWidth={1.5} />
+          </button>
+          <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="Extensions" style={{ WebkitAppRegion: 'no-drag' }}>
+            <Puzzle size={16} strokeWidth={1.5} />
+          </button>
+          <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="Settings" style={{ WebkitAppRegion: 'no-drag' }}>
+            <Settings size={16} strokeWidth={1.5} />
+          </button>
         </div>
       </div>
       
@@ -147,7 +194,7 @@ const App = () => {
                 <h2 className="text-3xl font-bold tracking-tight text-black">Active Spaces</h2>
                 <button 
                   onClick={() => handleAddTab()}
-                  className="px-6 py-2.5 rounded-2xl bg-[#635BFF] text-white font-bold text-sm hover:scale-105 transition-transform"
+                  className="px-6 py-2.5 rounded-2xl bg-orbit-accent text-white font-bold text-sm hover:scale-105 transition-transform"
                 >
                   New Space
                 </button>
@@ -159,13 +206,13 @@ const App = () => {
                     key={tab.id} 
                     onClick={() => handleSelectTab(tab.id)}
                     className={`
-                      aspect-[4/3] bg-black/5 rounded-[32px] border-[0.5px] border-black/10 overflow-hidden group 
+                      aspect-4/3 bg-black/5 rounded-4xl border-[0.5px] border-black/10 overflow-hidden group 
                       transition-all hover:scale-[1.03] hover:bg-black/10 relative cursor-pointer
-                      ${tab.id === activeTabId ? 'ring-2 ring-[#635BFF] border-transparent' : ''}
+                      ${tab.id === activeTabId ? 'ring-2 ring-orbit-accent border-transparent' : ''}
                     `}
                   >
                     <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                      <div className="px-3 py-1 rounded-full bg-white/40 backdrop-blur-xl border border-white/20 text-[10px] font-bold truncate max-w-[120px]">
+                      <div className="px-3 py-1 rounded-full bg-white/40 backdrop-blur-xl border border-white/20 text-[10px] font-bold truncate max-w-30">
                         {tab.title || 'New Space'}
                       </div>
                       <button 

@@ -9,27 +9,29 @@ import {
   Calendar,
   MoreVertical,
   Settings,
-  Grid
+  Grid,
+  History,
+  Download,
+  DownloadCloud
 } from 'lucide-react';
-
 import OrbitLogo from './OrbitLogo';
 
-const GoogleTile = memo(({ title, url, onClick }) => {
+const OrbitShortcut = memo(({ title, url, onClick }) => {
   const domain = new URL(url).hostname;
   
   return (
     <div 
       onClick={() => onClick(url)}
-      className="bento-item group cursor-pointer"
+      className="group flex flex-col items-center gap-3 p-4 rounded-3xl hover:bg-white transition-all duration-300 cursor-pointer"
     >
-      <div className="google-icon-container mb-4 group-hover:shadow-md transition-shadow">
+      <div className="w-18 h-18 rounded-3xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/3 flex items-center justify-center group-hover:scale-105 group-hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] group-hover:ring-black/6 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
         <img 
           src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`} 
-          className="w-6 h-6 object-contain" 
+          className="w-9 h-9 object-contain opacity-95 group-hover:opacity-100 transition-opacity" 
           alt={title}
         />
       </div>
-      <span className="text-[14px] font-medium text-[#3C4043] tracking-tight">{title}</span>
+      <span className="text-[13px] font-medium text-black/60 group-hover:text-black group-hover:font-semibold transition-all tracking-wide">{title}</span>
     </div>
   );
 });
@@ -64,15 +66,28 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
   ];
 
   return (
-    <div className="h-full w-full relative flex flex-col items-center bg-[#FFFFFF] overflow-hidden font-sans">
-      {/* Search Header Detail */}
-      <div className="w-full h-16 flex items-center justify-end px-8 gap-6 z-20">
-        <span className="text-[13px] font-medium text-black/60 hover:underline cursor-pointer">Images</span>
-        <span className="text-[13px] font-medium text-black/60 hover:underline cursor-pointer">Maps</span>
-        <div className="p-2 rounded-full hover:bg-black/5 cursor-pointer text-black/60 transition-colors">
-          <Grid size={20} />
+    <div className="h-full w-full relative flex flex-col items-center bg-orbit-bg overflow-hidden font-sans">
+      {/* Orbit Header Detail */}
+      <div className="w-full h-16 flex items-center justify-end px-8 gap-4 z-20">
+        {/* <div className="flex items-center bg-[#F1F3F4] rounded-full p-1 pr-2 gap-1">
+          <div className="px-4 py-1.5 rounded-full hover:bg-white text-[13px] font-medium text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer">Canvas</div>
+          <div className="w-px h-3 bg-black/10" />
+          <div className="px-4 py-1.5 rounded-full hover:bg-white text-[13px] font-medium text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer">Spaces</div>
+          <div className="w-px h-3 bg-black/10" />
+          <div className="px-4 py-1.5 rounded-full hover:bg-white text-[13px] font-medium text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer">Library</div>
+        </div> */}
+        
+        <div className="flex items-center bg-[#F1F3F4] rounded-full p-1 gap-1">
+             <div className="w-10 h-10 rounded-full hover:bg-white flex items-center justify-center text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer" title="History">
+                <History size={18} />
+             </div>
+             <div className="w-10 h-10 rounded-full hover:bg-white flex items-center justify-center text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer" title="Downloads">
+                <Download size={18} />
+             </div>
+             <div className="w-10 h-10 rounded-full hover:bg-white flex items-center justify-center text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer" title="Settings">
+                <Settings size={18} />
+             </div>
         </div>
-        <div className="w-8 h-8 rounded-full bg-[#4285F4] flex items-center justify-center text-white text-[12px] font-bold">U</div>
       </div>
 
       <div className="w-full max-w-4xl h-full flex flex-col items-center z-10 pt-24">
@@ -95,8 +110,8 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
             onSubmit={handleInternalSubmit}
             className="group relative"
           >
-            <div className="h-[48px] w-full bg-white rounded-[10px] border border-black/10 flex items-center px-4 gap-3 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_0_0_1px_rgba(0,0,0,0.02)] focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.12)] focus-within:border-black/5 transition-all duration-300 ease-out">
-              <Search size={16} className="text-black/40 group-focus-within:text-[#635BFF] group-focus-within:opacity-100 transition-colors" />
+            <div className="h-12 w-full bg-white rounded-[10px] border border-black/10 flex items-center px-4 gap-3 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_0_0_1px_rgba(0,0,0,0.02)] focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.12)] focus-within:border-black/5 transition-all duration-300 ease-out">
+              <Search size={16} className="text-black/40 group-focus-within:text-orbit-accent group-focus-within:opacity-100 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search Workspace or enter URL..."
@@ -106,15 +121,22 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
                 autoFocus
                 spellCheck={false}
               />
+              <div className="flex items-center gap-2">
+                 {localQuery.length > 0 && (
+                   <button className="p-1.5 rounded-md hover:bg-black/5 text-black/40 hover:text-black transition-colors animate-in fade-in zoom-in duration-200">
+                      <DownloadCloud size={16} />
+                   </button>
+                 )}
+              </div>
             </div>
           </form>
         </div>
 
         {/* Semantic Shortcuts Grid */}
-        <main className="w-full overflow-y-auto custom-scrollbar-hide pb-20">
-          <div className="bento-grid max-w-[700px] mx-auto">
+        <main className="w-full overflow-y-auto custom-scrollbar-hide pb-20 px-8">
+          <div className="grid grid-cols-4 gap-2 max-w-160 mx-auto">
             {displayItems.map((item, i) => (
-              <GoogleTile 
+              <OrbitShortcut 
                 key={item.id || i}
                 title={item.title}
                 url={item.url}
@@ -122,11 +144,11 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
               />
             ))}
             
-            <div className="bento-item group hover:bg-[#F8F9FA] cursor-pointer">
-               <div className="google-icon-container mb-4">
-                  <Plus size={24} className="text-black/30 group-hover:text-black transition-colors" />
+            <div className="group flex flex-col items-center gap-3 p-4 rounded-3xl hover:bg-white transition-all duration-300 cursor-pointer">
+               <div className="w-18 h-18 rounded-3xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/3 flex items-center justify-center group-hover:scale-105 group-hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] group-hover:ring-black/6 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                  <Plus size={28} className="text-black/30 group-hover:text-black/60 transition-colors" />
                </div>
-               <span className="text-[14px] font-medium text-black/30 group-hover:text-black transition-colors">Add Label</span>
+               <span className="text-[13px] font-medium text-black/40 group-hover:text-black/60 transition-colors tracking-wide">Add</span>
             </div>
           </div>
         </main>

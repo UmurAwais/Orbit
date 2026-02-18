@@ -556,7 +556,7 @@ export class ViewManager {
     const targetUrl = (currentUrl && currentUrl !== 'about:blank') ? currentUrl : (tabState?.lastUrl || 'about:blank');
     
     const isLoading = tabState?.isLoading || wc.isLoading();
-    const isNewTab = targetUrl === 'about:blank' && !isLoading;
+    const isNewTab = targetUrl === 'about:blank';
     const shouldShowBrowser = !isNewTab && !this.isOverview;
 
     if (shouldShowBrowser) {

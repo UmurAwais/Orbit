@@ -147,10 +147,10 @@ const SafariHeader = ({
   }, [activeTab?.url]);
 
   return (
-    <div className="flex flex-col w-full select-none relative z-[1000] border-b border-black/5 bg-white">
+    <div className="flex flex-col w-full select-none relative z-1000 border-b border-black/5 bg-white">
       
       {/* Top Bar: Calibrated Reference Layout */}
-      <div className="h-[52px] flex items-center px-3 drag">
+      <div className="h-13 flex items-center px-3 drag">
         
         {/* Left Section: Utility Controls */}
         <div className="flex-1 flex items-center gap-0.5 no-drag shrink-0 relative z-20">
@@ -191,7 +191,7 @@ const SafariHeader = ({
               onClick={() => inputRef.current?.focus()}
               className={`
               w-full h-8 flex items-center px-4 rounded-xl transition-all duration-300 relative group cursor-text
-              ${isFocused ? 'bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 scale-[1.01]' : 'bg-black/[0.05] hover:bg-black/[0.08]'}
+              ${isFocused ? 'bg-white shadow-[0_8px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 scale-[1.01]' : 'bg-black/5 hover:bg-black/8'}
             `}>
              <div className="flex items-center justify-center flex-1 min-w-0 h-full relative">
                
