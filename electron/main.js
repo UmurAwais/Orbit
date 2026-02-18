@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, shell, nativeTheme } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ViewManager } from './ViewManager.js';
@@ -10,6 +10,9 @@ let mainWindow;
 let viewManager;
 
 function createWindow() {
+  // Force light theme by default for the entire application and system preferences
+  nativeTheme.themeSource = 'light';
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,

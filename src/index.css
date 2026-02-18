@@ -137,3 +137,28 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
   border-color: rgba(0, 0, 0, 0.1);
 }
+
+/* Orbit Signature Scrollbar - Minimalist & Premium */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Hide scrollbar on specific components if needed, but maintain functionality */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

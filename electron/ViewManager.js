@@ -259,6 +259,39 @@ export class ViewManager {
     });
 
     this.sendStatus(id);
+    this.injectScrollbarStyle(wc);
+  }
+
+  // Inject minimalist scrollbar CSS into webpage
+  injectScrollbarStyle(webContents) {
+    const css = `
+      ::-webkit-scrollbar {
+        width: 8px !important;
+        height: 8px !important;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent !important;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15) !important;
+        border-radius: 10px !important;
+        border: 2px solid transparent !important;
+        background-clip: content-box !important;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.25) !important;
+        background-clip: content-box !important;
+      }
+    `;
+    
+    webContents.on('did-finish-load', () => {
+      webContents.insertCSS(css).catch(() => {});
+    });
+    
+    // Also inject on navigation to ensure it's there early
+    webContents.on('did-navigate', () => {
+      webContents.insertCSS(css).catch(() => {});
+    });
   }
 
   // Inject Safari-style context menu into webpage
