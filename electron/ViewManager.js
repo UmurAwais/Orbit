@@ -517,27 +517,39 @@ export class ViewManager {
     const [width, height] = this.mainWindow.getContentSize();
     const wc = view.webContents;
     const tabState = this.tabStates.get(this.activeViewId);
-    const targetUrl = tabState?.lastUrl || wc.getURL();
     
-    // Exactly check for New Tab page OR Overview mode
-    const isNewTab = targetUrl === '' || targetUrl === 'about:blank';
+    // Prioritize lastUrl during navigation phases to prevent UI flickering
+    const currentUrl = wc.getURL();
+    const targetUrl = (currentUrl && currentUrl !== 'about:blank') ? currentUrl : (tabState?.lastUrl || 'about:blank');
+    
+    const isLoading = tabState?.isLoading || wc.isLoading();
+    const isNewTab = targetUrl === 'about:blank' && !isLoading;
     const shouldShowBrowser = !isNewTab && !this.isOverview;
 
     if (shouldShowBrowser) {
-      // Show the native browser view
+      // Show the native browser view BEHIND the React UI (index 0)
       try {
         const children = this.mainWindow.contentView.children || [];
-        if (!children.includes(view)) {
-          this.mainWindow.contentView.addChildView(view);
+        // Force view to index 0 (background) to ensure React UI always remains on top
+        if (children.indexOf(view) !== 0) {
+          this.mainWindow.contentView.insertChildView(view, 0);
+          view.setBackgroundColor('#ffffff');
         }
       } catch (e) {}
       
-      // Calibrated Header Height (52px)
-      view.setBounds({ x: 0, y: 52, width, height: Math.max(0, height - 52) });
+      // Force bounds and focus
+      view.setBounds({ x: 0, y: 0, width, height });
+      if (this.mainWindow.isFocused()) {
+        // Only focus webContents if the window itself is active to avoid hijacking
+        // wc.focus() can sometimes trigger re-paints in certain GPU environments
+      }
     } else {
       // Hide for New Tab page
       try {
-        this.mainWindow.contentView.removeChildView(view);
+        const children = this.mainWindow.contentView.children || [];
+        if (children.includes(view)) {
+          this.mainWindow.contentView.removeChildView(view);
+        }
       } catch (e) {}
     }
   }

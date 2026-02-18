@@ -1,157 +1,124 @@
 import React, { memo, useState, useCallback } from 'react';
-
 import {
   Plus,
   Search,
-  Sun,
-  Layout,
-  Settings,
-  Shield,
-  Clock,
-  ExternalLink,
   Globe,
-  User,
-  LayoutGrid
+  Settings,
+  MoreVertical,
+  ArrowUpRight
 } from 'lucide-react';
 import OrbitLogo from './OrbitLogo';
 
-const QuickLink = memo(({ title, url, onClick }) => {
+const BentoTile = memo(({ title, url, onClick, size = 'normal' }) => {
   const [imgError, setImgError] = useState(false);
   const domain = new URL(url).hostname;
-  const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+  const faviconUrl = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
+
+  const sizeClass = 
+    size === 'large' ? 'bento-item-large' : 
+    size === 'wide' ? 'bento-item-wide' : '';
 
   return (
     <div 
       onClick={() => onClick(url)}
-      className="flex flex-col items-center gap-4 cursor-pointer group"
+      className={`bento-item group flex flex-col p-6 ${sizeClass}`}
     >
-      <div className="w-16 h-16 rounded-[18px] bg-white border border-slate-100 flex items-center justify-center p-4 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-slate-200 group-active:scale-95 shadow-sm">
-        {!imgError ? (
-           <img 
-            src={faviconUrl} 
-            className="w-8 h-8 object-contain" 
-            alt={title}
-            onError={() => setImgError(true)}
-           />
-        ) : (
-           <div className="w-8 h-8 flex items-center justify-center text-slate-400">
-              <Globe size={24} strokeWidth={1.5} />
-           </div>
-        )}
+      <div className="flex justify-between items-start mb-auto">
+        <div className="w-12 h-12 rounded-2xl bg-black/3 flex items-center justify-center p-2.5 group-hover:bg-black/5 transition-colors">
+          {!imgError ? (
+            <img 
+              src={faviconUrl} 
+              className="w-full h-full object-contain" 
+              alt={title}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <Globe size={24} className="text-black/10" />
+          )}
+        </div>
+        <ArrowUpRight size={18} className="text-black/0 group-hover:text-black/20 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
       </div>
-      <span className="text-[10px] font-semibold text-slate-500 group-hover:text-slate-900 uppercase tracking-[0.2em] text-center max-w-20 truncate leading-tight">
-        {title}
-      </span>
+      
+      <div>
+        <h3 className="text-[15px] font-medium text-[#1D1D1F] mb-1">{title}</h3>
+        <p className="text-[12px] text-black/40 truncate">{domain}</p>
+      </div>
     </div>
   );
 });
 
-const FAVORITES = [
-  { title: 'Google', url: 'https://google.com' },
-  { title: 'Apple', url: 'https://apple.com' },
-  { title: 'YouTube', url: 'https://youtube.com' },
-  { title: 'Amazon', url: 'https://amazon.com' },
-  { title: 'ChatGPT', url: 'https://chat.openai.com' },
-  { title: 'Facebook', url: 'https://facebook.com' },
-];
-
-const NewTab = ({ onNavigate }) => {
+const NewTab = ({ onNavigate, bookmarks = [] }) => {
   const [localQuery, setLocalQuery] = useState('');
 
   const handleInternalSubmit = useCallback((e) => {
     if (e) e.preventDefault();
     const val = localQuery.trim();
-    console.log('[NewTab] handleInternalSubmit called with:', val);
     if (!val) return;
-    console.log('[NewTab] Calling onNavigate with:', val);
     onNavigate(val);
   }, [localQuery, onNavigate]);
 
   return (
-    <div className="h-full w-full relative flex flex-col items-center overflow-y-auto overflow-x-hidden custom-scrollbar bg-white">
-      <div className="bg-mesh opacity-5 fixed inset-0 pointer-events-none" />
-      
-      {/* Utility Bar */}
-      <div className="w-full flex justify-between items-center p-6 z-30">
-        <div className="flex items-center gap-3 text-slate-400">
-           <Sun size={18} className="text-orange-400" />
-           <span className="text-[10px] font-semibold tracking-widest uppercase">72° / Clean Sky</span>
-        </div>
+    <div className="h-full w-full relative flex flex-col items-center overflow-y-auto custom-scrollbar-hide bg-orbit-bg p-12 pt-32">
+      <div className="w-full max-w-6xl space-y-20">
         
-        <div className="flex items-center gap-2">
-           {/* Text Links */}
-           <div className="flex items-center gap-4">
-             <button className="text-[13px] font-medium text-slate-600 hover:text-slate-900 cursor-pointer px-2 py-1 rounded-md hover:bg-slate-100/50">Orbit Mail</button>
-             <button className="text-[13px] font-medium text-slate-600 hover:text-slate-900 cursor-pointer px-2 py-1 rounded-md hover:bg-slate-100/50">Images</button>
-           </div>
-
-           {/* Icons */}
-           <button className="p-2 text-slate-500 hover:text-slate-900 rounded-full cursor-pointer">
-             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-               <path d="M6,8c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S4.9,8,6,8z M12,8c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,8,12,8z M18,8 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S16.9,8,18,8z M6,14c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S4.9,14,6,14z M12,14 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,14,12,14z M18,14c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S16.9,14,18,14z M6,20 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S4.9,20,6,20z M12,20c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,20,12,20z M18,20 c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S16.9,20,18,20z" />
-             </svg>
-           </button>
-
-           {/* Profile with Orbit Logo-style Metallic Ring */}
-           <div className="relative p-0.5 rounded-full bg-linear-to-tr from-[#2A2A2A] via-[#4A4A4A] to-[#666666] group cursor-pointer active:scale-95 shadow-lg hover:shadow-slate-300/50">
-             <div className="w-8 h-8 rounded-full bg-white p-0.5">
-               <div className="w-full h-full rounded-full bg-linear-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white shadow-inner">
-                 <User size={14} fill="currentColor" />
-               </div>
-             </div>
-           </div>
-        </div>
-      </div>
-
-      <main className="w-full flex-1 px-12 z-20 flex flex-col items-center justify-center -mt-20">
-        <section className="w-full max-w-4xl flex flex-col items-center">
-          <div className="mb-8">
-             <OrbitLogo size={110} />
-          </div>
-
-
+        {/* Minimal Search */}
+        <div className="flex flex-col items-center space-y-8">
+          <OrbitLogo size={100} />
           <form 
             onSubmit={handleInternalSubmit}
-            className="w-full relative group max-w-2xl px-4"
+            className="w-full max-w-xl group"
           >
-            <div className="relative flex items-center bg-slate-50 h-16 rounded-3xl px-8 border border-slate-200/50 shadow-xl shadow-slate-100/50 focus-within:ring-4 focus-within:ring-slate-100 focus-within:border-slate-300">
-              <Search size={22} className="text-slate-500 mr-5" strokeWidth={2} />
+            <div className="relative flex items-center bg-black/3 h-14 rounded-2xl px-6 border border-black/5 hover:border-black/10 focus-within:border-black/20 transition-all">
+              <Search size={20} className="text-black/20 mr-4" />
               <input 
                 type="text" 
-                placeholder="Ask Orbit or Type URL"
+                placeholder="Where to next?"
                 value={localQuery}
                 onChange={(e) => setLocalQuery(e.target.value)}
-                className="bg-transparent border-none outline-none w-full text-xl font-medium text-slate-800 placeholder:text-slate-400 tracking-tight"
+                className="bg-transparent border-none outline-none w-full text-lg font-medium text-black/80 placeholder:text-black/20"
                 autoFocus
                 spellCheck={false}
               />
             </div>
           </form>
+        </div>
 
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-12 mt-16 w-full">
-            {FAVORITES.map((fav, i) => (
-               <QuickLink key={i} title={fav.title} url={fav.url} onClick={(url) => onNavigate(url)} />
-            ))}
-            <div className="flex flex-col items-center gap-4 cursor-pointer group">
-              <div className="w-16 h-16 rounded-[18px] border border-dashed border-slate-200 flex items-center justify-center text-slate-400 hover:border-slate-600 hover:text-slate-900 group-hover:bg-slate-50 group-hover:scale-105 group-active:scale-95 shadow-xs">
-                <Plus size={24} strokeWidth={2} />
-              </div>
-              <span className="text-[10px] font-semibold text-slate-500 group-hover:text-slate-900 uppercase tracking-[0.2em] text-center">Add Link</span>
+        {/* Bento Dashboard */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-end px-2">
+            <div>
+              <h2 className="text-[20px] font-medium text-[#1D1D1F] tracking-tight">Spaces</h2>
+              <p className="text-[13px] text-black/40">Your digital architecture</p>
             </div>
           </div>
+          
+          <div className="bento-grid">
+            {bookmarks.map((fav, i) => (
+              <BentoTile 
+                key={fav.id || i} 
+                title={fav.title} 
+                url={fav.url} 
+                size={i === 0 ? 'large' : i % 5 === 0 ? 'wide' : 'normal'}
+                onClick={onNavigate} 
+              />
+            ))}
+            
+            <div className="bento-item flex flex-col items-center justify-center gap-3 border-dashed border-black/10 opacity-60 hover:opacity-100 hover:border-black/20">
+              <div className="w-12 h-12 rounded-2xl bg-black/3 flex items-center justify-center">
+                <Plus size={24} className="text-black/20" />
+              </div>
+              <span className="text-[12px] font-medium text-black/40 uppercase tracking-widest">New Space</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        </section>
-      </main>
-
-      <footer className="w-full mt-auto py-10 px-12 flex justify-between items-center z-20">
-         <div className="flex items-center gap-8 text-[9px] font-semibold text-slate-400 uppercase tracking-[0.3em]">
-            <span className="cursor-pointer hover:text-slate-900">Privacy</span>
-            <span className="cursor-pointer hover:text-slate-900">Orbit Engine v1.0</span>
-         </div>
-         <div className="text-[9px] font-semibold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            System Secure
-         </div>
+      <footer className="mt-auto w-full max-w-6xl py-12 flex justify-between items-center text-black/30 text-[11px] uppercase tracking-[0.2em]">
+        <span>Orbit Engine // Elite Minimalist</span>
+        <div className="flex gap-8">
+          <span className="cursor-pointer hover:text-black transition-colors">Safety</span>
+          <span className="cursor-pointer hover:text-white transition-colors">Architecture</span>
+        </div>
       </footer>
     </div>
   );

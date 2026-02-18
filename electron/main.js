@@ -15,12 +15,12 @@ function createWindow() {
     height: 900,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#ffffff00',
-      symbolColor: '#333333',
-      height: 40
+      color: '#FFFFFF',
+      symbolColor: '#1a1a1a',
+      height: 32
     },
     icon: path.join(__dirname, '../assets/orbit.png'),
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
     show: false, // Prevent flash
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -136,8 +136,6 @@ function setupIpcHandlers() {
       view.webContents.loadURL(url);
       
       if (viewManager.activeViewId === id && url !== 'about:blank') {
-        console.log('[main.js] Attaching view and updating layout');
-        try { mainWindow.contentView.addChildView(view); } catch(e) {}
         viewManager.updateLayout();
       }
     } else {

@@ -2,18 +2,19 @@ import React from 'react';
 import orbitTransparent from '../assets/orbit logo.png';
 import orbitIcon from '../assets/orbit.png';
 
-const OrbitLogo = ({ size = 40, className = "", variant = "logo" }) => {
+const OrbitLogo = ({ size = 40, className = "", variant = "logo", theme = "color" }) => {
   const isIcon = variant === "icon";
+  const isMonochrome = theme === "monochrome";
   
   return (
     <div 
-      className={`relative flex items-center justify-center ${!isIcon ? '' : 'overflow-hidden rounded-full'} ${className}`} 
+      className={`relative flex items-center justify-center ${className}`} 
       style={{ width: size, height: size }}
     >
       <img 
         src={isIcon ? orbitIcon : orbitTransparent} 
         alt="Orbit Logo" 
-        className={`w-full h-full ${isIcon ? 'object-cover scale-[1.4]' : 'object-contain'}`}
+        className={`w-full h-full object-contain ${isMonochrome ? 'brightness-0 opacity-80' : ''}`}
       />
     </div>
   );
