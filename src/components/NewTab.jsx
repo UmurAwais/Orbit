@@ -1,54 +1,47 @@
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useEffect } from 'react';
 import {
   Plus,
   Search,
-  Globe,
-  Settings,
+  ArrowUpRight,
+  Monitor,
+  Cloud,
+  Mail,
+  Calendar,
   MoreVertical,
-  ArrowUpRight
+  Settings,
+  Grid
 } from 'lucide-react';
+
 import OrbitLogo from './OrbitLogo';
 
-const BentoTile = memo(({ title, url, onClick, size = 'normal' }) => {
-  const [imgError, setImgError] = useState(false);
+const GoogleTile = memo(({ title, url, onClick }) => {
   const domain = new URL(url).hostname;
-  const faviconUrl = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
-
-  const sizeClass = 
-    size === 'large' ? 'bento-item-large' : 
-    size === 'wide' ? 'bento-item-wide' : '';
-
+  
   return (
     <div 
       onClick={() => onClick(url)}
-      className={`bento-item group flex flex-col p-6 ${sizeClass}`}
+      className="bento-item group cursor-pointer"
     >
-      <div className="flex justify-between items-start mb-auto">
-        <div className="w-12 h-12 rounded-2xl bg-black/3 flex items-center justify-center p-2.5 group-hover:bg-black/5 transition-colors">
-          {!imgError ? (
-            <img 
-              src={faviconUrl} 
-              className="w-full h-full object-contain" 
-              alt={title}
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <Globe size={24} className="text-black/10" />
-          )}
-        </div>
-        <ArrowUpRight size={18} className="text-black/0 group-hover:text-black/20 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+      <div className="google-icon-container mb-4 group-hover:shadow-md transition-shadow">
+        <img 
+          src={`https://www.google.com/s2/favicons?sz=64&domain=${domain}`} 
+          className="w-6 h-6 object-contain" 
+          alt={title}
+        />
       </div>
-      
-      <div>
-        <h3 className="text-[15px] font-medium text-[#1D1D1F] mb-1">{title}</h3>
-        <p className="text-[12px] text-black/40 truncate">{domain}</p>
-      </div>
+      <span className="text-[14px] font-medium text-[#3C4043] tracking-tight">{title}</span>
     </div>
   );
 });
 
 const NewTab = ({ onNavigate, bookmarks = [] }) => {
   const [localQuery, setLocalQuery] = useState('');
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleInternalSubmit = useCallback((e) => {
     if (e) e.preventDefault();
@@ -57,25 +50,59 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
     onNavigate(val);
   }, [localQuery, onNavigate]);
 
+  const timeString = time.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit', 
+    hour12: true 
+  });
+
+  const displayItems = bookmarks.length > 0 ? bookmarks : [
+    { title: 'Google Mail', url: 'https://mail.google.com' },
+    { title: 'Drive', url: 'https://drive.google.com' },
+    { title: 'Calendar', url: 'https://calendar.google.com' },
+    { title: 'Cloud', url: 'https://console.cloud.google.com' }
+  ];
+
   return (
-    <div className="h-full w-full relative flex flex-col items-center overflow-y-auto custom-scrollbar-hide bg-orbit-bg p-12 pt-32">
-      <div className="w-full max-w-6xl space-y-20">
+    <div className="h-full w-full relative flex flex-col items-center bg-[#FFFFFF] overflow-hidden font-sans">
+      {/* Search Header Detail */}
+      <div className="w-full h-16 flex items-center justify-end px-8 gap-6 z-20">
+        <span className="text-[13px] font-medium text-black/60 hover:underline cursor-pointer">Images</span>
+        <span className="text-[13px] font-medium text-black/60 hover:underline cursor-pointer">Maps</span>
+        <div className="p-2 rounded-full hover:bg-black/5 cursor-pointer text-black/60 transition-colors">
+          <Grid size={20} />
+        </div>
+        <div className="w-8 h-8 rounded-full bg-[#4285F4] flex items-center justify-center text-white text-[12px] font-bold">U</div>
+      </div>
+
+      <div className="w-full max-w-4xl h-full flex flex-col items-center z-10 pt-24">
         
-        {/* Minimal Search */}
-        <div className="flex flex-col items-center space-y-8">
-          <OrbitLogo size={100} />
+        {/* Dynamic Time Centerpiece */}
+        <div className="mb-12 flex flex-col items-center">
+            <h1 className="text-[96px] font-medium text-[#202124] tracking-[-0.04em] leading-none mb-2">
+              {timeString.split(' ')[0]}
+              <span className="text-[32px] font-normal text-black/20 ml-2 uppercase">{timeString.split(' ')[1]}</span>
+            </h1>
+            <div className="flex items-center gap-3">
+               <OrbitLogo size={30} />
+               <span className="text-[12px] font-bold text-black/30 tracking-widest uppercase">System Active</span>
+            </div>
+        </div>
+
+        {/* The Orbit Hub Search */}
+        <div className="w-full max-w-xl mb-20 z-20">
           <form 
             onSubmit={handleInternalSubmit}
-            className="w-full max-w-xl group"
+            className="group relative"
           >
-            <div className="relative flex items-center bg-black/3 h-14 rounded-2xl px-6 border border-black/5 hover:border-black/10 focus-within:border-black/20 transition-all">
-              <Search size={20} className="text-black/20 mr-4" />
+            <div className="h-[48px] w-full bg-white rounded-[10px] border border-black/10 flex items-center px-4 gap-3 shadow-[0_4px_12px_rgba(0,0,0,0.05),0_0_0_1px_rgba(0,0,0,0.02)] focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.12)] focus-within:border-black/5 transition-all duration-300 ease-out">
+              <Search size={16} className="text-black/40 group-focus-within:text-[#635BFF] group-focus-within:opacity-100 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Where to next?"
+                placeholder="Search Workspace or enter URL..."
                 value={localQuery}
                 onChange={(e) => setLocalQuery(e.target.value)}
-                className="bg-transparent border-none outline-none w-full text-lg font-medium text-black/80 placeholder:text-black/20"
+                className="bg-transparent border-none outline-none w-full text-[15px] font-medium text-[#1D1D1F] placeholder:text-black/30"
                 autoFocus
                 spellCheck={false}
               />
@@ -83,43 +110,38 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
           </form>
         </div>
 
-        {/* Bento Dashboard */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-end px-2">
-            <div>
-              <h2 className="text-[20px] font-medium text-[#1D1D1F] tracking-tight">Spaces</h2>
-              <p className="text-[13px] text-black/40">Your digital architecture</p>
-            </div>
-          </div>
-          
-          <div className="bento-grid">
-            {bookmarks.map((fav, i) => (
-              <BentoTile 
-                key={fav.id || i} 
-                title={fav.title} 
-                url={fav.url} 
-                size={i === 0 ? 'large' : i % 5 === 0 ? 'wide' : 'normal'}
-                onClick={onNavigate} 
+        {/* Semantic Shortcuts Grid */}
+        <main className="w-full overflow-y-auto custom-scrollbar-hide pb-20">
+          <div className="bento-grid max-w-[700px] mx-auto">
+            {displayItems.map((item, i) => (
+              <GoogleTile 
+                key={item.id || i}
+                title={item.title}
+                url={item.url}
+                onClick={onNavigate}
               />
             ))}
             
-            <div className="bento-item flex flex-col items-center justify-center gap-3 border-dashed border-black/10 opacity-60 hover:opacity-100 hover:border-black/20">
-              <div className="w-12 h-12 rounded-2xl bg-black/3 flex items-center justify-center">
-                <Plus size={24} className="text-black/20" />
-              </div>
-              <span className="text-[12px] font-medium text-black/40 uppercase tracking-widest">New Space</span>
+            <div className="bento-item group hover:bg-[#F8F9FA] cursor-pointer">
+               <div className="google-icon-container mb-4">
+                  <Plus size={24} className="text-black/30 group-hover:text-black transition-colors" />
+               </div>
+               <span className="text-[14px] font-medium text-black/30 group-hover:text-black transition-colors">Add Label</span>
             </div>
           </div>
-        </div>
-      </div>
+        </main>
 
-      <footer className="mt-auto w-full max-w-6xl py-12 flex justify-between items-center text-black/30 text-[11px] uppercase tracking-[0.2em]">
-        <span>Orbit Engine // Elite Minimalist</span>
-        <div className="flex gap-8">
-          <span className="cursor-pointer hover:text-black transition-colors">Safety</span>
-          <span className="cursor-pointer hover:text-white transition-colors">Architecture</span>
-        </div>
-      </footer>
+        <footer className="w-full h-16 flex justify-between items-center text-black/30 text-[11px] font-bold uppercase tracking-widest px-8">
+           <div className="flex gap-8">
+              <span className="hover:text-black cursor-pointer">Settings</span>
+              <span className="hover:text-black cursor-pointer">Privacy</span>
+           </div>
+           <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#34A853]" />
+              <span>Orbit Logic Engine</span>
+           </div>
+        </footer>
+      </div>
     </div>
   );
 };

@@ -111,31 +111,75 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* Bento Grid System */
+/* Orbit Premium Design System - Google Semantic Minimalist */
+:root {
+  --google-blue: #4285F4;
+  --google-red: #EA4335;
+  --google-yellow: #FBBC05;
+  --google-green: #34A853;
+  --google-bg: #FFFFFF;
+  --transition-logical: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.google-pill {
+  border-radius: 1000px;
+  background: #FFFFFF;
+  border: 1px solid #F1F3F4;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.25s var(--transition-logical);
+}
+
+.google-pill:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: transparent;
+}
+
+.google-icon-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F8F9FA;
+  transition: background 0.2s;
+}
+
+.google-icon-container:hover {
+  background: #F1F3F4;
+}
+
+/* Bento Grid System - Google Logic */
 .bento-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  grid-auto-rows: 200px;
-  grid-auto-flow: dense;
-  gap: 1.5rem;
+  grid-template-columns: repeat(8, 1fr);
+  grid-auto-rows: 160px;
+  gap: 1rem;
   width: 100%;
 }
 
 .bento-item {
+  grid-column: span 2;
   background: #FFFFFF;
-  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 20px;
   padding: 24px;
-  cursor: pointer;
-  transition: all 0.4s var(--transition-bounce);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  border: 1px solid #E8EAED;
+  transition: all 0.2s var(--transition-logical);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .bento-item:hover {
-  background: #FFFFFF;
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
-  border-color: rgba(0, 0, 0, 0.1);
+  background: #F8F9FA;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149);
+}
+
+.bento-item-large {
+  grid-column: span 4;
+  grid-row: span 2;
 }
 
 /* Orbit Signature Scrollbar - Minimalist & Premium */
