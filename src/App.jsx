@@ -127,7 +127,7 @@ const App = () => {
         />
       </div>
       
-      <main className="w-full h-full relative overflow-hidden flex flex-col items-center">
+      <main className={`w-full h-full relative overflow-hidden flex flex-col items-center ${isHome || isOverview ? 'pointer-events-auto' : 'pointer-events-none'}`}>
         {isHome && !isOverview && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pt-20">
             <NewTab onNavigate={handleNavigate} bookmarks={bookmarks} />
