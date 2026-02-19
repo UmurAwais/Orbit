@@ -630,9 +630,9 @@ export class ViewManager {
       
       view.setBounds({ 
         x: 0, 
-        y: 48, 
+        y: 56, 
         width: Math.max(0, width - Math.round(sidekickWidth)), 
-        height: height - 48 
+        height: height - 56 
       });
     } else {
       // Hide for New Tab page

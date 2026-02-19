@@ -11,7 +11,7 @@ let viewManager;
 
 function createWindow() {
   // Force light theme by default for the entire application and system preferences
-  nativeTheme.themeSource = 'light';
+  // nativeTheme.themeSource = 'light'; // Removed to allow dynamic theme switching
 
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -20,7 +20,7 @@ function createWindow() {
     titleBarOverlay: {
       color: '#FFFFFF',
       symbolColor: '#1a1a1a',
-      height: 48
+      height: 56
     },
     icon: path.join(__dirname, '../assets/orbit.png'),
     backgroundColor: '#FFFFFF',
@@ -55,6 +55,15 @@ function createWindow() {
 
   setupIpcHandlers();
   setupApplicationMenu();
+
+  nativeTheme.on('updated', () => {
+    mainWindow.setTitleBarOverlay({
+      color: isDark ? '#000000' : '#ffffff',
+      symbolColor: isDark ? '#f5f5f7' : '#1d1d1f',
+      height: 56
+    });
+    mainWindow.setBackgroundColor(isDark ? '#000000' : '#ffffff');
+  });
 }
 
 function setupApplicationMenu() {
@@ -279,6 +288,14 @@ function setupIpcHandlers() {
       viewManager.updateLayout(width);
     }
   });
+
+  // Window Control Handlers
+  ipcMain.on('window-minimize', () => mainWindow?.minimize());
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow?.isMaximized()) mainWindow.unmaximize();
+    else mainWindow?.maximize();
+  });
+  ipcMain.on('window-close', () => mainWindow?.close());
 }
 
 app.whenReady().then(() => {

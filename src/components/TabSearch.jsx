@@ -76,7 +76,7 @@ const TabSearch = ({
   return (
     <div className="relative pointer-events-auto z-3000" ref={containerRef}>
       <button 
-        className={`h-9 w-9 rounded-xl bg-black/5 hover:bg-white hover:shadow-sm flex items-center justify-center text-black/50 hover:text-black transition-all cursor-pointer ${isOpen ? 'bg-white text-black shadow-sm' : ''}`} 
+        className={`h-9 w-9 rounded-xl hover:bg-orbit-card hover:shadow-sm flex items-center justify-center text-orbit-text-dim hover:text-orbit-text transition-all cursor-pointer ${isOpen ? 'bg-orbit-surface text-orbit-text shadow-sm' : ''}`} 
         title="Search Tabs"
         onClick={() => setIsOpen(!isOpen)}
         style={{ WebkitAppRegion: 'no-drag' }}
@@ -91,20 +91,20 @@ const TabSearch = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 mt-3 w-[320px] bg-white/90 backdrop-blur-3xl rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.15)] border border-white/20 z-3000 overflow-hidden flex flex-col max-h-150 ring-1 ring-black/5"
+            className="absolute top-full left-0 mt-3 w-[320px] bg-orbit-surface/90 backdrop-blur-3xl rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5)] border border-orbit-border z-3000 overflow-hidden flex flex-col max-h-150 ring-1 ring-orbit-border"
           >
-            <div className="p-4 border-b border-black/5 bg-white/50 backdrop-blur-md">
+            <div className="p-4 border-b border-orbit-border bg-orbit-bg/50 backdrop-blur-md">
               <div className="relative flex items-center">
-                <Search className="absolute left-3.5 text-black/40" size={16} />
+                <Search className="absolute left-3.5 text-orbit-text-dim" size={16} />
                 <input
                   ref={inputRef}
                   type="text"
                   placeholder="Search Tabs"
-                  className="w-full bg-black/5 hover:bg-black/10 focus:bg-white transition-all rounded-xl pl-10 pr-4 py-2.5 text-sm text-black placeholder:text-black/40 outline-none border-[1.5px] border-transparent focus:border-orbit-accent/50 focus:shadow-sm font-medium"
+                  className="w-full bg-orbit-card hover:bg-orbit-border focus:bg-orbit-bg transition-all rounded-xl pl-10 pr-4 py-2.5 text-sm text-orbit-text placeholder:text-orbit-text-dim outline-none border-[1.5px] border-transparent focus:border-orbit-accent/50 focus:shadow-sm font-medium"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <span className="absolute right-3 text-[10px] font-bold text-black/30 border border-black/10 rounded px-1.5 py-0.5">
+                <span className="absolute right-3 text-[10px] font-bold text-orbit-text-dim border border-orbit-border rounded px-1.5 py-0.5">
                   Ctrl+Shift+A
                 </span>
               </div>
@@ -114,7 +114,7 @@ const TabSearch = ({
               {/* Open Tabs Section */}
               {filteredOpenTabs.length > 0 && (
                 <div className="py-2">
-                  <h3 className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-black/40">
+                  <h3 className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-orbit-text-dim">
                     Open Tabs
                   </h3>
                   <div className="space-y-0.5">
@@ -131,10 +131,10 @@ const TabSearch = ({
                           }}
                           className={`
                             group flex items-center gap-3 px-4 py-3 mx-2 rounded-xl cursor-pointer transition-all duration-200
-                            ${isActive ? 'bg-orbit-accent/5' : 'hover:bg-black/5'}
+                            ${isActive ? 'bg-orbit-accent/10' : 'hover:bg-orbit-card'}
                           `}
                         >
-                          <div className="w-9 h-9 rounded-lg bg-white shadow-sm border border-black/5 flex items-center justify-center shrink-0 overflow-hidden relative">
+                          <div className="w-9 h-9 rounded-lg bg-orbit-bg shadow-sm border border-orbit-border flex items-center justify-center shrink-0 overflow-hidden relative">
                             {favicon ? (
                               <img src={favicon} alt="" className="w-5 h-5 object-contain" />
                             ) : (
@@ -148,10 +148,10 @@ const TabSearch = ({
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-semibold truncate mb-0.5 ${isActive ? 'text-orbit-accent' : 'text-black'}`}>
+                            <div className={`text-sm font-semibold truncate mb-0.5 ${isActive ? 'text-orbit-accent' : 'text-orbit-text'}`}>
                               {tab.title || 'New Tab'}
                             </div>
-                            <div className="text-[11px] text-black/40 truncate font-medium">
+                            <div className="text-[11px] text-orbit-text-dim truncate font-medium">
                               {tab.url === 'about:blank' ? 'Start Page' : new URL(tab.url).hostname}
                             </div>
                           </div>
@@ -161,7 +161,7 @@ const TabSearch = ({
                               e.stopPropagation();
                               onCloseTab(tab.id);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-black/10 text-black/40 hover:text-red-500 transition-all"
+                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-orbit-card text-orbit-text-dim hover:text-red-500 transition-all"
                           >
                             <X size={14} />
                           </button>
@@ -174,8 +174,8 @@ const TabSearch = ({
 
               {/* Recently Closed Section */}
               {filteredClosedTabs.length > 0 && (
-                <div className="py-2 border-t border-black/5">
-                  <h3 className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-black/40 flex items-center gap-2">
+                <div className="py-2 border-t border-orbit-border">
+                  <h3 className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-orbit-text-dim flex items-center gap-2">
                     Recently Closed
                   </h3>
                   <div className="space-y-0.5">
@@ -187,17 +187,17 @@ const TabSearch = ({
                             onRestoreTab(tab);
                             setIsOpen(false);
                           }}
-                          className="group flex items-center gap-3 px-4 py-3 mx-2 rounded-lg cursor-pointer hover:bg-black/5 transition-colors"
+                          className="group flex items-center gap-3 px-4 py-3 mx-2 rounded-lg cursor-pointer hover:bg-orbit-card transition-colors"
                         >
-                          <div className="w-8 h-8 rounded-md bg-black/5 flex items-center justify-center shrink-0">
-                             <Clock size={16} className="text-black/40" />
+                          <div className="w-8 h-8 rounded-md bg-orbit-card flex items-center justify-center shrink-0">
+                             <Clock size={16} className="text-orbit-text-dim" />
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-black/70 truncate group-hover:text-black transition-colors">
+                            <div className="text-sm font-medium text-orbit-text truncate group-hover:text-orbit-accent transition-colors">
                               {tab.title}
                             </div>
-                            <div className="text-[11px] text-black/40 truncate flex items-center gap-1">
+                            <div className="text-[11px] text-orbit-text-dim truncate flex items-center gap-1">
                               {tab.url !== 'about:blank' && new URL(tab.url).hostname}
                               <span>•</span>
                               <span>{getTimeAgo(tab.closedAt)}</span>
@@ -211,7 +211,7 @@ const TabSearch = ({
               )}
               
               {filteredOpenTabs.length === 0 && filteredClosedTabs.length === 0 && (
-                <div className="py-12 flex flex-col items-center justify-center text-center opacity-40">
+                <div className="py-12 flex flex-col items-center justify-center text-center opacity-40 text-orbit-text">
                   <Search size={32} className="mb-2" />
                   <p className="text-sm">No tabs found</p>
                 </div>

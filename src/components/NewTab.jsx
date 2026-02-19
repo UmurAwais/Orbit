@@ -85,13 +85,13 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
         
         {/* Dynamic Time Centerpiece */}
         <div className="mb-12 flex flex-col items-center">
-            <h1 className="text-[96px] font-medium text-[#202124] tracking-[-0.04em] leading-none mb-2">
+            <h1 className="text-[96px] font-medium text-orbit-text tracking-[-0.04em] leading-none mb-2">
               {timeString.split(' ')[0]}
-              <span className="text-[32px] font-normal text-black/20 ml-2 uppercase">{timeString.split(' ')[1]}</span>
+              <span className="text-[32px] font-normal text-orbit-text-dim ml-2 uppercase">{timeString.split(' ')[1]}</span>
             </h1>
             <div className="flex items-center gap-3">
                <OrbitLogo size={30} />
-               <span className="text-[12px] font-bold text-black/30 tracking-widest uppercase">System Active</span>
+               <span className="text-[12px] font-bold text-orbit-text-dim tracking-widest uppercase">System Active</span>
             </div>
         </div>
 
@@ -101,14 +101,14 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
             onSubmit={handleInternalSubmit}
             className="group relative"
           >
-            <div className="h-14 w-full bg-white rounded-2xl border border-black/10 flex items-center px-5 gap-4 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)] focus-within:shadow-[0_12px_48px_rgba(0,0,0,0.08)] focus-within:border-black/5 transition-all duration-500 ease-out">
-              <Search size={18} className="text-black/30 group-focus-within:text-orbit-accent group-focus-within:opacity-100 transition-colors" />
+            <div className="h-14 w-full bg-orbit-surface rounded-2xl border border-orbit-border flex items-center px-5 gap-4 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)] focus-within:shadow-[0_12px_48px_rgba(0,0,0,0.08)] focus-within:border-orbit-border transition-all duration-500 ease-out">
+              <Search size={18} className="text-orbit-text opacity-60 group-focus-within:text-orbit-accent group-focus-within:opacity-100 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search Orbit or enter URL..."
                 value={localQuery}
                 onChange={(e) => setLocalQuery(e.target.value)}
-                className="bg-transparent border-none outline-none w-full text-[16px] font-medium text-[#1D1D1F] placeholder:text-black/30"
+                className="bg-transparent border-none outline-none w-full text-[16px] font-medium text-orbit-text placeholder:text-orbit-text-dim"
                 autoFocus
                 spellCheck={false}
               />
@@ -117,7 +117,7 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
                    <Loader2 size={16} className="text-orbit-accent animate-spin" />
                  )}
                  {localQuery.length > 0 && (
-                   <button className="p-2 rounded-xl hover:bg-black/5 text-black/40 hover:text-black transition-colors animate-in fade-in zoom-in duration-200">
+                   <button className="p-2 rounded-full hover:bg-orbit-card text-orbit-text opacity-70 hover:opacity-100 transition-colors animate-in fade-in zoom-in duration-200">
                       <DownloadCloud size={18} />
                    </button>
                  )}
@@ -131,14 +131,14 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
                   initial={{ opacity: 0, scale: 0.95, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-4 p-5 bg-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] border border-black/5 rounded-4xl z-50 overflow-hidden"
+                  className="absolute top-full left-0 right-0 mt-4 p-5 bg-orbit-surface shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] border border-orbit-border rounded-4xl z-50 overflow-hidden"
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles size={14} className="text-orbit-accent" />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-orbit-accent">AI Insight</span>
                   </div>
                   
-                  <p className="text-[14px] text-black/70 mb-4 leading-relaxed font-medium">
+                  <p className="text-[14px] text-orbit-text/90 mb-4 leading-relaxed font-medium">
                     {aiInsight.fact}
                   </p>
                   
@@ -148,7 +148,7 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
                         key={i}
                         type="button"
                         onClick={() => { setLocalQuery(s); onNavigate(s); }}
-                        className="px-4 py-2 rounded-full bg-orbit-accent/10 border border-orbit-accent/5 text-orbit-accent text-[11px] font-bold hover:bg-orbit-accent hover:text-white transition-all shadow-sm active:scale-95"
+                        className="px-4 py-2 rounded-full bg-orbit-accent/10 border border-orbit-accent/5 text-orbit-accent text-[11px] font-bold hover:bg-orbit-accent hover:text-orbit-bg transition-all shadow-sm active:scale-95"
                       >
                         {s}
                       </button>
@@ -179,10 +179,10 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
         </main>
 
 
-        <footer className="w-full h-16 mt-auto flex justify-between items-center text-black/30 text-[11px] font-bold uppercase tracking-widest px-8">
+        <footer className="w-full h-16 mt-auto flex justify-between items-center text-orbit-text-dim text-[11px] font-bold uppercase tracking-widest px-8">
            <div className="flex gap-8">
-              <span className="hover:text-black cursor-pointer transition-colors">Settings</span>
-              <span className="hover:text-black cursor-pointer transition-colors">Privacy</span>
+              <span className="hover:text-orbit-text cursor-pointer transition-colors">Settings</span>
+              <span className="hover:text-orbit-text cursor-pointer transition-colors">Privacy</span>
            </div>
            <div className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[#34A853] animate-pulse" />
