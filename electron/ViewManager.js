@@ -7,6 +7,7 @@ export class ViewManager {
     this.activeViewId = null;
     this.tabStates = new Map(); // id -> { lastActive: timestamp, isHibernated: bool, isLoading: bool }
     this.isOverview = false;
+    this.currentSidekickWidth = 0;
     
     this.HIBERNATE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
     this.setupHibernation();
@@ -542,7 +543,7 @@ export class ViewManager {
     }
   }
 
-  updateLayout() {
+  updateLayout(currentSidekickWidth = null) {
     if (!this.mainWindow || !this.activeViewId) return;
     const view = this.views.get(this.activeViewId);
     if (!view) return;
@@ -560,21 +561,41 @@ export class ViewManager {
     const shouldShowBrowser = !isNewTab && !this.isOverview;
 
     if (shouldShowBrowser) {
-      // Force the view to be ON TOP of the React UI to prevent occlusion
+      // Offset by 48px to match the header height
+      let sidekickWidth = 0;
+      
+      // 1. If opening/open: follow the animation frame-by-frame for perfect alignment
+      if (this.sidekickIsOpen && currentSidekickWidth !== null) {
+        sidekickWidth = currentSidekickWidth;
+        this.currentSidekickWidth = currentSidekickWidth;
+      } 
+      // 2. If closing/closed: force full width immediately behind the sidebar.
+      // This prevents white flashes by ensuring the revealed area is always 'pre-expanded'
+      else if (!this.sidekickIsOpen) {
+        sidekickWidth = 0;
+        this.currentSidekickWidth = 0;
+      }
+      // 3. Fallback: use last known stable width
+      else {
+        sidekickWidth = this.currentSidekickWidth || 384;
+      }
+      
       try {
         const children = this.mainWindow.contentView.children || [];
         if (!children.includes(view)) {
           this.mainWindow.contentView.addChildView(view);
           view.setBackgroundColor('#ffffff');
         }
-      } catch (e) {}
-      
-      // Offset by 48px to match the new centralized header height
-      view.setBounds({ x: 0, y: 48, width, height: height - 48 });
-      if (this.mainWindow.isFocused()) {
-        // Only focus webContents if the window itself is active to avoid hijacking
-        // wc.focus() can sometimes trigger re-paints in certain GPU environments
+      } catch (e) {
+        // Ignored
       }
+      
+      view.setBounds({ 
+        x: 0, 
+        y: 48, 
+        width: Math.max(0, width - Math.round(sidekickWidth)), 
+        height: height - 48 
+      });
     } else {
       // Hide for New Tab page
       try {
@@ -582,7 +603,9 @@ export class ViewManager {
         if (children.includes(view)) {
           this.mainWindow.contentView.removeChildView(view);
         }
-      } catch (e) {}
+      } catch (e) {
+        // Ignored
+      }
     }
   }
 

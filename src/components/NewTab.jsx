@@ -1,4 +1,5 @@
 import React, { memo, useState, useCallback, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Plus,
   Search,
@@ -12,9 +13,12 @@ import {
   Grid,
   History,
   Download,
-  DownloadCloud
+  DownloadCloud,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import OrbitLogo from './OrbitLogo';
+import { getSmartSearchInsights } from '../services/ai';
 
 const OrbitShortcut = memo(({ title, url, onClick }) => {
   const domain = new URL(url).hostname;
@@ -39,11 +43,30 @@ const OrbitShortcut = memo(({ title, url, onClick }) => {
 const NewTab = ({ onNavigate, bookmarks = [] }) => {
   const [localQuery, setLocalQuery] = useState('');
   const [time, setTime] = useState(new Date());
+  const [aiInsight, setAiInsight] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (localQuery.trim().length < 4) {
+      setAiInsight(null);
+      setIsSearching(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      const insight = await getSmartSearchInsights(localQuery);
+      setAiInsight(insight);
+      setIsSearching(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localQuery]);
 
   const handleInternalSubmit = useCallback((e) => {
     if (e) e.preventDefault();
@@ -69,13 +92,6 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
     <div className="h-full w-full relative flex flex-col items-center bg-orbit-bg overflow-hidden font-sans">
       {/* Orbit Header Detail */}
       <div className="w-full h-16 flex items-center justify-end px-8 gap-4 z-20">
-        {/* <div className="flex items-center bg-[#F1F3F4] rounded-full p-1 pr-2 gap-1">
-          <div className="px-4 py-1.5 rounded-full hover:bg-white text-[13px] font-medium text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer">Canvas</div>
-          <div className="w-px h-3 bg-black/10" />
-          <div className="px-4 py-1.5 rounded-full hover:bg-white text-[13px] font-medium text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer">Spaces</div>
-          <div className="w-px h-3 bg-black/10" />
-          <div className="px-4 py-1.5 rounded-full hover:bg-white text-[13px] font-medium text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer">Library</div>
-        </div> */}
         
         <div className="flex items-center bg-[#F1F3F4] rounded-full p-1 gap-1">
              <div className="w-10 h-10 rounded-full hover:bg-white flex items-center justify-center text-black/60 hover:text-black hover:shadow-sm transition-all cursor-pointer" title="History">
@@ -122,6 +138,9 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
                 spellCheck={false}
               />
               <div className="flex items-center gap-2">
+                 {isSearching && (
+                   <Loader2 size={16} className="text-orbit-accent animate-spin" />
+                 )}
                  {localQuery.length > 0 && (
                    <button className="p-1.5 rounded-md hover:bg-black/5 text-black/40 hover:text-black transition-colors animate-in fade-in zoom-in duration-200">
                       <DownloadCloud size={16} />
@@ -129,6 +148,40 @@ const NewTab = ({ onNavigate, bookmarks = [] }) => {
                  )}
               </div>
             </div>
+
+            {/* AI Search Insight Card */}
+            <AnimatePresence>
+              {aiInsight && localQuery.length >= 4 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full left-0 right-0 mt-4 p-4 bg-white/70 backdrop-blur-2xl rounded-2xl border border-black/5 shadow-xl z-50 overflow-hidden"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles size={14} className="text-orbit-accent" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-orbit-accent">AI Insight</span>
+                  </div>
+                  
+                  <p className="text-[14px] text-black/70 mb-4 leading-relaxed font-medium">
+                    {aiInsight.fact}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {aiInsight.suggestions?.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => { setLocalQuery(s); onNavigate(s); }}
+                        className="px-3 py-1.5 rounded-full bg-orbit-accent/10 border border-orbit-accent/5 text-orbit-accent text-[11px] font-bold hover:bg-orbit-accent hover:text-white transition-all"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </form>
         </div>
 

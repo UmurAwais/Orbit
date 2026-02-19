@@ -4,28 +4,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import SegmentedHub from './components/SegmentedHub';
 import NewTab from './components/NewTab';
 import OrbitLogo from './components/OrbitLogo';
-import { Search, ArrowRight, Bookmark, X, Plus, History, Puzzle, Settings, Wand2 } from 'lucide-react';
+import { Search, ArrowRight, Bookmark, X, Plus, History, Puzzle, Settings } from 'lucide-react';
 import TabSearch from './components/TabSearch';
+import AISidekick from './components/AISidekick';
 
-const ResultCard = memo(({ title, snippet, onOpen }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-white/5 backdrop-blur-xl border-[0.5px] border-black/10 rounded-2xl p-6 hover:bg-white/10 transition-all cursor-pointer group shadow-[0_4px_12px_rgba(0,0,0,0.02)]"
-    onClick={onOpen}
-  >
-    <div className="flex items-center gap-2 mb-4 opacity-40 group-hover:opacity-100 transition-opacity">
-      <Sparkles size={14} className="text-orbit-accent" />
-      <span className="text-[10px] font-bold uppercase tracking-widest text-orbit-accent">Verified Insight</span>
-    </div>
-    <h3 className="text-[18px] font-bold text-orbit-accent mb-2 leading-tight tracking-tight">
-      {title}
-    </h3>
-    <p className="text-[14px] font-light text-black/60 leading-relaxed line-clamp-2">
-      {snippet}
-    </p>
-  </motion.div>
-));
 
 const App = () => {
   const [tabs, setTabs] = useState([{
@@ -37,8 +19,13 @@ const App = () => {
     canGoForward: false,
   }]);
   const [activeTabId, setActiveTabId] = useState('default');
-  const [searchQuery, setSearchQuery] = useState('');
   const [isOverview, setIsOverview] = useState(false);
+  const [isAISidekickOpen, setIsAISidekickOpen] = useState(false);
+  
+  useEffect(() => {
+    window.orbit.ipcRenderer.send('ui:toggle-sidekick', isAISidekickOpen);
+  }, [isAISidekickOpen]);
+
   const [recentlyClosed, setRecentlyClosed] = useState([]);
   
   const [bookmarks] = useState([
@@ -126,9 +113,36 @@ const App = () => {
     <div className={`w-full h-screen overflow-hidden relative transition-colors duration-500 pointer-events-none ${isHome || isOverview ? 'bg-white' : 'bg-transparent'}`}>
       <div className="absolute top-0 left-0 right-0 h-16 drag-area z-0 pointer-events-none" />
       
-      {/* Permanent Hub Layer */}
-      <div className="fixed top-0 left-0 right-0 h-12 z-1000 flex items-center justify-center pointer-events-none">
-        <div className="pointer-events-auto">
+      {/* Header Layer */}
+      <div className="fixed top-0 left-0 right-0 h-12 z-1000 flex items-center justify-between pointer-events-none px-4">
+        {/* Left Side: Search & AI Trigger */}
+        <div className="flex items-center gap-2 pointer-events-auto h-full">
+          <TabSearch 
+             tabs={tabs}
+             activeTabId={activeTabId}
+             onSelectTab={handleSelectTab}
+             onCloseTab={handleCloseTab}
+             recentlyClosed={recentlyClosed}
+             onRestoreTab={handleRestoreTab}
+           />
+           
+           {/* Ask Orbit Button */}
+           <button 
+             onClick={() => setIsAISidekickOpen(prev => !prev)}
+             className={`h-9 px-4 rounded-xl flex items-center gap-2.5 transition-all duration-300 cursor-pointer ${
+               isAISidekickOpen 
+                 ? 'bg-orbit-accent text-white shadow-lg' 
+                 : 'bg-black/5 hover:bg-black/10 text-black/70 hover:text-black'
+             }`}
+             style={{ WebkitAppRegion: 'no-drag' }}
+           >
+             <img src="/assets/orbit.png" className="w-5 h-5 object-contain" alt="" />
+             <span className="text-[13px] font-bold tracking-tight">Ask Orbit</span>
+           </button>
+        </div>
+
+        {/* Center: Search Bar */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
           <SegmentedHub
             activeTab={activeTab}
             onNavigate={handleNavigate}
@@ -146,21 +160,8 @@ const App = () => {
           />
         </div>
 
-        {/* Orbit Tools - Left Aligned */}
-        {/* Tab Search Trigger - Separated */}
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-auto z-2000 drag-none">
-          <TabSearch 
-             tabs={tabs}
-             activeTabId={activeTabId}
-             onSelectTab={handleSelectTab}
-             onCloseTab={handleCloseTab}
-             recentlyClosed={recentlyClosed}
-             onRestoreTab={handleRestoreTab}
-           />
-        </div>
-
-        {/* Orbit Tools - Left Aligned Group */}
-        <div className="absolute left-16 top-1/2 -translate-y-1/2 pointer-events-auto flex items-center gap-1 z-2000 drag-none">
+        {/* Right Side: Navigation Tools */}
+        <div className="flex items-center gap-1 pointer-events-auto">
           <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="History" style={{ WebkitAppRegion: 'no-drag' }}>
             <History size={16} strokeWidth={1.5} />
           </button>
@@ -176,61 +177,86 @@ const App = () => {
         </div>
       </div>
       
-      <main className={`w-full h-full relative overflow-hidden flex flex-col items-center ${isHome || isOverview ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-        {isHome && !isOverview && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center pt-20">
-            <NewTab onNavigate={handleNavigate} bookmarks={bookmarks} />
-          </div>
-        )}
+      <main className={`w-full h-full pt-12 flex relative overflow-hidden pointer-events-auto transition-colors duration-300 ${isHome || isOverview ? 'bg-white' : 'bg-transparent'}`}>
+        {/* Browser Content / WebContentsView Section */}
+        <motion.div 
+          layout
+          className={`flex-1 h-full relative z-0 ${isHome || isOverview ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        >
+          <AnimatePresence mode="wait">
+            {isHome && !isOverview && (
+              <motion.div 
+                key="newtab"
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="w-full h-full flex flex-col items-center justify-center bg-white"
+              >
+                <NewTab onNavigate={handleNavigate} bookmarks={bookmarks} />
+              </motion.div>
+            )}
 
-        {isOverview && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="absolute inset-0 z-50 overflow-y-auto bg-white/80 backdrop-blur-3xl p-24"
-          >
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between mb-12">
-                <h2 className="text-3xl font-bold tracking-tight text-black">Active Spaces</h2>
-                <button 
-                  onClick={() => handleAddTab()}
-                  className="px-6 py-2.5 rounded-2xl bg-orbit-accent text-white font-bold text-sm hover:scale-105 transition-transform"
-                >
-                  New Space
-                </button>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {tabs.map(tab => (
-                  <div 
-                    key={tab.id} 
-                    onClick={() => handleSelectTab(tab.id)}
-                    className={`
-                      aspect-4/3 bg-black/5 rounded-4xl border-[0.5px] border-black/10 overflow-hidden group 
-                      transition-all hover:scale-[1.03] hover:bg-black/10 relative cursor-pointer
-                      ${tab.id === activeTabId ? 'ring-2 ring-orbit-accent border-transparent' : ''}
-                    `}
-                  >
-                    <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                      <div className="px-3 py-1 rounded-full bg-white/40 backdrop-blur-xl border border-white/20 text-[10px] font-bold truncate max-w-30">
-                        {tab.title || 'New Space'}
-                      </div>
-                      <button 
-                         onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id); }}
-                         className="w-6 h-6 rounded-full bg-black/5 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors text-black/40"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                    <div className="w-full h-full flex items-center justify-center opacity-10">
-                       <Plus size={64} className="text-black" />
-                    </div>
+            {isOverview && (
+              <motion.div 
+                key="overview"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="absolute inset-0 z-50 overflow-y-auto bg-white/80 backdrop-blur-3xl p-24"
+              >
+                {/* Overview Content ... */}
+                <div className="max-w-7xl mx-auto">
+                  <div className="flex items-center justify-between mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight text-black">Active Spaces</h2>
+                    <button 
+                      onClick={() => handleAddTab()}
+                      className="px-6 py-2.5 rounded-2xl bg-orbit-accent text-white font-bold text-sm hover:scale-105 transition-transform"
+                    >
+                      New Space
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    {tabs.map(tab => (
+                      <div 
+                        key={tab.id} 
+                        onClick={() => handleSelectTab(tab.id)}
+                        className={`
+                          aspect-4/3 bg-black/5 rounded-4xl border-[0.5px] border-black/10 overflow-hidden group 
+                          transition-all hover:scale-[1.03] hover:bg-black/10 relative cursor-pointer
+                          ${tab.id === activeTabId ? 'ring-2 ring-orbit-accent border-transparent' : ''}
+                        `}
+                      >
+                        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+                          <div className="px-3 py-1 rounded-full bg-white/40 backdrop-blur-xl border border-white/20 text-[10px] font-bold truncate max-w-30">
+                            {tab.title || 'New Space'}
+                          </div>
+                          <button 
+                             onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id); }}
+                             className="w-6 h-6 rounded-full bg-black/5 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors text-black/40"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                        <div className="w-full h-full flex items-center justify-center opacity-10">
+                           <Plus size={64} className="text-black" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* AI Sidekick Section (The Built-in Sidebar) */}
+        <AISidekick 
+          isOpen={isAISidekickOpen} 
+          onClose={() => setIsAISidekickOpen(false)} 
+          activeTab={activeTab} 
+        />
       </main>
     </div>
   );

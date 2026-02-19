@@ -241,6 +241,44 @@ function setupIpcHandlers() {
       wc.setZoomLevel(0);
     }
   });
+
+  ipcMain.handle('tab:getPageText', async (event, { id }) => {
+    const view = viewManager.views.get(id);
+    if (!view) return '';
+    try {
+      return await view.webContents.executeJavaScript(`
+        (function() {
+          // Remove scripts, styles, and other non-content tags
+          const clone = document.body.cloneNode(true);
+          const toRemove = clone.querySelectorAll('script, style, nav, footer, header, noscript, iframe');
+          toRemove.forEach(el => el.remove());
+          
+          // Get clean text
+          let text = clone.innerText || clone.textContent;
+          // Basic cleanup of whitespace
+          return text.replace(/\\s+/g, ' ').trim().substring(0, 15000);
+        })()
+      `);
+    } catch (e) {
+      console.error('[Orbit AI] Failed to get page text:', e);
+      return '';
+    }
+  });
+
+  ipcMain.on('ui:toggle-sidekick', (event, isOpen) => {
+    if (viewManager) {
+      viewManager.sidekickIsOpen = isOpen;
+      // Force immediate expansion on close to prevent white flashes
+      // The contracting sidebar UI will 'reveal' the already-expanded page
+      if (!isOpen) viewManager.updateLayout(0);
+    }
+  });
+
+  ipcMain.on('ui:sidekick-resize', (event, width) => {
+    if (viewManager) {
+      viewManager.updateLayout(width);
+    }
+  });
 }
 
 app.whenReady().then(() => {

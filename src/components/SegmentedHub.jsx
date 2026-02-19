@@ -1,5 +1,8 @@
 import React, { memo, useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, Search, Plus, DownloadCloud, Bookmark } from 'lucide-react';
+import { 
+  ChevronLeft, ChevronRight, RefreshCw, Search, Plus, 
+  DownloadCloud, Bookmark, LayoutGrid, Maximize 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const COMMANDS = [
@@ -103,8 +106,8 @@ const SegmentedHub = memo(({
   const showPlaceholder = !isFocused && inputValue.length === 0;
 
   return (
-    <div className={`segmented-hub group no-drag transition-all duration-300 relative ${
-      isFocused ? 'w-225 h-12 bg-white shadow-2xl' : 'w-175 h-10'
+    <div className={`segmented-hub group no-drag transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] relative ${
+      isFocused ? 'w-180 h-12 bg-white shadow-2xl' : 'w-140 h-10'
     } ${!isVisible && !isFocused ? 'segmented-hub-hidden' : ''}`}>
       {activeTab?.isLoading && (
         <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orbit-accent animate-pulse z-10 rounded-b-[10px]" />
@@ -217,16 +220,7 @@ const SegmentedHub = memo(({
           <RefreshCw size={17} className={activeTab?.isLoading ? 'animate-spin' : ''} />
         </button>
         <div className="w-px h-4 bg-black/10 mx-1" />
-        {inputValue && (
-           <>
-             <button className="p-1.5 rounded-md hover:bg-black/5 text-black/60 hover:text-black transition-colors animate-in fade-in zoom-in duration-200" title="Download">
-                <DownloadCloud size={18} />
-             </button>
-             <button className="p-1.5 rounded-md hover:bg-black/5 text-black/60 hover:text-black transition-colors animate-in fade-in zoom-in duration-200" title="Save">
-                <Bookmark size={18} />
-             </button>
-           </>
-        )}
+        
         <button 
           onClick={onToggleOverview}
           className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/5 text-black/60 hover:text-black transition-all relative"
