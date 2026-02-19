@@ -129,14 +129,16 @@ const App = () => {
            {/* Ask Orbit Button */}
            <button 
              onClick={() => setIsAISidekickOpen(prev => !prev)}
-             className={`h-9 px-4 rounded-xl flex items-center gap-2.5 transition-all duration-300 cursor-pointer ${
+             className={`h-9.5 pl-1.5 pr-4 rounded-xl flex items-center gap-2.5 transition-all duration-300 cursor-pointer border border-black/5 shadow-sm hover:shadow-md ${
                isAISidekickOpen 
-                 ? 'bg-orbit-accent text-white shadow-lg' 
-                 : 'bg-black/5 hover:bg-black/10 text-black/70 hover:text-black'
+                 ? 'bg-orbit-accent text-white border-transparent' 
+                 : 'bg-white/90 backdrop-blur-md text-black hover:bg-white'
              }`}
              style={{ WebkitAppRegion: 'no-drag' }}
            >
-             <img src="/assets/orbit.png" className="w-5 h-5 object-contain" alt="" />
+             <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isAISidekickOpen ? 'bg-white/20' : 'bg-white shadow-sm'}`}>
+               <img src="/assets/orbit.png" className="w-4.5 h-4.5 object-contain" alt="" />
+             </div>
              <span className="text-[13px] font-bold tracking-tight">Ask Orbit</span>
            </button>
         </div>
@@ -156,6 +158,7 @@ const App = () => {
               setIsOverview(nextState);
               window.orbit.ipcRenderer.send('ui:toggle-overview', nextState);
             }}
+            onAddTab={() => handleAddTab()}
             tabCount={tabs.length}
           />
         </div>

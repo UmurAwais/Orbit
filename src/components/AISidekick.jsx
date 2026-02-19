@@ -98,9 +98,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
             {/* Header (ChatGPT Atlas Inspired) */}
             <div className="h-13 px-4 border-b border-black/5 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-10">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center p-1.5 border border-black/5">
-                  <img src="/assets/orbit.png" className="w-full h-full object-contain" alt="Orbit" />
-                </div>
+                <img src="/assets/orbit.png" className="w-8 h-8 object-contain" alt="Orbit" />
                 <div className="flex flex-col">
                   <span className="text-[13px] font-bold text-black tracking-tight leading-tight">Orbit AI</span>
                   <span className="text-[10px] font-medium text-black/50 tracking-tight">Supercharge your browsing</span>

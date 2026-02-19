@@ -19,6 +19,7 @@ const SegmentedHub = memo(({
   onForward,
   onReload,
   onStop,
+  onAddTab,
   isVisible = true,
   onToggleOverview,
   tabCount = 1
@@ -221,6 +222,14 @@ const SegmentedHub = memo(({
         </button>
         <div className="w-px h-4 bg-black/10 mx-1" />
         
+        <button 
+          onClick={onAddTab}
+          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/5 text-black/60 hover:text-black transition-all"
+          title="New Space"
+        >
+          <Plus size={16} />
+        </button>
+
         <button 
           onClick={onToggleOverview}
           className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/5 text-black/60 hover:text-black transition-all relative"

@@ -3,7 +3,7 @@
 @theme {
   --color-orbit-bg: #FFFFFF;
   --color-orbit-surface: #F5F5F7;
-  --color-orbit-accent: #635BFF;
+  --color-orbit-accent: #2F0179;
   --color-orbit-border: rgba(0, 0, 0, 0.05);
   --color-orbit-card: rgba(0, 0, 0, 0.02);
   
@@ -99,7 +99,7 @@ body {
   top: 0;
   left: 0;
   height: 1.5px;
-  background: #635BFF;
+  background: #2F0179;
   transition: width 0.3s ease;
 }
 
