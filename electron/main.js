@@ -18,12 +18,12 @@ function createWindow() {
     height: 900,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#FFFFFF',
-      symbolColor: '#1a1a1a',
-      height: 56
+      color: nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff',
+      symbolColor: nativeTheme.shouldUseDarkColors ? '#f5f5f7' : '#1d1d1f',
+      height: 46
     },
     icon: path.join(__dirname, '../assets/orbit.png'),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff',
     show: false, // Prevent flash
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -57,10 +57,11 @@ function createWindow() {
   setupApplicationMenu();
 
   nativeTheme.on('updated', () => {
+    const isDark = nativeTheme.shouldUseDarkColors;
     mainWindow.setTitleBarOverlay({
       color: isDark ? '#000000' : '#ffffff',
       symbolColor: isDark ? '#f5f5f7' : '#1d1d1f',
-      height: 56
+      height: 46
     });
     mainWindow.setBackgroundColor(isDark ? '#000000' : '#ffffff');
   });
@@ -118,6 +119,10 @@ function setupApplicationMenu() {
 }
 
 function setupIpcHandlers() {
+  ipcMain.on('theme:update', (event, theme) => {
+    nativeTheme.themeSource = theme;
+  });
+
   ipcMain.handle('tab:create', (event, { id, url }) => {
     viewManager.createView(id, url);
     return { id };
@@ -138,14 +143,32 @@ function setupIpcHandlers() {
     const view = viewManager.views.get(id);
     if (view) {
       // Set target URL synchronously to prevent race condition in layout logic
-      const state = viewManager.tabStates.get(id);
-      if (state) {
-        console.log('[main.js] Setting lastUrl:', url);
-        state.lastUrl = url;
+      // Smart URL / Search Parsing (Chromium Behavior)
+      let targetUrl = url;
+      const hasProtocol = /^([a-z][a-z0-9+\-.]*):/i.test(url);
+      const hasSpace = url.includes(' ');
+      const isLocalhost = /^localhost(:\d+)?$/i.test(url);
+      const isIP = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(url);
+      const hasExtension = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:\d+)?([/?#].*)?$/.test(url);
+
+      if (!hasProtocol) {
+        if (isLocalhost || isIP) {
+          targetUrl = `http://${url}`;
+        } else if (hasExtension && !hasSpace) {
+          targetUrl = `https://${url}`;
+        } else {
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+        }
       }
 
-      console.log('[main.js] Loading URL in webContents');
-      view.webContents.loadURL(url);
+      const state = viewManager.tabStates.get(id);
+      if (state) {
+        console.log('[main.js] Setting lastUrl:', targetUrl);
+        state.lastUrl = targetUrl;
+      }
+
+      console.log('[main.js] Loading URL in webContents:', targetUrl);
+      view.webContents.loadURL(targetUrl);
       
       if (viewManager.activeViewId === id && url !== 'about:blank') {
         viewManager.updateLayout();

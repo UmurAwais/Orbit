@@ -1,15 +1,15 @@
-
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import SegmentedHub from './components/SegmentedHub';
 import NewTab from './components/NewTab';
 import OrbitLogo from './components/OrbitLogo';
-import { Search, ArrowRight, Bookmark, X, Plus, History, Puzzle, Settings, Minus, Square } from 'lucide-react';
+import { Search, ArrowRight, Bookmark, X, Plus, History, Puzzle, Settings, Minus, Square, Key,
+  ChevronLeft, ChevronRight, LayoutGrid, Share, MoreHorizontal, User
+} from 'lucide-react';
 import TabSearch from './components/TabSearch';
 import AISidekick from './components/AISidekick';
 import ExtensionsManager from './components/ExtensionsManager';
 import SettingsManager from './components/SettingsManager';
-
 
 const App = () => {
   const [tabs, setTabs] = useState([{
@@ -27,12 +27,21 @@ const App = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [pinnedExtensions, setPinnedExtensions] = useState(() => {
     const saved = localStorage.getItem('orbit-pinned-extensions');
-    return saved ? JSON.parse(saved) : ['1']; // Default pin
+    return saved ? JSON.parse(saved) : ['1'];
   });
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('orbit-theme') || 'system';
   });
+
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const cleanup = window.orbit.ipcRenderer.on('viewport:scroll', (scrollY) => {
+      setIsScrolled(scrollY > 20);
+    });
+    return () => cleanup();
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -57,13 +66,16 @@ const App = () => {
     }
   }, [theme]);
 
-  
-  useEffect(() => {
-    window.orbit.ipcRenderer.send('ui:toggle-sidekick', isAISidekickOpen);
-  }, [isAISidekickOpen]);
+  const [passwordPrompt, setPasswordPrompt] = useState(null);
 
-  const [recentlyClosed, setRecentlyClosed] = useState([]);
-  
+  useEffect(() => {
+    const handlePasswordPrompt = (data) => {
+      setPasswordPrompt(data);
+      setTimeout(() => setPasswordPrompt(null), 10000);
+    };
+    window.orbit.ipcRenderer.on('password-prompt', handlePasswordPrompt);
+  }, []);
+
   const [bookmarks, setBookmarks] = useState(() => {
     const saved = localStorage.getItem('orbit-bookmarks');
     return saved ? JSON.parse(saved) : [
@@ -77,22 +89,7 @@ const App = () => {
     localStorage.setItem('orbit-bookmarks', JSON.stringify(bookmarks));
   }, [bookmarks]);
 
-  useEffect(() => {
-    localStorage.setItem('orbit-pinned-extensions', JSON.stringify(pinnedExtensions));
-  }, [pinnedExtensions]);
-
-  const togglePinExtension = useCallback((id) => {
-    setPinnedExtensions(prev => 
-      prev.includes(id) ? prev.filter(extId => extId !== id) : [...prev, id]
-    );
-  }, []);
-
-  const handleUpdateBookmarks = useCallback((newBookmarks) => {
-    setBookmarks(newBookmarks);
-  }, []);
-
-
-  const activeTab = React.useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
+  const activeTab = useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
   const isHome = activeTab?.url === 'about:blank';
 
   useEffect(() => {
@@ -107,8 +104,6 @@ const App = () => {
       if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, []);
-
-  // Removed ghost header visibility logic to keep it permanent
 
   const handleSelectTab = useCallback((id) => {
     setActiveTabId(id);
@@ -127,140 +122,133 @@ const App = () => {
     handleSelectTab(id);
   }, [handleSelectTab]);
 
-  const handleCloseTab = useCallback(async (id) => {
-    // Save to recently closed
-    const tabToClose = tabs.find(t => t.id === id);
-    if (tabToClose) {
-      setRecentlyClosed(prev => [{...tabToClose, closedAt: Date.now()}, ...prev].slice(0, 20));
-    }
-
-    await window.orbit.tabs.close({ id });
+  const handleCloseTab = useCallback((id) => {
     setTabs(prev => {
-      const filtered = prev.filter(t => t.id !== id);
-      if (activeTabId === id && filtered.length > 0) {
-        handleSelectTab(filtered[filtered.length - 1].id);
-      } else if (filtered.length === 0) {
-        handleAddTab();
+      const newTabs = prev.filter(t => t.id !== id);
+      if (newTabs.length === 0) {
+        const defaultId = Date.now().toString();
+        const defaultTab = { id: defaultId, title: 'New Tab', url: 'about:blank', isLoading: false, canGoBack: false, canGoForward: false };
+        window.orbit.tabs.create({ id: defaultId, url: 'about:blank' });
+        setActiveTabId(defaultId);
+        return [defaultTab];
       }
-      return filtered;
+      if (activeTabId === id) {
+        const nextId = newTabs[newTabs.length - 1].id;
+        setActiveTabId(nextId);
+        window.orbit.tabs.select({ id: nextId });
+      }
+      return newTabs;
     });
-  }, [tabs, activeTabId, handleSelectTab, handleAddTab]);
+    window.orbit.tabs.close({ id });
+  }, [activeTabId]);
 
-  const handleRestoreTab = useCallback((tab) => {
-    const newId = Date.now().toString();
-    const restoredTab = { ...tab, id: newId, isLoading: true };
-    setRecentlyClosed(prev => prev.filter(t => t.id !== tab.id));
-    setTabs(prev => [...prev, restoredTab]);
-    window.orbit.tabs.create({ id: newId, url: tab.url });
-    handleSelectTab(newId);
-  }, [handleSelectTab]);
-
-  const handleNavigate = useCallback((input) => {
-    const query = input?.trim();
-    if (!query) return;
-
-    if (query.toLowerCase() === 'orbit://extensions') {
-      setIsExtensionsOpen(true);
-      setIsOverview(false);
-      return;
-    }
-
-    if (query.toLowerCase() === 'orbit://settings') {
-      setIsSettingsOpen(true);
-      setIsExtensionsOpen(false);
-      setIsOverview(false);
-      return;
-    }
-
-    setIsOverview(false);
-    setIsExtensionsOpen(false);
-    setIsSettingsOpen(false);
-    
-    const isUrl = query.startsWith('http') || (query.includes('.') && !query.includes(' '));
-    const url = isUrl ? (query.startsWith('http') ? query : `https://${query}`) : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-    
+  const handleNavigate = useCallback((url) => {
     window.orbit.tabs.navigate({ id: activeTabId, url });
-    setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, url, isLoading: true } : t));
   }, [activeTabId]);
 
   return (
-    <div className={`w-full h-screen overflow-hidden relative transition-colors duration-200 pointer-events-none ${isHome || isOverview || isExtensionsOpen || isSettingsOpen ? 'bg-orbit-bg' : 'bg-transparent'}`}>
-      <div className="absolute top-0 left-0 right-0 h-16 drag-area z-0 pointer-events-none" />
+    <div className={`w-full h-screen overflow-hidden relative transition-colors duration-200 bg-orbit-bg`}>
+      <div className="absolute top-0 left-0 right-0 h-24 drag-area z-0 pointer-events-none" />
       
-      {/* Header Layer */}
-      <div className="fixed top-0 left-0 right-0 h-14 z-1000 flex items-center justify-between pointer-events-none px-4 border-b border-orbit-border">
-        {/* Left Side: Search & AI Trigger */}
-        <div className="flex items-center gap-2 pointer-events-auto h-full">
-          <TabSearch 
-             tabs={tabs}
-             activeTabId={activeTabId}
-             onSelectTab={handleSelectTab}
-             onCloseTab={handleCloseTab}
-             recentlyClosed={recentlyClosed}
-             onRestoreTab={handleRestoreTab}
-           />
-           
-           {/* Ask Orbit Button */}
-           <button 
-             onClick={() => setIsAISidekickOpen(prev => !prev)}
-             className={`h-9.5 pl-1.5 pr-4 rounded-xl flex items-center gap-2.5 transition-all duration-300 cursor-pointer border border-orbit-border shadow-sm hover:shadow-md ${
-               isAISidekickOpen 
-                 ? 'bg-orbit-accent text-white border-transparent' 
-                 : 'bg-orbit-surface/90 backdrop-blur-md text-orbit-text hover:bg-orbit-bg'
-             }`}
-             style={{ WebkitAppRegion: 'no-drag' }}
-           >
-             <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isAISidekickOpen ? 'bg-white/20' : 'bg-orbit-bg shadow-sm'}`}>
-               <img src="/assets/orbit.png" className="w-4.5 h-4.5 object-contain" alt="" />
+      {/* Orbital Nexus - Global Hybrid Header (Modern Matte Rebuild) */}
+      <header className="nexus-chassis drag-area no-drag">
+        {/* Tier 1: The Command Deck (Top Row) - Primary Navigation */}
+        <div className="nexus-row nexus-top-row pointer-events-auto px-4">
+           {/* Left Section: Balanced Spacer */}
+           <div className="flex-1 flex items-center no-drag">
+              <div className="flex items-center gap-2">
+                 <OrbitLogo size={20} />
+                 <span className="text-[11px] font-black tracking-[0.2em] text-black">Orbit</span>
+              </div>
+           </div>
+
+           {/* Center Section: Expansive Search Hub */}
+           <div className="flex-4 flex justify-center no-drag">
+             <div className="w-full max-w-225">
+               <SegmentedHub 
+                 activeTab={activeTab}
+                 onNavigate={handleNavigate}
+                 tabCount={tabs.length}
+                 isVisible={true}
+               />
              </div>
-             <span className="text-[13px] font-bold tracking-tight">Ask Orbit</span>
-           </button>
+           </div>
+
+           {/* Right Section: System Control Pod */}
+           <div className="flex-1 flex justify-end h-full no-drag">
+              <div className="flex items-center h-full">
+                 {/* Native Windows Controls Area */}
+              </div>
+           </div>
         </div>
 
-        {/* Center: Search Bar */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-          <SegmentedHub
-            activeTab={activeTab}
-            onNavigate={handleNavigate}
-            onReload={() => window.orbit.tabs.reload({ id: activeTabId })}
-            onStop={() => window.orbit.tabs.stop({ id: activeTabId })}
-            onBack={() => window.orbit.tabs.goBack({ id: activeTabId })}
-            onForward={() => window.orbit.tabs.goForward({ id: activeTabId })}
-            isVisible={true}
-            onToggleOverview={() => {
-              const nextState = !isOverview;
-              setIsOverview(nextState);
-              window.orbit.ipcRenderer.send('ui:toggle-overview', nextState);
-            }}
-            onAddTab={() => handleAddTab()}
-            tabCount={tabs.length}
-            pinnedExtensions={pinnedExtensions}
-            onTogglePin={togglePinExtension}
-          />
-        </div>
+        {/* Tier 2: The Tab Deck (Bottom Row) - Integrated Stream */}
+        <div className="nexus-row nexus-bottom-row pointer-events-auto px-4">
+          {/* Left-Aligned Control Stream: Group -> Tabs -> Add */}
+          <div className="flex-1 flex items-center gap-3 no-drag overflow-hidden">
+            {/* Workspace Context */}
+            {/* <div className="nexus-workspace-group shrink-0 hover:bg-nexus-tab-hover transition-colors">
+              <div className="nexus-workspace-dot" />
+              <span className="text-nexus-text">Workspace</span>
+            </div> */}
 
-        {/* Right Side: Navigation Tools */}
-        <div className="flex items-center gap-1 pointer-events-auto">
-          <button className="h-9 w-9 rounded-full hover:bg-orbit-card active:bg-orbit-border flex items-center justify-center text-orbit-text opacity-70 hover:opacity-100 transition-all cursor-pointer" title="History" style={{ WebkitAppRegion: 'no-drag' }}>
-            <History size={18} strokeWidth={1.8} />
-          </button>
-          <button className="h-9 w-9 rounded-full hover:bg-orbit-card active:bg-orbit-border flex items-center justify-center text-orbit-text opacity-70 hover:opacity-100 transition-all cursor-pointer" title="Bookmarks" style={{ WebkitAppRegion: 'no-drag' }}>
-            <Bookmark size={18} strokeWidth={1.8} />
-          </button>
-          <button className="h-9 w-9 rounded-full hover:bg-orbit-card active:bg-orbit-border flex items-center justify-center text-orbit-text opacity-70 hover:opacity-100 transition-all cursor-pointer" title="Extensions" style={{ WebkitAppRegion: 'no-drag' }} onClick={() => handleNavigate('orbit://extensions')}>
-            <Puzzle size={18} strokeWidth={1.8} />
-          </button>
+            {/* Seamless Tab Tray */}
+            <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+              <div className="nexus-tabs-tray">
+                {tabs.map((tab) => (
+                  <div 
+                    key={tab.id}
+                    onClick={() => handleSelectTab(tab.id)}
+                    className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab`}
+                  >
+                    {tab.favicon ? (
+                      <img src={tab.favicon} className="w-3.5 h-3.5 object-contain rounded-sm" alt="" />
+                    ) : (
+                      <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/10" />
+                    )}
+                    <span className="flex-1 truncate text-[11px] font-bold tracking-tight">
+                      {tab.title || 'New Tab'}
+                    </span>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id); }}
+                      className="nexus-tab-close"
+                    >
+                      <X size={10} strokeWidth={3} />
+                    </button>
+                  </div>
+                ))}
+              </div>
 
-          <button className="h-9 w-9 rounded-full hover:bg-orbit-card active:bg-orbit-border flex items-center justify-center text-orbit-text opacity-70 hover:opacity-100 transition-all cursor-pointer" title="Settings" style={{ WebkitAppRegion: 'no-drag' }} onClick={() => handleNavigate('orbit://settings')}>
-            <Settings size={18} strokeWidth={1.8} />
-          </button>
+              {/* Authentic Chrome-style New Tab Button */}
+              <button 
+                onClick={() => handleAddTab()}
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-transparent hover:bg-gray-200 text-nexus-text-dim hover:text-nexus-text transition-colors duration-200 no-drag shrink-0"
+                title="New Tab"
+              >
+                <Plus size={18} strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+
+          {/* Right-Aligned Global Tools */}
+          <div className="flex items-center gap-3 no-drag pl-4">
+             <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="w-8.5 h-8.5 flex items-center justify-center rounded-full hover:bg-nexus-hub-bg text-nexus-text-dim hover:text-nexus-text transition-all"
+             >
+               <Settings size={15} strokeWidth={2.2} />
+             </button>
+             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-nexus-hub-bg border border-nexus-border text-[10px] font-bold text-nexus-text-dim hover:border-nexus-accent/30 transition-colors cursor-default">
+                <User size={12} strokeWidth={2.5} className="opacity-40" />
+                <span className="opacity-70 tracking-tight">sample@gmail.com</span>
+             </div>
+          </div>
         </div>
-      </div>
-      
-      <main className={`w-full h-full pt-14 flex relative overflow-hidden pointer-events-auto transition-colors duration-200 ${isHome || isOverview || isExtensionsOpen || isSettingsOpen ? 'bg-orbit-bg' : 'bg-transparent'}`}>
-        {/* Browser Content / WebContentsView Section */}
-        <motion.div 
-          layout
+      </header>
+
+      {/* Main Content Area */}
+      <main className="w-full h-full pt-[92px] relative z-0">
+        <div 
           className={`flex-1 h-full relative z-0 ${isHome || isOverview || isExtensionsOpen || isSettingsOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
           <AnimatePresence mode="wait">
@@ -276,23 +264,12 @@ const App = () => {
                   onNavigate={handleNavigate} 
                   theme={theme}
                   setTheme={setTheme}
+                  onClose={() => setIsSettingsOpen(false)}
                 />
               </motion.div>
             )}
 
-            {isExtensionsOpen && (
-              <motion.div
-                key="extensions"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full h-full"
-              >
-                <ExtensionsManager onNavigate={handleNavigate} />
-              </motion.div>
-            )}
-
-            {isHome && !isOverview && !isExtensionsOpen && (
+            {isHome && !isOverview && !isExtensionsOpen && !isSettingsOpen && (
               <motion.div 
                 key="newtab"
                 layout
@@ -303,74 +280,44 @@ const App = () => {
               >
                 <NewTab 
                   onNavigate={handleNavigate} 
-                  bookmarks={bookmarks} 
-                  onUpdateBookmarks={handleUpdateBookmarks}
                 />
-
-              </motion.div>
-            )}
-
-            {isOverview && (
-              <motion.div 
-                key="overview"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute inset-0 z-50 overflow-y-auto bg-orbit-bg/80 backdrop-blur-3xl p-24"
-              >
-                {/* Overview Content ... */}
-                <div className="max-w-7xl mx-auto">
-                  <div className="flex items-center justify-between mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight text-orbit-text">Active Spaces</h2>
-                    <button 
-                      onClick={() => handleAddTab()}
-                      className="px-6 py-2.5 rounded-2xl bg-orbit-accent text-white font-bold text-sm hover:scale-105 transition-transform"
-                    >
-                      New Space
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    {tabs.map(tab => (
-                      <div 
-                        key={tab.id} 
-                        onClick={() => handleSelectTab(tab.id)}
-                        className={`
-                          aspect-4/3 bg-orbit-card rounded-4xl border-[0.5px] border-orbit-border overflow-hidden group 
-                          transition-all hover:scale-[1.03] hover:bg-orbit-surface relative cursor-pointer
-                          ${tab.id === activeTabId ? 'ring-2 ring-orbit-accent border-transparent' : ''}
-                        `}
-                      >
-                        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                          <div className="px-3 py-1 rounded-full bg-orbit-surface/40 backdrop-blur-xl border border-orbit-border/20 text-[10px] font-bold truncate max-w-30 text-orbit-text">
-                            {tab.title || 'New Space'}
-                          </div>
-                          <button 
-                             onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id); }}
-                             className="w-6 h-6 rounded-full bg-orbit-card hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors text-orbit-text-dim"
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                        <div className="w-full h-full flex items-center justify-center opacity-10">
-                           <Plus size={64} className="text-orbit-text" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
-        {/* AI Sidekick Section (The Built-in Sidebar) */}
         <AISidekick 
           isOpen={isAISidekickOpen} 
           onClose={() => setIsAISidekickOpen(false)} 
           activeTab={activeTab} 
         />
       </main>
+
+      {/* Password Save Prompt */}
+      <AnimatePresence>
+        {passwordPrompt && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed top-24 right-4 w-80 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-2xl border border-orbit-border z-3000 p-4 text-orbit-text"
+          >
+             <div className="flex items-start gap-4">
+               <div className="w-10 h-10 rounded-full bg-orbit-accent/10 flex items-center justify-center text-orbit-accent">
+                  <Key size={20} />
+               </div>
+               <div className="flex-1">
+                  <h3 className="font-bold text-sm mb-1">Save password?</h3>
+                  <p className="text-xs text-orbit-text-dim mb-3">Orbit can save your password for this site.</p>
+                  <div className="flex justify-end gap-2">
+                     <button onClick={() => setPasswordPrompt(null)} className="px-3 py-1.5 rounded-lg hover:bg-orbit-card text-xs font-bold">Never</button>
+                     <button onClick={() => setPasswordPrompt(null)} className="px-4 py-1.5 bg-orbit-accent text-white rounded-lg text-xs font-bold">Save</button>
+                  </div>
+               </div>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

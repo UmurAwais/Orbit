@@ -1,44 +1,81 @@
 @import "tailwindcss";
 
 @theme {
-  --color-orbit-bg: #FFFFFF;
-  --color-orbit-surface: #F5F5F7;
-  --color-orbit-accent: #2F0179;
-  --color-orbit-border: rgba(0, 0, 0, 0.05);
-  --color-orbit-card: rgba(0, 0, 0, 0.02);
-  --color-orbit-text: #1D1D1F;
-  --color-orbit-text-dim: rgba(0, 0, 0, 0.4);
+  --color-orbit-bg: var(--orbit-bg);
+  --color-orbit-surface: var(--orbit-surface);
+  --color-orbit-accent: var(--orbit-accent);
+  --color-orbit-border: var(--orbit-border);
+  --color-orbit-card: var(--orbit-card);
+  --color-orbit-text: var(--orbit-text);
+  --color-orbit-text-dim: var(--orbit-text-dim);
   
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --shadow-hub: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
+/* Orbit Browser Theme Variables */
+:root {
+  /* Shared Base Palette (Light Mode Default) */
+  --orbit-bg: #FFFFFF;
+  --orbit-surface: #F5F5F7;
+  --orbit-accent: #2F0179;
+  --orbit-border: rgba(0, 0, 0, 0.08);
+  --orbit-card: rgba(0, 0, 0, 0.03);
+  --orbit-text: #1D1D1F;
+  --orbit-text-dim: rgba(0, 0, 0, 0.5);
+
+  /* Nexus Variables mapping */
+  --nexus-bg: var(--orbit-bg);
+  --nexus-border: var(--orbit-border);
+  --nexus-hub-bg: #f1f3f4;
+  --nexus-tab-bg: #e8eaed;
+  --nexus-tab-active: #ffffff;
+  --nexus-tab-hover: #e2e4e7;
+  --nexus-text: var(--orbit-text);
+  --nexus-text-dim: #70757a;
+  --nexus-accent: var(--orbit-accent);
+  --nexus-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
 .dark {
-  --color-orbit-bg: #000000;
-  --color-orbit-surface: #1E1E1E;
-  --color-orbit-accent: #8E44AD;
-  --color-orbit-border: rgba(255, 255, 255, 0.1);
-  --color-orbit-card: rgba(255, 255, 255, 0.05);
-  --color-orbit-text: #F5F5F7;
-  --color-orbit-text-dim: rgba(255, 255, 255, 0.6);
+  /* Dark Palette Overrides */
+  --orbit-bg: #000000;
+  --orbit-surface: #121212;
+  --orbit-accent: #6366f1; /* Indirect Indigo for better dark contrast */
+  --orbit-border: rgba(255, 255, 255, 0.15);
+  --orbit-card: rgba(255, 255, 255, 0.08);
+  --orbit-text: #FFFFFF;
+  --orbit-text-dim: rgba(255, 255, 255, 0.5);
+
+  /* Nexus Dark Overrides */
+  --nexus-bg: #000000;
+  --nexus-border: rgba(255, 255, 255, 0.15);
+  --nexus-hub-bg: #1c1c1e;
+  --nexus-tab-bg: #1c1c1e;
+  --nexus-tab-active: #2c2c2e;
+  --nexus-tab-hover: #2c2c2e;
+  --nexus-text: #FFFFFF;
+  --nexus-text-dim: #98989d;
+  --nexus-accent: #6366f1;
+  --nexus-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
 :root {
   --app-region: drag;
   background-color: var(--color-orbit-bg);
   color: var(--color-orbit-text);
+  overflow: hidden;
 }
 
 * {
   box-sizing: border-box;
-  font-family: 'Satoshi', sans-serif;
-  letter-spacing: -0.02em;
+  font-family: 'Satoshi', 'Inter', -apple-system, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 body {
   margin: 0;
-  font-family: 'Satoshi', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -57,140 +94,193 @@ body {
   overflow: hidden;
 }
 
-.segmented-hub {
-  position: relative;
-  border-radius: 10px;
+/* Orbital Nexus Chassis (Tiered Header) */
+.nexus-chassis {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 92px;
+  background: var(--nexus-bg);
+  border-bottom: 1px solid var(--nexus-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 2000;
+  box-shadow: var(--nexus-shadow);
+  padding: 0;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.nexus-row {
   display: flex;
   align-items: center;
+  width: 100%;
   padding: 0 12px;
-  z-index: 1000;
-  transition: all 0.2s var(--transition-smooth);
 }
 
-.segmented-hub-hidden {
-  opacity: 0;
-  transform: translate(-50%, -20px);
-  pointer-events: none;
+.nexus-top-row {
+  height: 46px;
 }
 
-* {
-  font-family: 'Satoshi', sans-serif;
+.nexus-bottom-row {
+  height: 46px;
 }
 
-
-.tab-square {
-  width: 32px;
+/* Orbital Nexus Search Hub */
+.nexus-hub {
+  background: var(--nexus-hub-bg);
+  border-radius: 20px;
   height: 32px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.03);
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.nexus-hub-inner-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 2px;
+}
+
+.nexus-hub-nav-btn {
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  color: #888;
+  transition: all 0.2s;
+}
+
+.nexus-hub-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.nexus-hub:focus-within {
+  background: var(--nexus-hub-bg); /* Keep it matching the idle state */
+}
+
+/* Nexus Workspace Control */
+.nexus-workspace-group {
+  background: var(--nexus-hub-bg);
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--nexus-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
   cursor: pointer;
-  transition: all 0.2s var(--transition-smooth);
-  border: 1px solid transparent;
-  overflow: hidden;
+  border: 1px solid var(--nexus-border);
 }
 
-.tab-square:hover {
-  background: rgba(0, 0, 0, 0.06);
+.nexus-workspace-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff453a; /* iOS-style vibrant red dot */
+  box-shadow: 0 0 8px rgba(255, 69, 58, 0.4);
 }
 
-.tab-square.active {
-  background: #FFFFFF;
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+/* Nexus Tabs System - Floating Pill Mode */
+.nexus-tabs-tray {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
 }
 
-.loading-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 1.5px;
-  background: #2F0179;
-  transition: width 0.3s ease;
+.nexus-tab {
+  height: 30px;
+  min-width: 130px;
+  max-width: 200px;
+  padding: 0 12px;
+  border-radius: 15px; /* Perfect Pill */
+  background: var(--nexus-tab-bg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--nexus-text-dim);
+  border: 1px solid var(--nexus-border);
 }
 
-.drag-area {
-  -webkit-app-region: drag;
+.nexus-tab:hover:not(.active) {
+  background: var(--nexus-tab-hover);
+  color: var(--nexus-text);
+}
+
+.nexus-tab.active {
+  background: var(--nexus-tab-active);
+  color: var(--nexus-text);
+  border-color: var(--nexus-accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.nexus-tab-close {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s ease;
+  color: inherit;
+}
+
+.nexus-tab:hover .nexus-tab-close {
+  opacity: 0.4;
+}
+
+.nexus-tab-close:hover {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.dark .nexus-tab-close:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .no-drag {
   -webkit-app-region: no-drag;
 }
 
-/* Orbit Premium Design System - Google Semantic Minimalist */
-:root {
-  --google-blue: #4285F4;
-  --google-red: #EA4335;
-  --google-yellow: #FBBC05;
-  --google-green: #34A853;
-  --google-bg: #FFFFFF;
-  --transition-logical: cubic-bezier(0.4, 0, 0.2, 1);
+.drag-area {
+  -webkit-app-region: drag;
 }
 
-.google-pill {
-  border-radius: 1000px;
-  background: #FFFFFF;
-  border: 1px solid #F1F3F4;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  transition: all 0.25s var(--transition-logical);
+/* Utility Animations */
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
-.google-pill:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-color: transparent;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.google-icon-container {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #F8F9FA;
-  transition: background 0.2s;
+/* Safari High-Fidelity Progress Line */
+.nexus-progress-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--nexus-accent);
+  transition: width 0.3s ease;
 }
 
-.google-icon-container:hover {
-  background: #F1F3F4;
-}
-
-/* Bento Grid System - Google Logic */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-auto-rows: 160px;
-  gap: 1rem;
-  width: 100%;
-}
-
-.bento-item {
-  grid-column: span 2;
-  background: #FFFFFF;
-  border-radius: 20px;
-  padding: 24px;
-  border: 1px solid #E8EAED;
-  transition: all 0.2s var(--transition-logical);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-.bento-item:hover {
-  background: #F8F9FA;
-  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.302), 0 1px 3px 1px rgba(60,64,67,0.149);
-}
-
-.bento-item-large {
-  grid-column: span 4;
-  grid-row: span 2;
-}
-
-/* Orbit Signature Scrollbar - Minimalist & Premium */
+/* Scrollbar Style */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -203,14 +293,8 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  transition: all 0.3s ease;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-/* Hide scrollbar on specific components if needed, but maintain functionality */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
 }
