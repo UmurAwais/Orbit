@@ -1,8 +1,10 @@
 import React, { memo, useState, useEffect } from 'react';
 import { 
   ChevronLeft, ChevronRight, RefreshCw, Search, Plus, 
-  DownloadCloud, Bookmark, LayoutGrid, Maximize 
+  DownloadCloud, Bookmark, LayoutGrid, Maximize, Puzzle,
+  Pin, MoreVertical, ExternalLink, X
 } from 'lucide-react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 const COMMANDS = [
@@ -10,6 +12,11 @@ const COMMANDS = [
   "Summarize this article instantly...",
   "Search, command, or explore...",
   "Type a goal, not just a URL..."
+];
+
+const INSTALLED_EXTENSIONS = [
+  { id: '1', name: 'Orbit Dark Mode Pro', icon: '🌙' },
+  { id: '2', name: 'AdBlock Ultimate', icon: '🛡️' }
 ];
 
 const SegmentedHub = memo(({
@@ -22,13 +29,16 @@ const SegmentedHub = memo(({
   onAddTab,
   isVisible = true,
   onToggleOverview,
-  tabCount = 1
+  tabCount = 1,
+  pinnedExtensions = [],
+  onTogglePin
 }) => {
   const [inputValue, setInputValue] = useState(activeTab?.url || '');
   const [isFocused, setIsFocused] = useState(false);
   const [commandIndex, setCommandIndex] = useState(0);
   const [suggestions, setSuggestions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isExtensionsDropdownOpen, setIsExtensionsDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -37,6 +47,16 @@ const SegmentedHub = memo(({
       setSelectedIndex(-1);
     }
   }, [activeTab?.url, isFocused]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isExtensionsDropdownOpen && !e.target.closest('.extensions-trigger')) {
+        setIsExtensionsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isExtensionsDropdownOpen]);
 
   useEffect(() => {
     if (isFocused || inputValue.length > 0) return;
@@ -108,7 +128,7 @@ const SegmentedHub = memo(({
 
   return (
     <div className={`segmented-hub group no-drag transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)] relative ${
-      isFocused ? 'w-180 h-12 bg-white shadow-2xl' : 'w-140 h-10'
+      isFocused ? 'w-180 h-13 bg-white shadow-2xl' : 'w-140 h-11'
     } ${!isVisible && !isFocused ? 'segmented-hub-hidden' : ''}`}>
       {activeTab?.isLoading && (
         <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orbit-accent animate-pulse z-10 rounded-b-[10px]" />
@@ -240,6 +260,89 @@ const SegmentedHub = memo(({
             </span>
           </div>
         </button>
+
+
+        {/* Pinned Extensions */}
+        {INSTALLED_EXTENSIONS.filter(ext => pinnedExtensions.includes(ext.id)).map(ext => (
+          <button 
+            key={ext.id}
+            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/5 text-[14px] transition-all cursor-pointer"
+            title={ext.name}
+          >
+            {ext.icon}
+          </button>
+        ))}
+
+        <div className="relative extensions-trigger">
+          <button 
+            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${isExtensionsDropdownOpen ? 'bg-black/10 text-black' : 'hover:bg-black/5 text-black/60 hover:text-black'}`}
+            title="Extensions"
+            onClick={() => setIsExtensionsDropdownOpen(!isExtensionsDropdownOpen)}
+          >
+            <Puzzle size={16} strokeWidth={1.5} />
+          </button>
+
+          <AnimatePresence>
+            {isExtensionsDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute top-full right-0 mt-2 w-72 bg-white border border-black/5 rounded-2xl shadow-2xl z-3000 overflow-hidden backdrop-blur-3xl"
+              >
+                <div className="p-3 border-b border-black/5 flex items-center justify-between bg-black/2">
+                  <span className="text-[11px] font-black uppercase tracking-widest text-black/40 pl-1">Exensions</span>
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={() => {
+                        onNavigate('orbit://extensions');
+                        setIsExtensionsDropdownOpen(false);
+                      }}
+                      className="text-[10px] font-bold text-orbit-accent hover:text-orbit-accent/80 transition-colors flex items-center gap-1 pr-2"
+                    >
+                      Manage Extensions
+                    </button>
+                    <button 
+                      onClick={() => setIsExtensionsDropdownOpen(false)}
+                      className="p-1 rounded-md hover:bg-black/10 text-black/40 hover:text-black transition-all"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="py-2">
+                  {INSTALLED_EXTENSIONS.map(ext => (
+                    <div key={ext.id} className="px-2 py-1">
+                      <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-black/5 group/item transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center text-lg">
+                          {ext.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-bold text-black truncate">{ext.name}</p>
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTogglePin(ext.id);
+                          }}
+                          className={`p-1.5 rounded-lg transition-all ${pinnedExtensions.includes(ext.id) ? 'text-orbit-accent bg-orbit-accent/5' : 'text-black/30 hover:text-black hover:bg-black/5'}`}
+                        >
+                          <Pin size={14} className={pinnedExtensions.includes(ext.id) ? 'fill-current' : ''} />
+                        </button>
+                        <button className="p-1.5 rounded-lg text-black/30 hover:text-black hover:bg-black/5 transition-all">
+                          <MoreVertical size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+
       </div>
     </div>
   );

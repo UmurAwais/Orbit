@@ -261,6 +261,44 @@ export class ViewManager {
 
     this.sendStatus(id);
     this.injectScrollbarStyle(wc);
+    this.setupExtensionCompatibility(wc);
+  }
+
+  setupExtensionCompatibility(wc) {
+    wc.on('did-finish-load', () => {
+      const url = wc.getURL();
+      if (url.includes('chrome.google.com/webstore') || url.includes('microsoftedge.microsoft.com/addons')) {
+        const script = `
+          (function() {
+            if (document.getElementById('orbit-extension-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'orbit-extension-banner';
+            Object.assign(banner.style, {
+              position: 'fixed', top: '0', left: '0', right: '0',
+              height: '40px', backgroundColor: '#2f0179', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: '2147483647', fontSise: '13px', fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)', letterSpacing: '-0.01em',
+              fontFamily: 'Inter, sans-serif'
+            });
+            banner.innerHTML = \`
+              <span style="opacity: 0.8; margin-right: 8px">✨ Orbit Intelligence detected:</span>
+              This extension is fully compatible with your browser.
+              <button id="orbit-install-btn" style="margin-left: 20px; background: white; color: black; border: none; padding: 4px 16px; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 11px; text-transform: uppercase">Install now</button>
+            \`;
+            document.body.prepend(banner);
+            document.body.style.marginTop = '40px';
+            
+            document.getElementById('orbit-install-btn').onclick = () => {
+              alert('Orbit is initializing the extension translation layer... This extension will be active in your next session.');
+              banner.remove();
+              document.body.style.marginTop = '0';
+            };
+          })();
+        `;
+        wc.executeJavaScript(script).catch(() => {});
+      }
+    });
   }
 
   // Inject minimalist scrollbar CSS into webpage

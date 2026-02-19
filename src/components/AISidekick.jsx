@@ -138,10 +138,8 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
                       <span className="text-[12px] text-black/40 italic">Synthesizing...</span>
                     </div>
                   ) : summary ? (
-                    <div className="text-[13px] text-black/80 leading-relaxed prose prose-sm max-w-none">
-                      {summary.split('\n').map((line, i) => (
-                        <p key={i} className="mb-2">{line}</p>
-                      ))}
+                    <div className="text-[13px] text-black/80 leading-relaxed max-w-none whitespace-pre-wrap">
+                      {summary}
                     </div>
                   ) : (
                     <button 
@@ -166,7 +164,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
                   }`}>
                     {msg.role === 'user' ? <User size={12} /> : <Bot size={12} />}
                   </div>
-                  <div className={`max-w-[85%] rounded-xl p-3 text-[13px] leading-relaxed ${
+                  <div className={`max-w-[85%] rounded-xl p-3 text-[13px] leading-relaxed whitespace-pre-wrap ${
                     msg.role === 'user' 
                       ? 'bg-black text-white rounded-tr-none' 
                       : 'bg-white border border-black/5 shadow-sm rounded-tl-none text-black/90'

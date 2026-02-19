@@ -7,6 +7,7 @@ import OrbitLogo from './components/OrbitLogo';
 import { Search, ArrowRight, Bookmark, X, Plus, History, Puzzle, Settings } from 'lucide-react';
 import TabSearch from './components/TabSearch';
 import AISidekick from './components/AISidekick';
+import ExtensionsManager from './components/ExtensionsManager';
 
 
 const App = () => {
@@ -21,6 +22,12 @@ const App = () => {
   const [activeTabId, setActiveTabId] = useState('default');
   const [isOverview, setIsOverview] = useState(false);
   const [isAISidekickOpen, setIsAISidekickOpen] = useState(false);
+  const [isExtensionsOpen, setIsExtensionsOpen] = useState(false);
+  const [pinnedExtensions, setPinnedExtensions] = useState(() => {
+    const saved = localStorage.getItem('orbit-pinned-extensions');
+    return saved ? JSON.parse(saved) : ['1']; // Default pin
+  });
+
   
   useEffect(() => {
     window.orbit.ipcRenderer.send('ui:toggle-sidekick', isAISidekickOpen);
@@ -28,11 +35,33 @@ const App = () => {
 
   const [recentlyClosed, setRecentlyClosed] = useState([]);
   
-  const [bookmarks] = useState([
-    { id: '1', title: 'Google', url: 'https://google.com' },
-    { id: '2', title: 'YouTube', url: 'https://youtube.com' },
-    { id: '3', title: 'GitHub', url: 'https://github.com' }
-  ]);
+  const [bookmarks, setBookmarks] = useState(() => {
+    const saved = localStorage.getItem('orbit-bookmarks');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', title: 'Google', url: 'https://google.com' },
+      { id: '2', title: 'YouTube', url: 'https://youtube.com' },
+      { id: '3', title: 'GitHub', url: 'https://github.com' }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('orbit-bookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
+
+  useEffect(() => {
+    localStorage.setItem('orbit-pinned-extensions', JSON.stringify(pinnedExtensions));
+  }, [pinnedExtensions]);
+
+  const togglePinExtension = useCallback((id) => {
+    setPinnedExtensions(prev => 
+      prev.includes(id) ? prev.filter(extId => extId !== id) : [...prev, id]
+    );
+  }, []);
+
+  const handleUpdateBookmarks = useCallback((newBookmarks) => {
+    setBookmarks(newBookmarks);
+  }, []);
+
 
   const activeTab = React.useMemo(() => tabs.find(t => t.id === activeTabId), [tabs, activeTabId]);
   const isHome = activeTab?.url === 'about:blank';
@@ -55,6 +84,7 @@ const App = () => {
   const handleSelectTab = useCallback((id) => {
     setActiveTabId(id);
     setIsOverview(false);
+    setIsExtensionsOpen(false);
     window.orbit.tabs.select({ id });
     window.orbit.ipcRenderer.send('ui:toggle-overview', false);
   }, []);
@@ -99,7 +129,14 @@ const App = () => {
     const query = input?.trim();
     if (!query) return;
 
+    if (query.toLowerCase() === 'orbit://extensions') {
+      setIsExtensionsOpen(true);
+      setIsOverview(false);
+      return;
+    }
+
     setIsOverview(false);
+    setIsExtensionsOpen(false);
     window.orbit.ipcRenderer.send('ui:toggle-overview', false);
     
     const isUrl = query.startsWith('http') || (query.includes('.') && !query.includes(' '));
@@ -160,6 +197,8 @@ const App = () => {
             }}
             onAddTab={() => handleAddTab()}
             tabCount={tabs.length}
+            pinnedExtensions={pinnedExtensions}
+            onTogglePin={togglePinExtension}
           />
         </div>
 
@@ -171,23 +210,36 @@ const App = () => {
           <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="Bookmarks" style={{ WebkitAppRegion: 'no-drag' }}>
             <Bookmark size={16} strokeWidth={1.5} />
           </button>
-          <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="Extensions" style={{ WebkitAppRegion: 'no-drag' }}>
+          <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="Extensions" style={{ WebkitAppRegion: 'no-drag' }} onClick={() => handleNavigate('orbit://extensions')}>
             <Puzzle size={16} strokeWidth={1.5} />
           </button>
+
           <button className="h-9 w-9 rounded-lg hover:bg-black/5 active:bg-black/10 flex items-center justify-center text-black/60 hover:text-black transition-all cursor-pointer" title="Settings" style={{ WebkitAppRegion: 'no-drag' }}>
             <Settings size={16} strokeWidth={1.5} />
           </button>
         </div>
       </div>
       
-      <main className={`w-full h-full pt-12 flex relative overflow-hidden pointer-events-auto transition-colors duration-300 ${isHome || isOverview ? 'bg-white' : 'bg-transparent'}`}>
+      <main className={`w-full h-full pt-12 flex relative overflow-hidden pointer-events-auto transition-colors duration-300 ${isHome || isOverview || isExtensionsOpen ? 'bg-white' : 'bg-transparent'}`}>
         {/* Browser Content / WebContentsView Section */}
         <motion.div 
           layout
-          className={`flex-1 h-full relative z-0 ${isHome || isOverview ? 'pointer-events-auto' : 'pointer-events-none'}`}
+          className={`flex-1 h-full relative z-0 ${isHome || isOverview || isExtensionsOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
           <AnimatePresence mode="wait">
-            {isHome && !isOverview && (
+            {isExtensionsOpen && (
+              <motion.div
+                key="extensions"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="w-full h-full"
+              >
+                <ExtensionsManager onNavigate={handleNavigate} />
+              </motion.div>
+            )}
+
+            {isHome && !isOverview && !isExtensionsOpen && (
               <motion.div 
                 key="newtab"
                 layout
@@ -196,7 +248,12 @@ const App = () => {
                 exit={{ opacity: 0 }}
                 className="w-full h-full flex flex-col items-center justify-center bg-white"
               >
-                <NewTab onNavigate={handleNavigate} bookmarks={bookmarks} />
+                <NewTab 
+                  onNavigate={handleNavigate} 
+                  bookmarks={bookmarks} 
+                  onUpdateBookmarks={handleUpdateBookmarks}
+                />
+
               </motion.div>
             )}
 
