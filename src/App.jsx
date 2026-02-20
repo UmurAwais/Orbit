@@ -4,7 +4,7 @@ import SegmentedHub from './components/SegmentedHub';
 import NewTab from './components/NewTab';
 import OrbitLogo from './components/OrbitLogo';
 import { Search, ArrowRight, Bookmark, X, Plus, History, Puzzle, Settings, Minus, Square, Key,
-  ChevronLeft, ChevronRight, LayoutGrid, Share, MoreHorizontal, User
+  ChevronLeft, ChevronRight, LayoutGrid, Share, MoreHorizontal, User, Download
 } from 'lucide-react';
 import TabSearch from './components/TabSearch';
 import AISidekick from './components/AISidekick';
@@ -233,14 +233,37 @@ const App = () => {
           </div>
 
           {/* Right-Aligned Global Tools */}
-          <div className="flex items-center gap-3 no-drag pl-4">
+          <div className="flex items-center gap-0.5 no-drag pl-4">
+             <button 
+                onClick={() => setIsExtensionsOpen(true)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                title="Extensions"
+             >
+               <Puzzle size={15} strokeWidth={2.2} />
+             </button>
+             <button 
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                title="Downloads"
+             >
+               <Download size={15} strokeWidth={2.2} />
+             </button>
+             <button 
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                title="History"
+             >
+               <History size={15} strokeWidth={2.2} />
+             </button>
              <button 
                 onClick={() => setIsSettingsOpen(true)}
-                className="w-8.5 h-8.5 flex items-center justify-center rounded-full hover:bg-nexus-hub-bg text-nexus-text-dim hover:text-nexus-text transition-all"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                title="Settings"
              >
                <Settings size={15} strokeWidth={2.2} />
              </button>
-             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-nexus-hub-bg border border-nexus-border text-[10px] font-bold text-nexus-text-dim hover:border-nexus-accent/30 transition-colors cursor-default">
+             
+             <div className="w-px h-4 bg-nexus-border mx-2" />
+
+             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 border border-nexus-border text-[10px] font-bold text-nexus-text-dim hover:text-nexus-text transition-all cursor-pointer">
                 <User size={12} strokeWidth={2.5} className="opacity-40" />
                 <span className="opacity-70 tracking-tight">sample@gmail.com</span>
              </div>
