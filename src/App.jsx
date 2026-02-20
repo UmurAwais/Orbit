@@ -209,7 +209,6 @@ const App = () => {
                     position: 'fixed',
                     left: previewPos.x,
                     top: previewPos.y,
-                    transform: 'translateX(-50%)',
                     zIndex: 9999,
                     pointerEvents: 'none'
                   }}
@@ -255,7 +254,7 @@ const App = () => {
                     onMouseEnter={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect();
                       setHoveredTabId(tab.id);
-                      setPreviewPos({ x: rect.left + rect.width / 2, y: rect.bottom + 12 });
+                      setPreviewPos({ x: rect.left, y: rect.bottom + 12 });
                     }}
                     onMouseLeave={() => setHoveredTabId(null)}
                     className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab relative`}
