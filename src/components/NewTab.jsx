@@ -1,204 +1,240 @@
-import React, { memo, useState, useCallback, useEffect } from 'react';
+import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Search,
-  History,
-  Settings,
-  Download,
-  DownloadCloud,
-  Sparkles,
-  Loader2,
-  Shield,
-  Puzzle,
-  User,
-  Share2,
-  Bell
+  Search, ArrowUpRight, Shield, Zap, Globe, TrendingUp,
+  Plus, Bookmark, History, Download
 } from 'lucide-react';
 
 import OrbitLogo from './OrbitLogo';
-import { getSmartSearchInsights } from '../services/ai';
 import BookmarkCard from './BookmarkCard';
 import AddBookmarkCard from './AddBookmarkCard';
-import DashboardHeader from './DashboardHeader';
 
+/* ─── Greeting ─── */
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 5)  return { text: 'Good Night',     emoji: '🌙' };
+  if (h < 12) return { text: 'Good Morning',   emoji: '☀️' };
+  if (h < 17) return { text: 'Good Afternoon', emoji: '🌤' };
+  if (h < 21) return { text: 'Good Evening',   emoji: '🌆' };
+  return       { text: 'Good Night',           emoji: '🌙' };
+};
+
+/* ─── Hardcoded session stats (like Brave/Edge) ─── */
+const STATS = [
+  { icon: Shield,      value: '2,847', label: 'Trackers Blocked',   accent: 'var(--orbit-accent)' },
+  { icon: Zap,         value: '184ms', label: 'Avg. Page Load',      accent: 'var(--orbit-accent)' },
+  { icon: Globe,       value: '99.9%', label: 'Secure Connections',  accent: 'var(--orbit-accent)' },
+];
+
+
+/* ─── Quick-nav items (inspired by Edge top bar links) ─── */
+const QUICK_NAV = [
+  { label: 'Bookmarks', icon: Bookmark,  action: null },
+  { label: 'History',   icon: History,   action: null },
+  { label: 'Downloads', icon: Download,  action: null },
+];
 
 const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
-  const [localQuery, setLocalQuery] = useState('');
-  const [time, setTime] = useState(new Date());
-  const [aiInsight, setAiInsight] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
+  const [query, setQuery]     = useState('');
+  const [focused, setFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [selIdx, setSelIdx]   = useState(-1);
+  const inputRef              = useRef(null);
+  const { text: greeting }    = getGreeting();
 
+  /* ── Suggestions (Chrome-style omnibox) ── */
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+    if (!focused || !query || query.startsWith('http')) { setSuggestions([]); return; }
+    const t = setTimeout(async () => {
+      try {
+        const res = await window.orbit?.ipcRenderer?.invoke('tab:getSuggestions', query) ?? [];
+        const isUrl = query.includes('.') && !query.includes(' ');
+        const items = res.slice(0, 6).map(s => ({ type: 'search', text: s }));
+        if (isUrl) items.unshift({ type: 'url', text: query });
+        setSuggestions(items);
+        setSelIdx(-1);
+      } catch { setSuggestions([]); }
+    }, 120);
+    return () => clearTimeout(t);
+  }, [query, focused]);
 
-  useEffect(() => {
-    if (localQuery.trim().length < 4) {
-      setAiInsight(null);
-      setIsSearching(false);
-      return;
+  const navigate = useCallback((val) => {
+    const v = val?.trim() || query.trim();
+    if (!v) return;
+    onNavigate(v);
+    setSuggestions([]);
+    setFocused(false);
+  }, [query, onNavigate]);
+
+  const handleKey = (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSelIdx(p => Math.min(p + 1, suggestions.length - 1)); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setSelIdx(p => Math.max(p - 1, -1)); }
+    if (e.key === 'Escape')    { setSuggestions([]); inputRef.current?.blur(); }
+    if (e.key === 'Enter' && selIdx >= 0 && suggestions[selIdx]) {
+      e.preventDefault(); navigate(suggestions[selIdx].text);
     }
+  };
 
-    const timer = setTimeout(async () => {
-      setIsSearching(true);
-      const insight = await getSmartSearchInsights(localQuery);
-      setAiInsight(insight);
-      setIsSearching(false);
-    }, 500);
+  const handleSubmit = (e) => { e.preventDefault(); navigate(); };
 
-    return () => clearTimeout(timer);
-  }, [localQuery]);
-
-  const handleInternalSubmit = useCallback((e) => {
-    if (e) e.preventDefault();
-    const val = localQuery.trim();
-    if (!val) return;
-    onNavigate(val);
-  }, [localQuery, onNavigate]);
-
-  const handleAddBookmark = useCallback((newBookmark) => {
-    onUpdateBookmarks([...bookmarks, newBookmark]);
-  }, [bookmarks, onUpdateBookmarks]);
-
-  const handleDeleteBookmark = useCallback((id) => {
-    onUpdateBookmarks(bookmarks.filter(b => b.id !== id));
-  }, [bookmarks, onUpdateBookmarks]);
-
-  const timeString = time.toLocaleTimeString('en-US', { 
-    hour: 'numeric', 
-    minute: '2-digit', 
-    hour12: false 
-  });
+  const addBookmark = useCallback((b) => onUpdateBookmarks([...bookmarks, b]), [bookmarks, onUpdateBookmarks]);
+  const delBookmark = useCallback((id) => onUpdateBookmarks(bookmarks.filter(b => b.id !== id)), [bookmarks, onUpdateBookmarks]);
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-orbit-bg overflow-hidden font-sans selection:bg-orbit-accent selection:text-white">
-      
-      {/* Subtle Animated Background - Zen Mode */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-50%] left-[-20%] w-[80vw] h-[80vw] bg-orbit-accent/5 rounded-full blur-[150px] animate-pulse duration-10000" />
-        <div className="absolute bottom-[-50%] right-[-20%] w-[80vw] h-[80vw] bg-blue-500/5 rounded-full blur-[150px] animate-pulse duration-75" />
+    <div className="nt">
+      {/* ── Layered CSS Background ── */}
+      <div className="nt-bg" aria-hidden="true">
+        <div className="nt-bg-1" />
+        <div className="nt-bg-2" />
+        <div className="nt-bg-3" />
+        <div className="nt-bg-grid" />
       </div>
 
-      {/* <DashboardHeader onNavigate={onNavigate} /> */}
+      <div className="nt-body">
 
-      <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-6 pb-24 w-full max-w-7xl mx-auto">
-        
-        {/* Typographic Centerpiece */}
-        <div className="flex flex-col items-center mb-16 select-none">
-          <h1 className="text-[12rem] leading-none font-thin text-orbit-text tracking-tighter opacity-90" style={{ fontVariationSettings: '"wght" 100' }}>
-            {timeString}
-          </h1>
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-orbit-text-dim mt-4">
-            {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
+        {/* ── Greeting (Firefox NTP style) ── */}
+        <motion.div
+          className="nt-greeting-row"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="nt-brand">
+            <OrbitLogo size={34} />
+            <span className="nt-brand-name">Orbit</span>
+          </div>
+          <span className="nt-greeting-text">{greeting}</span>
+        </motion.div>
 
-        {/* The Omni-Bar (Simplified/Static) */}
-        <div className="w-full max-w-2xl relative group z-20 mb-20">
-          <form onSubmit={handleInternalSubmit} className="relative">
-            {/* Static container without scaling or glows */}
-            <div className="relative h-16 w-full bg-orbit-surface/80 backdrop-blur-3xl rounded-full border border-orbit-border flex items-center px-8 gap-5 transition-colors focus-within:bg-orbit-surface">
-              <Search size={24} strokeWidth={1.5} className="text-orbit-text-dim" />
-              
-              <input 
-                type="text" 
-                placeholder="Search or enter URL..."
-                value={localQuery}
-                onChange={(e) => setLocalQuery(e.target.value)}
-                className="bg-transparent border-none outline-none w-full text-xl text-orbit-text placeholder:text-orbit-text-dim/50 font-medium h-full"
-                autoFocus
-                spellCheck={false}
-              />
-              
-              <div className="flex items-center gap-3">
-                 {isSearching ? (
-                   <Loader2 size={20} className="text-orbit-accent animate-spin" />
-                 ) : localQuery.length > 0 && (
-                   <button className="p-2.5 rounded-full bg-orbit-text text-orbit-bg hover:scale-110 active:scale-95 transition-all text-sm font-bold">
-                      <Share2 size={16} strokeWidth={2.5} className="rotate-90" />
-                   </button>
-                 )}
-              </div>
-            </div>
-
-            {/* Intelligent Suggestions */}
+        {/* ── Omnibox Search (Chrome + Edge hybrid) ── */}
+        <motion.div
+          className="nt-omnibox-wrap"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <form onSubmit={handleSubmit} className={`nt-omnibox ${focused ? 'nt-omnibox--focus' : ''}`}>
+            <Search size={17} strokeWidth={2} className="nt-omnibox-icon" />
+            <input
+              ref={inputRef}
+              className="nt-omnibox-input"
+              type="text"
+              placeholder="Search or enter address"
+              value={query}
+              onChange={e => { setQuery(e.target.value); setSelIdx(-1); }}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setTimeout(() => { setFocused(false); setSuggestions([]); }, 150)}
+              onKeyDown={handleKey}
+              autoFocus
+              spellCheck={false}
+              autoComplete="off"
+            />
             <AnimatePresence>
-              {aiInsight && localQuery.length >= 4 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, y: 5, filter: 'blur(10px)' }}
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  className="absolute top-full left-4 right-4 mt-6 p-1 bg-orbit-bg/80 backdrop-blur-3xl border border-orbit-border/50 rounded-3xl shadow-2xl overflow-hidden"
+              {query.length > 0 && (
+                <motion.button
+                  type="submit"
+                  className="nt-omnibox-go"
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.6 }}
+                  transition={{ duration: 0.12 }}
                 >
-                  <div className="p-6 bg-linear-to-b from-white/5 to-transparent rounded-[20px]">
-                    <div className="flex gap-4">
-                      <div className="mt-1">
-                        <Sparkles size={18} className="text-orbit-accent animate-pulse" />
-                      </div>
-                      <div className="space-y-4 w-full">
-                        <p className="text-sm text-orbit-text/90 leading-relaxed font-medium">
-                          {aiInsight.fact}
-                        </p>
-                        
-                        {aiInsight.suggestions?.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {aiInsight.suggestions.map((s, i) => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => { setLocalQuery(s); onNavigate(s); }}
-                                className="px-4 py-2 rounded-xl bg-orbit-surface hover:bg-orbit-text hover:text-orbit-bg border border-orbit-border hover:border-transparent text-orbit-text text-xs font-semibold tracking-wide transition-all duration-300"
-                              >
-                                {s}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+                  <ArrowUpRight size={15} strokeWidth={2.5} />
+                </motion.button>
               )}
             </AnimatePresence>
           </form>
-        </div>
 
-        {/* Minimalist Shortcuts */}
-        <div className="w-full">
-          <div className="flex flex-wrap justify-center gap-6">
-            <AnimatePresence layout>
-              {bookmarks.map((item) => (
-                <BookmarkCard 
+          {/* Chrome-style Suggestion Dropdown */}
+          <AnimatePresence>
+            {focused && suggestions.length > 0 && (
+              <motion.div
+                className="nt-suggestions"
+                initial={{ opacity: 0, y: 4, scaleY: 0.96 }}
+                animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                exit={{ opacity: 0, y: 4, scaleY: 0.96 }}
+                transition={{ duration: 0.15 }}
+              >
+                {suggestions.map((item, i) => (
+                  <div
+                    key={i}
+                    className={`nt-suggestion-row ${selIdx === i ? 'nt-suggestion-row--active' : ''}`}
+                    onMouseDown={() => navigate(item.text)}
+                    onMouseEnter={() => setSelIdx(i)}
+                  >
+                    <div className="nt-suggestion-icon">
+                      {item.type === 'url' ? <Globe size={13} /> : <Search size={13} />}
+                    </div>
+                    <span className="nt-suggestion-text">{item.text}</span>
+                    {item.type === 'url' && <span className="nt-suggestion-tag">Visit</span>}
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* ── Top Sites (Chrome + Firefox style) ── */}
+        <motion.section
+          className="nt-topsites"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {bookmarks.length > 0 && (
+            <div className="nt-section-label">Favourites</div>
+          )}
+          <div className="nt-topsites-grid">
+            <AnimatePresence mode="popLayout">
+              {bookmarks.map(item => (
+                <BookmarkCard
                   key={item.id}
                   title={item.title}
                   url={item.url}
                   onClick={onNavigate}
-                  onDelete={() => handleDeleteBookmark(item.id)}
+                  onDelete={() => delBookmark(item.id)}
                   variant="minimal"
                 />
               ))}
-              <AddBookmarkCard onAdd={handleAddBookmark} variant="minimal" />
             </AnimatePresence>
+            <AddBookmarkCard onAdd={addBookmark} variant="minimal" />
           </div>
-        </div>
-      </main>
+        </motion.section>
 
-      {/* Floating Status Bar */}
-      <footer className="absolute bottom-8 w-full flex justify-center pointer-events-none">
-         <div className="px-6 py-2 rounded-full bg-orbit-surface/50 backdrop-blur-md border border-orbit-border/50 text-[10px] font-bold uppercase tracking-widest text-orbit-text-dim flex items-center gap-4 shadow-sm">
-            <span className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-              Connected
-            </span>
-            <span className="w-px h-3 bg-orbit-border" />
-            <span>v2.5.0</span>
-         </div>
-      </footer>
+        {/* ── Privacy + Performance Stats (Brave + Edge) ── */}
+        <motion.div
+          className="nt-stats-row"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {STATS.map(({ icon: Icon, value, label, accent }, i) => (
+            <div className="nt-stat-card" key={i}>
+              <div className="nt-stat-icon" style={{ '--accent': accent }}>
+                <Icon size={14} strokeWidth={2} />
+              </div>
+              <div className="nt-stat-body">
+                <span className="nt-stat-value" style={{ '--accent': accent }}>{value}</span>
+                <span className="nt-stat-label">{label}</span>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+
+      </div>
+
+      {/* ── Status ── */}
+      <motion.div
+        className="nt-status"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <span className="nt-status-dot" />
+        <span className="nt-status-text">Orbit · Private & Fast</span>
+      </motion.div>
     </div>
   );
 };
 
 export default memo(NewTab);
-
