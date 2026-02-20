@@ -25,4 +25,25 @@ contextBridge.exposeInMainWorld('orbit', {
       return () => ipcRenderer.removeListener(channel, subscription);
     },
   },
+  downloads: {
+    list: () => ipcRenderer.invoke('downloads:list'),
+    openFile: (id) => ipcRenderer.send('downloads:openFile', id),
+    showInFolder: (id) => ipcRenderer.send('downloads:showInFolder', id),
+    remove: (id) => ipcRenderer.send('downloads:remove', id),
+    onStarted: (callback) => {
+      const sub = (event, data) => callback(data);
+      ipcRenderer.on('download:started', sub);
+      return () => ipcRenderer.removeListener('download:started', sub);
+    },
+    onUpdated: (callback) => {
+      const sub = (event, data) => callback(data);
+      ipcRenderer.on('download:updated', sub);
+      return () => ipcRenderer.removeListener('download:updated', sub);
+    },
+    onListUpdated: (callback) => {
+      const sub = (event, data) => callback(data);
+      ipcRenderer.on('downloads:list-updated', sub);
+      return () => ipcRenderer.removeListener('downloads:list-updated', sub);
+    }
+  }
 });

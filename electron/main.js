@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, shell, nativeTheme } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, shell, nativeTheme, session } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ViewManager } from './ViewManager.js';
@@ -319,6 +319,81 @@ function setupIpcHandlers() {
     else mainWindow?.maximize();
   });
   ipcMain.on('window-close', () => mainWindow?.close());
+
+  // Download Management
+  const downloads = new Map();
+
+  const setupDownloadHandler = (ses) => {
+    ses.on('will-download', (event, item, webContents) => {
+      const id = Date.now().toString();
+      const filename = item.getFilename();
+      const totalBytes = item.getTotalBytes();
+      const savePath = item.getSavePath() || path.join(app.getPath('downloads'), filename);
+      
+      // Default behavior: save to downloads folder
+      if (!item.getSavePath()) item.setSavePath(savePath);
+
+      const downloadInfo = {
+        id,
+        filename,
+        totalBytes,
+        receivedBytes: 0,
+        percentage: 0,
+        state: 'progressing',
+        path: savePath,
+        startTime: Date.now()
+      };
+
+      downloads.set(id, downloadInfo);
+      mainWindow.webContents.send('download:started', downloadInfo);
+
+      item.on('updated', (event, state) => {
+        if (state === 'interrupted') {
+          downloadInfo.state = 'interrupted';
+        } else if (state === 'progressing') {
+          downloadInfo.receivedBytes = item.getReceivedBytes();
+          downloadInfo.percentage = totalBytes > 0 ? Math.floor((downloadInfo.receivedBytes / totalBytes) * 100) : 0;
+          downloadInfo.state = 'progressing';
+        }
+        mainWindow.webContents.send('download:updated', downloadInfo);
+      });
+
+      item.once('done', (event, state) => {
+        if (state === 'completed') {
+          downloadInfo.state = 'completed';
+          downloadInfo.percentage = 100;
+        } else {
+          downloadInfo.state = 'failed';
+        }
+        mainWindow.webContents.send('download:updated', downloadInfo);
+      });
+    });
+  };
+
+  // Attach to default session and any future sessions
+  setupDownloadHandler(nativeTheme.session || session.defaultSession);
+  app.on('session-created', (ses) => setupDownloadHandler(ses));
+
+  ipcMain.handle('downloads:list', () => Array.from(downloads.values()).reverse());
+  
+  ipcMain.on('downloads:openFile', (event, id) => {
+    const item = downloads.get(id);
+    if (item && item.state === 'completed') {
+      shell.openPath(item.path);
+    }
+  });
+
+  ipcMain.on('downloads:showInFolder', (event, id) => {
+    const item = downloads.get(id);
+    if (item) {
+      shell.showItemInFolder(item.path);
+    }
+  });
+
+  ipcMain.on('downloads:remove', (event, id) => {
+    downloads.delete(id);
+    mainWindow.webContents.send('downloads:list-updated', Array.from(downloads.values()).reverse());
+  });
 }
 
 app.whenReady().then(() => {

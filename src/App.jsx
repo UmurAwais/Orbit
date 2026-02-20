@@ -11,6 +11,7 @@ import AISidekick from './components/AISidekick';
 import ExtensionsManager from './components/ExtensionsManager';
 import SettingsManager from './components/SettingsManager';
 import TabOverview from './components/TabOverview';
+import DownloadsManager from './components/DownloadsManager';
 
 const App = () => {
   const [tabs, setTabs] = useState([{
@@ -29,6 +30,7 @@ const App = () => {
   const [isAISidekickOpen, setIsAISidekickOpen] = useState(false);
   const [isExtensionsOpen, setIsExtensionsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
   const [pinnedExtensions, setPinnedExtensions] = useState(() => {
     const saved = localStorage.getItem('orbit-pinned-extensions');
     return saved ? JSON.parse(saved) : ['1'];
@@ -114,6 +116,7 @@ const App = () => {
     setIsOverview(false);
     setIsExtensionsOpen(false);
     setIsSettingsOpen(false);
+    setIsDownloadsOpen(false);
     window.orbit.tabs.select({ id });
     window.orbit.ipcRenderer.send('ui:toggle-overview', false);
   }, []);
@@ -266,7 +269,8 @@ const App = () => {
                <Puzzle size={15} strokeWidth={2.2} />
              </button>
              <button 
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100 transition-all duration-200 cursor-pointer"
+                onClick={() => setIsDownloadsOpen(!isDownloadsOpen)}
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${isDownloadsOpen ? 'bg-orbit-accent text-white shadow-lg' : 'hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100'}`}
                 title="Downloads"
              >
                <Download size={15} strokeWidth={2.2} />
@@ -296,7 +300,7 @@ const App = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full h-[calc(100vh-92px)] mt-[92px] relative z-0">
+      <main className="w-full h-[calc(100vh-92px)] mt-23 relative z-0">
         <div 
           className={`flex-1 h-full relative z-0 ${isHome || isOverview || isExtensionsOpen || isSettingsOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
@@ -428,6 +432,12 @@ const App = () => {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isDownloadsOpen && (
+          <DownloadsManager onClose={() => setIsDownloadsOpen(false)} />
         )}
       </AnimatePresence>
 
