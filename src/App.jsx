@@ -191,7 +191,7 @@ const App = () => {
         {/* Tier 2: The Tab Deck (Bottom Row) - Integrated Stream */}
         <div className="nexus-row nexus-bottom-row pointer-events-auto px-4">
           {/* Left-Aligned Control Stream: Overview -> Tabs -> Add */}
-          <div className="flex-1 flex items-center gap-3 no-drag overflow-hidden">
+          <div className="flex-1 flex items-center gap-1 no-drag overflow-hidden">
             {/* Apple-style Tab Overview Toggle */}
             <button 
               onClick={() => {
@@ -202,10 +202,15 @@ const App = () => {
               className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? 'bg-orbit-accent text-white shadow-lg' : 'hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100'}`}
               title="Show Tab Overview"
             >
-              <LayoutGrid size={16} strokeWidth={2.2} />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              </svg>
             </button>
 
-            <div className="w-px h-4 bg-nexus-border/50 mx-1 shrink-0" />
+            <div className="w-px h-4 bg-nexus-border/20 mx-0.5 shrink-0" />
 
             {/* Tab Preview Overlay */}
             <AnimatePresence>

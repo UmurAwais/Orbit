@@ -101,7 +101,12 @@ const TabOverview = ({
                     {tab.favicon ? (
                       <img src={tab.favicon} className="w-3.5 h-3.5 object-contain" alt="" />
                     ) : (
-                      <LayoutGrid size={12} className="opacity-20 text-orbit-text" />
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-20 text-orbit-text">
+                        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                        <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                      </svg>
                     )}
                   </div>
                   <span className="text-[13px] font-bold truncate text-orbit-text tracking-tight">
