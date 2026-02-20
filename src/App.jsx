@@ -10,6 +10,7 @@ import TabSearch from './components/TabSearch';
 import AISidekick from './components/AISidekick';
 import ExtensionsManager from './components/ExtensionsManager';
 import SettingsManager from './components/SettingsManager';
+import TabOverview from './components/TabOverview';
 
 const App = () => {
   const [tabs, setTabs] = useState([{
@@ -189,13 +190,22 @@ const App = () => {
 
         {/* Tier 2: The Tab Deck (Bottom Row) - Integrated Stream */}
         <div className="nexus-row nexus-bottom-row pointer-events-auto px-4">
-          {/* Left-Aligned Control Stream: Group -> Tabs -> Add */}
+          {/* Left-Aligned Control Stream: Overview -> Tabs -> Add */}
           <div className="flex-1 flex items-center gap-3 no-drag overflow-hidden">
-            {/* Workspace Context */}
-            {/* <div className="nexus-workspace-group shrink-0 hover:bg-nexus-tab-hover transition-colors">
-              <div className="nexus-workspace-dot" />
-              <span className="text-nexus-text">Workspace</span>
-            </div> */}
+            {/* Apple-style Tab Overview Toggle */}
+            <button 
+              onClick={() => {
+                const newState = !isOverview;
+                setIsOverview(newState);
+                window.orbit.ipcRenderer.send('ui:toggle-overview', newState);
+              }}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? 'bg-orbit-accent text-white shadow-lg' : 'hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100'}`}
+              title="Show Tab Overview"
+            >
+              <LayoutGrid size={16} strokeWidth={2.2} />
+            </button>
+
+            <div className="w-px h-4 bg-nexus-border/50 mx-1 shrink-0" />
 
             {/* Tab Preview Overlay */}
             <AnimatePresence>
@@ -228,7 +238,7 @@ const App = () => {
                       </div>
                     )}
                     {/* Glass Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-orbit-surface/50" />
+                    <div className="absolute inset-0 bg-linear-to-b from-transparent to-orbit-surface/50" />
                   </div>
                   <div className="p-3 bg-orbit-surface/90">
                     <div className="flex items-center gap-2 truncate">
@@ -348,6 +358,17 @@ const App = () => {
                   onClose={() => setIsSettingsOpen(false)}
                 />
               </motion.div>
+            )}
+
+            {isOverview && (
+              <TabOverview 
+                tabs={tabs}
+                activeTabId={activeTabId}
+                onSelectTab={handleSelectTab}
+                onCloseTab={handleCloseTab}
+                onAddTab={handleAddTab}
+                onClose={() => setIsOverview(false)}
+              />
             )}
 
             {isHome && !isOverview && !isExtensionsOpen && !isSettingsOpen && (
