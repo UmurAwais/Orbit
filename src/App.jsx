@@ -153,9 +153,10 @@ const App = () => {
   return (
     <div className={`w-full h-screen overflow-hidden relative transition-colors duration-200 bg-orbit-bg`}>
       <div className="absolute top-0 left-0 right-0 h-24 drag-area z-0 pointer-events-none" />
-      
+
       {/* Orbital Nexus - Global Hybrid Header (Modern Matte Rebuild) */}
       <header className="nexus-chassis drag-area no-drag">
+        <div className="nexus-chassis-bg" />
         {/* Tier 1: The Command Deck (Top Row) - Primary Navigation */}
         <div className="nexus-row nexus-top-row pointer-events-auto px-4">
            {/* Left Section: Balanced Spacer */}
@@ -191,7 +192,7 @@ const App = () => {
         {/* Tier 2: The Tab Deck (Bottom Row) - Integrated Stream */}
         <div className="nexus-row nexus-bottom-row pointer-events-auto px-4">
           {/* Left-Aligned Control Stream: Overview -> Tabs -> Add */}
-          <div className="flex-1 flex items-center gap-1 no-drag overflow-hidden">
+          <div className="flex-1 flex items-center gap-1 no-drag">
             {/* Apple-style Tab Overview Toggle */}
             <button 
               onClick={() => {
@@ -212,55 +213,9 @@ const App = () => {
 
             <div className="w-px h-4 bg-nexus-border/20 mx-0.5 shrink-0" />
 
-            {/* Tab Preview Overlay */}
-            <AnimatePresence>
-              {hoveredTabId && tabs.find(t => t.id === hoveredTabId)?.url !== 'about:blank' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                  style={{ 
-                    position: 'fixed',
-                    left: previewPos.x,
-                    top: previewPos.y,
-                    zIndex: 9999,
-                    pointerEvents: 'none'
-                  }}
-                  className="w-56 overflow-hidden rounded-xl bg-orbit-surface border border-orbit-border shadow-2xl backdrop-blur-xl"
-                >
-                  <div className="h-32 w-full bg-orbit-card relative overflow-hidden">
-                    {tabs.find(t => t.id === hoveredTabId)?.preview ? (
-                      <img 
-                        src={tabs.find(t => t.id === hoveredTabId).preview} 
-                        className="w-full h-full object-cover"
-                        alt="Preview"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-20">
-                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-orbit-text" />
-                        <span className="text-[10px] uppercase tracking-widest font-bold">Capturing...</span>
-                      </div>
-                    )}
-                    {/* Glass Overlay */}
-                    <div className="absolute inset-0 bg-linear-to-b from-transparent to-orbit-surface/50" />
-                  </div>
-                  <div className="p-3 bg-orbit-surface/90">
-                    <div className="flex items-center gap-2 truncate">
-                      {tabs.find(t => t.id === hoveredTabId)?.favicon && (
-                        <img src={tabs.find(t => t.id === hoveredTabId).favicon} className="w-3 h-3 object-contain" alt="" />
-                      )}
-                      <span className="text-[11px] font-bold truncate text-orbit-text">
-                        {tabs.find(t => t.id === hoveredTabId)?.title || 'Untitled'}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
             {/* Seamless Tab Tray */}
-            <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+            <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar z-9999">
               <div className="nexus-tabs-tray">
                 {tabs.map((tab) => (
                   <div 
@@ -269,7 +224,7 @@ const App = () => {
                     onMouseEnter={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect();
                       setHoveredTabId(tab.id);
-                      setPreviewPos({ x: rect.left, y: rect.bottom + 12 });
+                      setPreviewPos({ x: rect.left, y: rect.bottom }); // Tighter upward positioning
                     }}
                     onMouseLeave={() => setHoveredTabId(null)}
                     className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab relative`}
@@ -340,6 +295,56 @@ const App = () => {
              </div>
           </div>
         </div>
+
+        {/* Tab Preview Overlay (Header-Relative Portal) */}
+        <AnimatePresence>
+          {hoveredTabId && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              style={{ 
+                position: 'fixed',
+                left: previewPos.x,
+                top: previewPos.y,
+                zIndex: 10000,
+                pointerEvents: 'none'
+              }}
+              className="w-56 overflow-visible rounded-xl bg-orbit-bg border border-orbit-accent/30 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-3xl"
+            >
+              {/* Decorative Arrow */}
+              <div className="absolute -top-1.5 left-6 w-3 h-3 bg-orbit-bg border-t border-l border-orbit-accent/30 rotate-45 z-10" />
+              
+              <div className="h-32 w-full bg-orbit-card relative overflow-hidden rounded-t-xl">
+                {tabs.find(t => t.id === hoveredTabId)?.preview ? (
+                  <img 
+                    src={tabs.find(t => t.id === hoveredTabId).preview} 
+                    className="w-full h-full object-cover"
+                    alt="Preview"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-20">
+                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-orbit-text" />
+                    <span className="text-[10px] uppercase tracking-widest font-bold">Capturing...</span>
+                  </div>
+                )}
+                {/* Glass Overlay */}
+                <div className="absolute inset-0 bg-linear-to-b from-transparent to-orbit-surface/50" />
+              </div>
+              <div className="p-3 bg-orbit-surface/90 rounded-b-xl">
+                <div className="flex items-center gap-2 truncate">
+                  {tabs.find(t => t.id === hoveredTabId)?.favicon && (
+                    <img src={tabs.find(t => t.id === hoveredTabId).favicon} className="w-3 h-3 object-contain" alt="" />
+                  )}
+                  <span className="text-[11px] font-bold truncate text-orbit-text">
+                    {tabs.find(t => t.id === hoveredTabId)?.title || 'New Tab'}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Main Content Area */}
@@ -427,6 +432,7 @@ const App = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };

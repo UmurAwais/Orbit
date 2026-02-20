@@ -100,15 +100,25 @@ body {
   top: 0;
   left: 0;
   right: 0;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  z-index: 5000;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.nexus-chassis-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 92px;
   background: var(--nexus-bg);
   border-bottom: 1px solid var(--nexus-border);
-  display: flex;
-  flex-direction: column;
-  z-index: 2000;
   box-shadow: var(--nexus-shadow);
-  padding: 0;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  z-index: -1;
+  pointer-events: auto;
 }
 
 .nexus-row {
