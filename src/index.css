@@ -879,13 +879,13 @@ body {
 .nt-stat-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 12px 18px;
   background: color-mix(in srgb, var(--orbit-surface) 70%, transparent);
   backdrop-filter: blur(16px) saturate(1.4);
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   border: 1px solid var(--orbit-border);
-  border-radius: 20px;
+  border-radius: 18px;
   box-shadow:
     0 1px 0 rgba(255,255,255,0.45) inset,
     0 4px 16px -6px rgba(0,0,0,0.05);
@@ -907,9 +907,9 @@ body {
 }
 
 .nt-stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -926,7 +926,7 @@ body {
 }
 
 .nt-stat-value {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -934,7 +934,7 @@ body {
 }
 
 .nt-stat-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--orbit-text-dim);
   opacity: 0.55;
