@@ -25,7 +25,7 @@ const TabOverview = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-100 bg-orbit-bg/90 backdrop-blur-[50px] overflow-y-auto"
+      className="absolute inset-0 z-6000 bg-orbit-bg/90 backdrop-blur-[50px] overflow-y-auto"
     >
       {/* Safari-style Command Center */}
       <div className="sticky top-0 left-0 right-0 z-50 px-12 py-8 bg-linear-to-b from-orbit-bg via-orbit-bg/80 to-transparent backdrop-blur-sm">
@@ -52,7 +52,7 @@ const TabOverview = ({
 
           <div className="flex-1 flex justify-end gap-3">
             <button 
-              onClick={onAddTab}
+              onClick={() => onAddTab()}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-orbit-surface border border-orbit-border hover:bg-orbit-accent hover:text-white transition-all shadow-soft cursor-pointer"
             >
               <Plus size={20} />
@@ -143,25 +143,6 @@ const TabOverview = ({
             </motion.div>
           ))}
 
-          {/* Minimalist Add Button - Height Matched */}
-          <motion.button
-            variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}
-            onClick={onAddTab}
-            className="group cursor-pointer relative rounded-3xl border-2 border-dashed border-orbit-border hover:border-orbit-accent bg-orbit-surface/20 flex flex-col overflow-hidden transition-all duration-300"
-          >
-            {/* Dummy Header to match height */}
-            <div className="px-5 py-3.5 flex items-center border-b border-transparent">
-              <div className="w-6 h-6 opacity-0" />
-            </div>
-
-            {/* Icon Centered in Aspect Container */}
-            <div className="w-full aspect-video flex flex-col items-center justify-center gap-3">
-              <div className="w-14 h-14 rounded-2xl bg-orbit-surface border border-orbit-border shadow-soft flex items-center justify-center text-orbit-text group-hover:scale-110 group-hover:text-orbit-accent transition-all duration-500">
-                <Plus size={32} strokeWidth={2} />
-              </div>
-              <span className="text-xs font-black uppercase tracking-widest text-orbit-text/30 group-hover:text-orbit-accent/60 transition-colors">New Tab</span>
-            </div>
-          </motion.button>
         </motion.div>
       </div>
     </motion.div>

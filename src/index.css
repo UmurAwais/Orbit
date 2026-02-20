@@ -100,12 +100,13 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 500px;
+  height: 92px; /* Normal height to prevent blocking clicks */
   display: flex;
   flex-direction: column;
   z-index: 5000;
-  pointer-events: none;
-  overflow: visible;
+  padding: 0;
+  overflow: visible; /* Allow previews to overflow visually */
+  transition: opacity 0.3s ease;
 }
 
 .nexus-chassis-bg {

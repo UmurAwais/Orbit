@@ -127,14 +127,12 @@ const App = () => {
   }, [handleSelectTab]);
 
   const handleCloseTab = useCallback((id) => {
+    if (hoveredTabId === id) setHoveredTabId(null);
     setTabs(prev => {
       const newTabs = prev.filter(t => t.id !== id);
       if (newTabs.length === 0) {
-        const defaultId = Date.now().toString();
-        const defaultTab = { id: defaultId, title: 'New Tab', url: 'about:blank', isLoading: false, canGoBack: false, canGoForward: false };
-        window.orbit.tabs.create({ id: defaultId, url: 'about:blank' });
-        setActiveTabId(defaultId);
-        return [defaultTab];
+        window.orbit.ipcRenderer.send('window-close');
+        return prev; // Window will close, state change doesn't matter much
       }
       if (activeTabId === id) {
         const nextId = newTabs[newTabs.length - 1].id;
@@ -144,7 +142,7 @@ const App = () => {
       return newTabs;
     });
     window.orbit.tabs.close({ id });
-  }, [activeTabId]);
+  }, [activeTabId, hoveredTabId]);
 
   const handleNavigate = useCallback((url) => {
     window.orbit.tabs.navigate({ id: activeTabId, url });
@@ -295,60 +293,10 @@ const App = () => {
              </div>
           </div>
         </div>
-
-        {/* Tab Preview Overlay (Header-Relative Portal) */}
-        <AnimatePresence>
-          {hoveredTabId && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              style={{ 
-                position: 'fixed',
-                left: previewPos.x,
-                top: previewPos.y,
-                zIndex: 10000,
-                pointerEvents: 'none'
-              }}
-              className="w-56 overflow-visible rounded-xl bg-orbit-bg border border-orbit-accent/30 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-3xl"
-            >
-              {/* Decorative Arrow */}
-              <div className="absolute -top-1.5 left-6 w-3 h-3 bg-orbit-bg border-t border-l border-orbit-accent/30 rotate-45 z-10" />
-              
-              <div className="h-32 w-full bg-orbit-card relative overflow-hidden rounded-t-xl">
-                {tabs.find(t => t.id === hoveredTabId)?.preview ? (
-                  <img 
-                    src={tabs.find(t => t.id === hoveredTabId).preview} 
-                    className="w-full h-full object-cover"
-                    alt="Preview"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-20">
-                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-orbit-text" />
-                    <span className="text-[10px] uppercase tracking-widest font-bold">Capturing...</span>
-                  </div>
-                )}
-                {/* Glass Overlay */}
-                <div className="absolute inset-0 bg-linear-to-b from-transparent to-orbit-surface/50" />
-              </div>
-              <div className="p-3 bg-orbit-surface/90 rounded-b-xl">
-                <div className="flex items-center gap-2 truncate">
-                  {tabs.find(t => t.id === hoveredTabId)?.favicon && (
-                    <img src={tabs.find(t => t.id === hoveredTabId).favicon} className="w-3 h-3 object-contain" alt="" />
-                  )}
-                  <span className="text-[11px] font-bold truncate text-orbit-text">
-                    {tabs.find(t => t.id === hoveredTabId)?.title || 'New Tab'}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full h-full pt-20.5 relative z-0">
+      <main className="w-full h-[calc(100vh-92px)] mt-[92px] relative z-0">
         <div 
           className={`flex-1 h-full relative z-0 ${isHome || isOverview || isExtensionsOpen || isSettingsOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
@@ -429,6 +377,56 @@ const App = () => {
                   </div>
                </div>
              </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Global Tab Preview Overlay (Top-Level Portal) */}
+      <AnimatePresence>
+        {hoveredTabId && tabs.some(t => t.id === hoveredTabId) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            style={{ 
+              position: 'fixed',
+              left: previewPos.x,
+              top: previewPos.y,
+              zIndex: 20000, // Highest priority
+              pointerEvents: 'none'
+            }}
+            className="w-56 overflow-visible rounded-xl bg-orbit-bg border border-orbit-accent/30 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-3xl"
+          >
+            {/* Decorative Arrow */}
+            <div className="absolute -top-1.5 left-6 w-3 h-3 bg-orbit-bg border-t border-l border-orbit-accent/30 rotate-45 z-10" />
+            
+            <div className="h-32 w-full bg-orbit-card relative overflow-hidden rounded-t-xl">
+              {tabs.find(t => t.id === hoveredTabId)?.preview ? (
+                <img 
+                  src={tabs.find(t => t.id === hoveredTabId).preview} 
+                  className="w-full h-full object-cover"
+                  alt="Preview"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-20">
+                  <div className="w-12 h-12 rounded-full border-2 border-dashed border-orbit-text" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold">Capturing...</span>
+                </div>
+              )}
+              {/* Glass Overlay */}
+              <div className="absolute inset-0 bg-linear-to-b from-transparent to-orbit-surface/50" />
+            </div>
+            <div className="p-3 bg-orbit-surface/90 rounded-b-xl">
+              <div className="flex items-center gap-2 truncate">
+                {tabs.find(t => t.id === hoveredTabId)?.favicon && (
+                  <img src={tabs.find(t => t.id === hoveredTabId).favicon} className="w-3 h-3 object-contain" alt="" />
+                )}
+                <span className="text-[11px] font-bold truncate text-orbit-text">
+                  {tabs.find(t => t.id === hoveredTabId)?.title || 'New Tab'}
+                </span>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
