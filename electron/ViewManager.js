@@ -1,16 +1,31 @@
-import { BrowserWindow, WebContentsView, ipcMain } from 'electron';
+import { WebContentsView } from 'electron';
 
 export class ViewManager {
-  constructor(mainWindow) {
+  constructor(mainWindow, uiView) {
     this.mainWindow = mainWindow;
-    this.views = new Map(); // id -> WebContentsView
+    this.uiView = uiView; // React browser UI — always kept as the topmost view
+    this.views = new Map();
     this.activeViewId = null;
-    this.tabStates = new Map(); // id -> { lastActive: timestamp, isHibernated: bool, isLoading: bool }
+    this.tabStates = new Map();
     this.isOverview = false;
     this.currentSidekickWidth = 0;
     
-    this.HIBERNATE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+    this.HIBERNATE_THRESHOLD = 5 * 60 * 1000;
     this.setupHibernation();
+  }
+
+  // Re-raise the React UI view to the top of the child view stack.
+  // Must be called after adding ANY page WebContentsView, since addChildView()
+  // puts the new view above all existing children.
+  raiseUIView() {
+    if (this.uiView) {
+      try {
+        // addChildView on an already-child view moves it to the END (top) of the stack
+        this.mainWindow.contentView.addChildView(this.uiView);
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   createView(id, url) {
@@ -599,22 +614,15 @@ export class ViewManager {
     const shouldShowBrowser = !isNewTab && !this.isOverview;
 
     if (shouldShowBrowser) {
-      // Offset by 48px to match the header height
       let sidekickWidth = 0;
       
-      // 1. If opening/open: follow the animation frame-by-frame for perfect alignment
       if (this.sidekickIsOpen && currentSidekickWidth !== null) {
         sidekickWidth = currentSidekickWidth;
         this.currentSidekickWidth = currentSidekickWidth;
-      } 
-      // 2. If closing/closed: force full width immediately behind the sidebar.
-      // This prevents white flashes by ensuring the revealed area is always 'pre-expanded'
-      else if (!this.sidekickIsOpen) {
+      } else if (!this.sidekickIsOpen) {
         sidekickWidth = 0;
         this.currentSidekickWidth = 0;
-      }
-      // 3. Fallback: use last known stable width
-      else {
+      } else {
         sidekickWidth = this.currentSidekickWidth || 384;
       }
       
@@ -623,11 +631,16 @@ export class ViewManager {
         if (!children.includes(view)) {
           this.mainWindow.contentView.addChildView(view);
           view.setBackgroundColor('#ffffff');
+          // CRITICAL: Always re-raise the React UI view after adding any page view.
+          // In Electron's view stack, last-added = topmost layer.
+          // By re-raising uiView here, it permanently stays above all web content.
+          // This is the true Chromium-style layering fix — no CSS hacks needed.
+          this.raiseUIView();
         }
       } catch (e) {
         // Ignored
       }
-      
+
       view.setBounds({ 
         x: 0, 
         y: 92, 
@@ -635,7 +648,7 @@ export class ViewManager {
         height: height - 92 
       });
     } else {
-      // Hide for New Tab page
+      // Hide for New Tab page or overview
       try {
         const children = this.mainWindow.contentView.children || [];
         if (children.includes(view)) {
@@ -665,8 +678,8 @@ export class ViewManager {
   }
 
   sendToUI(channel, data) {
-    if (this.mainWindow) {
-      this.mainWindow.webContents.send(channel, data);
+    if (this.uiView && !this.uiView.webContents.isDestroyed()) {
+      this.uiView.webContents.send(channel, data);
     }
   }
 }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, shell, nativeTheme, session } from 'electron';
+import { app, BaseWindow, WebContentsView, ipcMain, Menu, shell, nativeTheme, session } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ViewManager } from './ViewManager.js';
@@ -7,13 +7,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
+let uiView;      // WebContentsView for the React browser UI — always on top
 let viewManager;
 
 function createWindow() {
-  // Force light theme by default for the entire application and system preferences
-  // nativeTheme.themeSource = 'light'; // Removed to allow dynamic theme switching
-
-  mainWindow = new BrowserWindow({
+  // Use BaseWindow so we control ALL child view z-ordering manually.
+  // With BrowserWindow, the built-in webContents is always the BOTTOM layer and
+  // WebContentsViews added via addChildView always render on top of it — making
+  // it impossible for HTML dropdowns to appear above web page content.
+  // With BaseWindow + a dedicated uiView added LAST, the React UI is always on top.
+  mainWindow = new BaseWindow({
     width: 1400,
     height: 900,
     titleBarStyle: 'hidden',
@@ -24,32 +27,49 @@ function createWindow() {
     },
     icon: path.join(__dirname, '../assets/orbit.png'),
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff',
-    show: false, // Prevent flash
+    show: false,
+  });
+
+  // Create the React UI view — this is the browser chrome (header, tabs, dropdowns)
+  uiView = new WebContentsView({
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true
+      sandbox: false, // preload needs access to node path apis
     },
   });
 
-  viewManager = new ViewManager(mainWindow);
+  // Transparent background so the page content shows through the parts of the
+  // UI that have no opaque elements (below the header area)
+  uiView.setBackgroundColor('#00000000');
 
+  // Add uiView now (will be re-raised after every page view addition)
+  mainWindow.contentView.addChildView(uiView);
+
+  // Size the UI view to cover the full window
+  const [w, h] = mainWindow.getContentSize();
+  uiView.setBounds({ x: 0, y: 0, width: w, height: h });
+
+  // ViewManager manages page WebContentsViews.
+  // Pass uiView so it can re-raise it to the top after adding each page view.
+  viewManager = new ViewManager(mainWindow, uiView);
+
+  // Load the React app in uiView
   if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    uiView.webContents.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    uiView.webContents.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
   mainWindow.on('resize', () => {
+    const [width, height] = mainWindow.getContentSize();
+    uiView.setBounds({ x: 0, y: 0, width, height });
     viewManager.updateLayout();
   });
 
-  mainWindow.once('ready-to-show', () => {
+  uiView.webContents.once('did-finish-load', () => {
     mainWindow.show();
-    // if (process.env.VITE_DEV_SERVER_URL) {
-    //   mainWindow.webContents.openDevTools({ mode: 'detach' });
-    // }
     if (viewManager) viewManager.updateLayout();
   });
 
@@ -102,7 +122,7 @@ function setupApplicationMenu() {
         {
           label: 'Inspect Browser UI',
           accelerator: 'Alt+Shift+I',
-          click: () => mainWindow.webContents.toggleDevTools()
+          click: () => uiView?.webContents.toggleDevTools()
         },
         { type: 'separator' },
         { role: 'resetZoom' },
@@ -142,8 +162,6 @@ function setupIpcHandlers() {
     console.log('[main.js] tab:navigate called:', { id, url });
     const view = viewManager.views.get(id);
     if (view) {
-      // Set target URL synchronously to prevent race condition in layout logic
-      // Smart URL / Search Parsing (Chromium Behavior)
       let targetUrl = url;
       const hasProtocol = /^([a-z][a-z0-9+\-.]*):/i.test(url);
       const hasSpace = url.includes(' ');
@@ -162,14 +180,10 @@ function setupIpcHandlers() {
       }
 
       const state = viewManager.tabStates.get(id);
-      if (state) {
-        console.log('[main.js] Setting lastUrl:', targetUrl);
-        state.lastUrl = targetUrl;
-      }
+      if (state) state.lastUrl = targetUrl;
 
-      console.log('[main.js] Loading URL in webContents:', targetUrl);
       view.webContents.loadURL(targetUrl);
-      
+
       if (viewManager.activeViewId === id && url !== 'about:blank') {
         viewManager.updateLayout();
       }
@@ -179,16 +193,13 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('tab:reload', (event, { id }) => {
-    console.log(`[IPC] tab:reload requested for ${id}`);
     return viewManager.views.get(id)?.webContents.reload();
   });
-  
+
   ipcMain.handle('tab:stop', (event, { id }) => {
-    console.log(`[IPC] tab:stop requested for ${id}`);
     const view = viewManager.views.get(id);
     if (view) {
       view.webContents.stop();
-      // Explicitly clear loading state
       const state = viewManager.tabStates.get(id);
       if (state) {
         state.isLoading = false;
@@ -203,29 +214,26 @@ function setupIpcHandlers() {
       }
     }
   });
-  
+
   ipcMain.handle('tab:goBack', (event, { id }) => {
-    console.log(`[IPC] tab:goBack requested for ${id}`);
     const wc = viewManager.views.get(id)?.webContents;
     if (wc) {
       if (wc.navigationHistory) wc.navigationHistory.goBack();
       else if (wc.canGoBack()) wc.goBack();
     }
   });
-  
+
   ipcMain.handle('tab:goForward', (event, { id }) => {
-    console.log(`[IPC] tab:goForward requested for ${id}`);
     const wc = viewManager.views.get(id)?.webContents;
     if (wc) {
       if (wc.navigationHistory) wc.navigationHistory.goForward();
       else if (wc.canGoForward()) wc.goForward();
     }
   });
-  
-   ipcMain.on('ui:toggle-overview', (event, isOverview) => {
+
+  ipcMain.on('ui:toggle-overview', (event, isOverview) => {
     viewManager.isOverview = isOverview;
     if (isOverview && viewManager.activeViewId) {
-      // Capture before hiding
       viewManager.captureThumbnail(viewManager.activeViewId);
       try { mainWindow.contentView.removeChildView(viewManager.views.get(viewManager.activeViewId)); } catch(e) {}
     } else if (viewManager.activeViewId) {
@@ -236,7 +244,6 @@ function setupIpcHandlers() {
   ipcMain.handle('tab:getSuggestions', async (event, query) => {
     if (!query) return [];
     try {
-      // Use a proper User-Agent to avoid being blocked or getting 405/403
       const response = await fetch(`https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -253,25 +260,17 @@ function setupIpcHandlers() {
 
   ipcMain.handle('tab:zoomIn', (event, { id }) => {
     const wc = viewManager.views.get(id)?.webContents;
-    if (wc) {
-      const currentZoom = wc.getZoomLevel();
-      wc.setZoomLevel(currentZoom + 0.5);
-    }
+    if (wc) wc.setZoomLevel(wc.getZoomLevel() + 0.5);
   });
 
   ipcMain.handle('tab:zoomOut', (event, { id }) => {
     const wc = viewManager.views.get(id)?.webContents;
-    if (wc) {
-      const currentZoom = wc.getZoomLevel();
-      wc.setZoomLevel(currentZoom - 0.5);
-    }
+    if (wc) wc.setZoomLevel(wc.getZoomLevel() - 0.5);
   });
 
   ipcMain.handle('tab:resetZoom', (event, { id }) => {
     const wc = viewManager.views.get(id)?.webContents;
-    if (wc) {
-      wc.setZoomLevel(0);
-    }
+    if (wc) wc.setZoomLevel(0);
   });
 
   ipcMain.handle('tab:getPageText', async (event, { id }) => {
@@ -280,15 +279,9 @@ function setupIpcHandlers() {
     try {
       return await view.webContents.executeJavaScript(`
         (function() {
-          // Remove scripts, styles, and other non-content tags
           const clone = document.body.cloneNode(true);
-          const toRemove = clone.querySelectorAll('script, style, nav, footer, header, noscript, iframe');
-          toRemove.forEach(el => el.remove());
-          
-          // Get clean text
-          let text = clone.innerText || clone.textContent;
-          // Basic cleanup of whitespace
-          return text.replace(/\\s+/g, ' ').trim().substring(0, 15000);
+          clone.querySelectorAll('script, style, nav, footer, header, noscript, iframe').forEach(el => el.remove());
+          return (clone.innerText || clone.textContent).replace(/\\s+/g, ' ').trim().substring(0, 15000);
         })()
       `);
     } catch (e) {
@@ -300,17 +293,18 @@ function setupIpcHandlers() {
   ipcMain.on('ui:toggle-sidekick', (event, isOpen) => {
     if (viewManager) {
       viewManager.sidekickIsOpen = isOpen;
-      // Force immediate expansion on close to prevent white flashes
-      // The contracting sidebar UI will 'reveal' the already-expanded page
       if (!isOpen) viewManager.updateLayout(0);
     }
   });
 
   ipcMain.on('ui:sidekick-resize', (event, width) => {
-    if (viewManager) {
-      viewManager.updateLayout(width);
-    }
+    if (viewManager) viewManager.updateLayout(width);
   });
+
+  // No longer needed — ui:dropdown-toggle is obsolete now that the React UI
+  // is a WebContentsView rendered above all page views at the OS level.
+  // Keeping a stub so existing frontend calls don't cause IPC errors.
+  ipcMain.on('ui:dropdown-toggle', () => {});
 
   // Window Control Handlers
   ipcMain.on('window-minimize', () => mainWindow?.minimize());
@@ -324,28 +318,23 @@ function setupIpcHandlers() {
   const downloads = new Map();
 
   const setupDownloadHandler = (ses) => {
-    ses.on('will-download', (event, item, webContents) => {
+    ses.on('will-download', (event, item) => {
       const id = Date.now().toString();
       const filename = item.getFilename();
       const totalBytes = item.getTotalBytes();
       const savePath = item.getSavePath() || path.join(app.getPath('downloads'), filename);
-      
-      // Default behavior: save to downloads folder
+
       if (!item.getSavePath()) item.setSavePath(savePath);
 
       const downloadInfo = {
-        id,
-        filename,
-        totalBytes,
-        receivedBytes: 0,
-        percentage: 0,
-        state: 'progressing',
-        path: savePath,
+        id, filename, totalBytes,
+        receivedBytes: 0, percentage: 0,
+        state: 'progressing', path: savePath,
         startTime: Date.now()
       };
 
       downloads.set(id, downloadInfo);
-      mainWindow.webContents.send('download:started', downloadInfo);
+      uiView.webContents.send('download:started', downloadInfo);
 
       item.on('updated', (event, state) => {
         if (state === 'interrupted') {
@@ -355,44 +344,35 @@ function setupIpcHandlers() {
           downloadInfo.percentage = totalBytes > 0 ? Math.floor((downloadInfo.receivedBytes / totalBytes) * 100) : 0;
           downloadInfo.state = 'progressing';
         }
-        mainWindow.webContents.send('download:updated', downloadInfo);
+        uiView.webContents.send('download:updated', downloadInfo);
       });
 
       item.once('done', (event, state) => {
-        if (state === 'completed') {
-          downloadInfo.state = 'completed';
-          downloadInfo.percentage = 100;
-        } else {
-          downloadInfo.state = 'failed';
-        }
-        mainWindow.webContents.send('download:updated', downloadInfo);
+        downloadInfo.state = state === 'completed' ? 'completed' : 'failed';
+        if (state === 'completed') downloadInfo.percentage = 100;
+        uiView.webContents.send('download:updated', downloadInfo);
       });
     });
   };
 
-  // Attach to default session and any future sessions
   setupDownloadHandler(nativeTheme.session || session.defaultSession);
   app.on('session-created', (ses) => setupDownloadHandler(ses));
 
   ipcMain.handle('downloads:list', () => Array.from(downloads.values()).reverse());
-  
+
   ipcMain.on('downloads:openFile', (event, id) => {
     const item = downloads.get(id);
-    if (item && item.state === 'completed') {
-      shell.openPath(item.path);
-    }
+    if (item && item.state === 'completed') shell.openPath(item.path);
   });
 
   ipcMain.on('downloads:showInFolder', (event, id) => {
     const item = downloads.get(id);
-    if (item) {
-      shell.showItemInFolder(item.path);
-    }
+    if (item) shell.showItemInFolder(item.path);
   });
 
   ipcMain.on('downloads:remove', (event, id) => {
     downloads.delete(id);
-    mainWindow.webContents.send('downloads:list-updated', Array.from(downloads.values()).reverse());
+    uiView.webContents.send('downloads:list-updated', Array.from(downloads.values()).reverse());
   });
 }
 
@@ -404,4 +384,3 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
-

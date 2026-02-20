@@ -68,21 +68,28 @@ const SegmentedHub = memo(({
       return;
     }
 
-    const fetchSuggestions = async () => {
+  const fetchSuggestions = async () => {
       try {
         const results = await window.orbit.ipcRenderer.invoke('tab:getSuggestions', inputValue);
         const processed = results.map(s => ({ type: 'search', text: s }));
         
-        // Add "Go to URL" suggestion if it looks like one
         const isUrl = inputValue.includes('.') && !inputValue.includes(' ');
         if (isUrl) {
           processed.unshift({ type: 'url', text: inputValue });
         }
         
-        setSuggestions(processed.slice(0, 8));
+        const newSuggestions = processed.slice(0, 8);
+        setSuggestions(newSuggestions);
         setSelectedIndex(-1);
+        // Dynamically compute how far the dropdown extends:
+        // header(92) + gap(8) + bar(32) + rows(count × 48px) + padding(16)
+        if (newSuggestions.length > 0) {
+          const dynamicBottom = 92 + 8 + 32 + newSuggestions.length * 48 + 16;
+          window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: true, dropdownBottom: dynamicBottom });
+        }
       } catch (e) {
         setSuggestions([]);
+        window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
       }
     };
 
@@ -100,11 +107,14 @@ const SegmentedHub = memo(({
     } else if (e.key === 'Escape') {
       setIsFocused(false);
       setSuggestions([]);
+      window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
     } else if (e.key === 'Enter') {
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
         e.preventDefault();
         onNavigate(suggestions[selectedIndex].text);
         setIsFocused(false);
+        setSuggestions([]);
+        window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
       }
     }
   };
@@ -116,6 +126,8 @@ const SegmentedHub = memo(({
       : inputValue;
     onNavigate(finalValue);
     setIsFocused(false);
+    setSuggestions([]);
+    window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
     e.target.querySelector('input').blur();
   };
 
@@ -171,7 +183,13 @@ const SegmentedHub = memo(({
           }}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+          onBlur={() => {
+            setTimeout(() => {
+              setIsFocused(false);
+              setSuggestions([]);
+              window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
+            }, 200);
+          }}
           className={`bg-transparent border-none outline-none w-full text-[13px] text-nexus-text z-10 font-medium ${
             isFocused ? 'text-left pl-4' : 'text-center text-transparent'
           }`}
@@ -194,7 +212,7 @@ const SegmentedHub = memo(({
 
         {/* Chromium-style Dropdown */}
         {isFocused && suggestions.length > 0 && (
-          <div className="absolute top-[calc(100%+8px)] -left-4 -right-4 bg-nexus-hub-bg border border-nexus-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl z-9999">
+          <div className="absolute top-[calc(100%+8px)] -left-4 -right-4 bg-nexus-hub-bg border border-nexus-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl z-5000">
             <div className="py-2">
               {suggestions.map((item, index) => (
                 <div
@@ -202,6 +220,8 @@ const SegmentedHub = memo(({
                   onClick={() => {
                     onNavigate(item.text);
                     setIsFocused(false);
+                    setSuggestions([]);
+                    window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
                   }}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={`px-6 py-3 flex items-center gap-4 cursor-pointer transition-colors ${

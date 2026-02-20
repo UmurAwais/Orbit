@@ -65,7 +65,10 @@
 
 :root {
   --app-region: drag;
-  background-color: var(--color-orbit-bg);
+  /* TRANSPARENT: the uiView (React app) is now an OS-level view on top of page views.
+     The page shows through the transparent areas of this document. Only explicit
+     UI components (header, dropdowns, overlays) should have opaque backgrounds. */
+  background-color: transparent;
   color: var(--color-orbit-text);
   overflow: hidden;
 }
@@ -94,6 +97,7 @@ body {
   width: 100vw;
   display: block;
   overflow: hidden;
+  background: transparent;
 }
 
 /* Orbital Nexus Chassis (Tiered Header) */

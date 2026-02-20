@@ -31,6 +31,9 @@ const App = () => {
   const [isExtensionsOpen, setIsExtensionsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
+
+  const openDownloads = (val) => setIsDownloadsOpen(val);
+
   const [pinnedExtensions, setPinnedExtensions] = useState(() => {
     const saved = localStorage.getItem('orbit-pinned-extensions');
     return saved ? JSON.parse(saved) : ['1'];
@@ -116,7 +119,7 @@ const App = () => {
     setIsOverview(false);
     setIsExtensionsOpen(false);
     setIsSettingsOpen(false);
-    setIsDownloadsOpen(false);
+    openDownloads(false);
     window.orbit.tabs.select({ id });
     window.orbit.ipcRenderer.send('ui:toggle-overview', false);
   }, []);
@@ -148,11 +151,12 @@ const App = () => {
   }, [activeTabId, hoveredTabId]);
 
   const handleNavigate = useCallback((url) => {
+    openDownloads(false);
     window.orbit.tabs.navigate({ id: activeTabId, url });
   }, [activeTabId]);
 
   return (
-    <div className={`w-full h-screen overflow-hidden relative transition-colors duration-200 bg-orbit-bg`}>
+    <div className={`w-full h-screen overflow-hidden relative transition-colors duration-200`}>
       <div className="absolute top-0 left-0 right-0 h-24 drag-area z-0 pointer-events-none" />
 
       {/* Orbital Nexus - Global Hybrid Header (Modern Matte Rebuild) */}
@@ -216,7 +220,7 @@ const App = () => {
 
 
             {/* Seamless Tab Tray */}
-            <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar z-9999">
+            <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar z-10">
               <div className="nexus-tabs-tray">
                 {tabs.map((tab) => (
                   <div 
@@ -271,7 +275,7 @@ const App = () => {
                <Puzzle size={15} strokeWidth={2.2} />
              </button>
              <button 
-                onClick={() => setIsDownloadsOpen(!isDownloadsOpen)}
+                onClick={() => openDownloads(!isDownloadsOpen)}
                 className={`w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer ${isDownloadsOpen ? 'bg-orbit-accent text-white shadow-lg' : 'hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100'}`}
                 title="Downloads"
              >
@@ -441,7 +445,7 @@ const App = () => {
 
       <AnimatePresence>
         {isDownloadsOpen && (
-          <DownloadsManager onClose={() => setIsDownloadsOpen(false)} />
+          <DownloadsManager onClose={() => openDownloads(false)} />
         )}
       </AnimatePresence>
 
