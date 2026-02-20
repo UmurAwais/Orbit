@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo, useRef, useLayoutEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import SegmentedHub from './components/SegmentedHub';
 import NewTab from './components/NewTab';
@@ -44,6 +44,47 @@ const App = () => {
   });
 
   const [isScrolled, setIsScrolled] = useState(false);
+  const tabTrayRef = useRef(null);
+  const [showScrollLeft, setShowScrollLeft] = useState(false);
+  const [showScrollRight, setShowScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    if (tabTrayRef.current) {
+      const { scrollLeft, scrollWidth, offsetWidth } = tabTrayRef.current;
+      setShowScrollLeft(scrollLeft > 0);
+      setShowScrollRight(scrollLeft < scrollWidth - offsetWidth - 5);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    checkScroll();
+    const timer = setTimeout(checkScroll, 100); // Guard for late-rendering tabs
+    return () => clearTimeout(timer);
+  }, [tabs, activeTabId, checkScroll]);
+
+  useEffect(() => {
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [checkScroll]);
+
+  const scrollTabs = (direction) => {
+    if (tabTrayRef.current) {
+      const scrollAmount = 300; // Increased for better navigation
+      tabTrayRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleWheel = (e) => {
+    if (tabTrayRef.current) {
+      // Convert vertical scroll to horizontal scroll for tab tray
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        tabTrayRef.current.scrollLeft += e.deltaY;
+      }
+    }
+  };
 
   useEffect(() => {
     const cleanup = window.orbit.ipcRenderer.on('viewport:scroll', (scrollY) => {
@@ -114,6 +155,16 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (tabTrayRef.current) {
+      const activeTabElement = tabTrayRef.current.querySelector('.nexus-tab.active');
+      if (activeTabElement) {
+        activeTabElement.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+      }
+    }
+    checkScroll();
+  }, [activeTabId, checkScroll]);
+
   const handleSelectTab = useCallback((id) => {
     setActiveTabId(id);
     setIsOverview(false);
@@ -165,15 +216,15 @@ const App = () => {
         {/* Tier 1: The Command Deck (Top Row) - Primary Navigation */}
         <div className="nexus-row nexus-top-row pointer-events-auto px-4">
            {/* Left Section: Balanced Spacer */}
-           <div className="flex-1 flex items-center no-drag">
-              <div className="flex items-center gap-2">
+           <div className="flex-1 flex items-center no-drag min-w-0">
+              <div className="flex items-center gap-2 shrink-0">
                  <OrbitLogo size={20} />
                  <span className="text-[11px] font-black tracking-[0.2em] text-black">Orbit</span>
               </div>
            </div>
 
            {/* Center Section: Expansive Search Hub */}
-           <div className="flex-4 flex justify-center no-drag">
+           <div className="flex-4 flex justify-center no-drag min-w-0">
              <div className="w-full max-w-225">
                <SegmentedHub 
                  activeTab={activeTab}
@@ -187,7 +238,7 @@ const App = () => {
            </div>
 
            {/* Right Section: System Control Pod */}
-           <div className="flex-1 flex justify-end h-full no-drag">
+           <div className="flex-1 flex justify-end h-full no-drag min-w-0">
               <div className="flex items-center h-full">
                  {/* Native Windows Controls Area */}
               </div>
@@ -197,7 +248,7 @@ const App = () => {
         {/* Tier 2: The Tab Deck (Bottom Row) - Integrated Stream */}
         <div className="nexus-row nexus-bottom-row pointer-events-auto px-4">
           {/* Left-Aligned Control Stream: Overview -> Tabs -> Add */}
-          <div className="flex-1 flex items-center gap-1 no-drag">
+          <div className="flex-1 flex items-center gap-1 no-drag min-w-0">
             {/* Apple-style Tab Overview Toggle */}
             <button 
               onClick={() => {
@@ -220,48 +271,70 @@ const App = () => {
 
 
             {/* Seamless Tab Tray */}
-            <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar z-10">
-              <div className="nexus-tabs-tray">
-                {tabs.map((tab) => (
-                  <div 
-                    key={tab.id}
-                    onClick={() => handleSelectTab(tab.id)}
-                    onMouseEnter={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setHoveredTabId(tab.id);
-                      setPreviewPos({ x: rect.left, y: rect.bottom }); // Tighter upward positioning
-                    }}
-                    onMouseLeave={() => setHoveredTabId(null)}
-                    className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab relative`}
-                  >
-                    {tab.url === 'about:blank' ? (
-                      <OrbitLogo size={14} variant="icon" />
-                    ) : tab.favicon ? (
-                      <img src={tab.favicon} className="w-3.5 h-3.5 object-contain rounded-sm" alt="" />
-                    ) : (
-                      <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/10" />
-                    )}
-                    <span className="flex-1 truncate text-[11px] font-bold tracking-tight">
-                      {tab.title || 'New Tab'}
-                    </span>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id); }}
-                      className="nexus-tab-close"
+            <div className="flex-1 flex items-center min-w-0 z-10 px-1 overflow-hidden">
+              <div className="nexus-tabs-container">
+                <button 
+                  className={`nexus-tab-nav-btn left no-drag ${showScrollLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} 
+                  onClick={() => scrollTabs('left')}
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                
+                <div 
+                  ref={tabTrayRef}
+                  onScroll={checkScroll}
+                  onWheel={handleWheel}
+                  onMouseMove={checkScroll}
+                  className="nexus-tabs-tray"
+                >
+                  {tabs.map((tab) => (
+                    <div 
+                      key={tab.id}
+                      onClick={() => handleSelectTab(tab.id)}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setHoveredTabId(tab.id);
+                        setPreviewPos({ x: rect.left, y: rect.bottom });
+                      }}
+                      onMouseLeave={() => setHoveredTabId(null)}
+                      className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab relative`}
                     >
-                      <X size={10} strokeWidth={3} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                      {tab.url === 'about:blank' ? (
+                        <OrbitLogo size={14} variant="icon" />
+                      ) : tab.favicon ? (
+                        <img src={tab.favicon} className="w-3.5 h-3.5 object-contain rounded-sm" alt="" />
+                      ) : (
+                        <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/10" />
+                      )}
+                      <span className="flex-1 truncate text-[11px] font-bold tracking-tight">
+                        {tab.title || 'New Tab'}
+                      </span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id); }}
+                        className="nexus-tab-close"
+                      >
+                        <X size={10} strokeWidth={3} />
+                      </button>
+                    </div>
+                  ))}
 
-              {/* Authentic Chrome-style New Tab Button */}
-              <button 
-                onClick={() => handleAddTab()}
-                className="w-6 h-6 flex items-center justify-center rounded-full bg-transparent hover:bg-gray-200 text-nexus-text-dim hover:text-nexus-text transition-colors duration-200 no-drag shrink-0"
-                title="New Tab"
-              >
-                <Plus size={18} strokeWidth={2} />
-              </button>
+                  {/* Authentic Chrome-style New Tab Button - Inside Tray */}
+                  <button 
+                    onClick={() => handleAddTab()}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-transparent hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 no-drag shrink-0 ml-1"
+                    title="New Tab"
+                  >
+                    <Plus size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
+
+                <button 
+                  className={`nexus-tab-nav-btn right no-drag ${showScrollRight ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} 
+                  onClick={() => scrollTabs('right')}
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           </div>
 

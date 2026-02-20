@@ -212,60 +212,192 @@ body {
 }
 
 /* Nexus Tabs System - Floating Pill Mode */
+.nexus-tabs-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden; /* Critical to clip tabs */
+}
+
+/* Chrome-style side fades */
+.nexus-tabs-container::before,
+.nexus-tabs-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  z-index: 150;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.nexus-tabs-container::before {
+  left: 0;
+  background: linear-gradient(to right, var(--nexus-bg), transparent);
+}
+
+.nexus-tabs-container::after {
+  right: 0;
+  background: linear-gradient(to left, var(--nexus-bg), transparent);
+}
+
 .nexus-tabs-tray {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 4px;
+  gap: 6px;
+  padding: 0 12px; /* Reduced side padding (was 44px) */
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding: 0 12px;
+}
+
+.nexus-tabs-tray::-webkit-scrollbar {
+  display: none; /* Hide scrollbar Chrome/Safari */
+}
+
+.nexus-tab-nav-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  cursor: pointer;
+  z-index: 250;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  background: white !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  color: #222 !important;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.nexus-tab-nav-btn:hover {
+  background: #fdfdfd !important;
+  transform: translateY(-50%) scale(1.04);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  border-color: rgba(0,0,0,0.2) !important;
+}
+
+.nexus-tab-nav-btn.left {
+  left: 4px;
+}
+
+.nexus-tab-nav-btn.right {
+  right: 4px;
 }
 
 .nexus-tab {
-  height: 30px;
-  min-width: 130px;
-  max-width: 200px;
+  height: 32px;
+  flex: 0 0 145px;
+  min-width: 145px;
+  max-width: 145px;
   padding: 0 12px;
-  border-radius: 15px; /* Perfect Pill */
-  background: var(--nexus-tab-bg);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.03); /* Minimalist flat background */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px; /* Tightened gap between favicon and title */
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   color: var(--nexus-text-dim);
-  border: 1px solid var(--nexus-border);
+  border: 1px solid transparent; /* Cleaner flat look */
+  position: relative;
+  overflow: hidden;
+  user-select: none;
 }
 
 .nexus-tab:hover:not(.active) {
-  background: var(--nexus-tab-hover);
+  background: rgba(0, 0, 0, 0.06); /* Subtle shade shift only */
   color: var(--nexus-text);
 }
 
-.nexus-tab.active {
-  background: var(--nexus-tab-active);
-  color: var(--nexus-text);
-  border-color: var(--nexus-accent);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.dark .nexus-tab {
+  background: rgba(255, 255, 255, 0.05);
 }
+
+.dark .nexus-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Active State: High Prominence */
+/* Active State: Minimalist & Focused */
+.nexus-tab.active {
+  background: white;
+  color: var(--nexus-text);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+}
+
+.dark .nexus-tab.active {
+  background: var(--nexus-bg-alt);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Accent Indicator for Active Tab */
+.nexus-tab.active::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--nexus-accent);
+  border-radius: 4px;
+}
+
+/* Label Styling */
+.nexus-tab span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Hide label entirely when tab is very small */
+@media (max-width: 600px) { /* This would be for the window, but we want it per-tab */
+}
+
+/* We use the flex-basis: 0 on the tab and min-width: 0 on span to handle this */
 
 .nexus-tab-close {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: all 0.2s ease;
   color: inherit;
+  flex-shrink: 0;
 }
 
+.nexus-tab.active .nexus-tab-close,
 .nexus-tab:hover .nexus-tab-close {
-  opacity: 0.4;
+  opacity: 0.6;
 }
 
 .nexus-tab-close:hover {
   opacity: 1 !important;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .dark .nexus-tab-close:hover {
