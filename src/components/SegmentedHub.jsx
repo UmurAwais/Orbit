@@ -154,6 +154,14 @@ const SegmentedHub = memo(({
       </div>
 
       <form onSubmit={handleSubmit} className="flex-1 flex items-center h-full relative">
+        {/* Visual URL Display (Centered with Icon) */}
+        {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 gap-1.5">
+             <Lock size={11} className="text-nexus-text opacity-50 stroke-[2.5]" />
+             <span className="text-[13px] font-medium text-nexus-text opacity-90">{displayUrl}</span>
+          </div>
+        )}
+
         <input
           type="text"
           value={selectedIndex >= 0 ? suggestions[selectedIndex].text : (isFocused ? inputValue : displayUrl)}
@@ -165,19 +173,12 @@ const SegmentedHub = memo(({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 200)}
           className={`bg-transparent border-none outline-none w-full text-[13px] text-nexus-text z-10 font-medium ${
-            isFocused ? 'text-left pl-4' : 'text-center opacity-90'
+            isFocused ? 'text-left pl-4' : 'text-center text-transparent'
           }`}
           spellCheck={false}
           autoComplete="off"
           style={{ letterSpacing: '-0.01em' }}
         />
-        
-        {/* Domain safe suffix (Only when not focused) */}
-        {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-             <span className="text-[13px] font-medium text-nexus-text-dim ml-45"> - safe</span>
-          </div>
-        )}
         
         {/* Orbit Placeholder */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none top-1/2 -translate-y-1/2 h-full">
@@ -193,7 +194,7 @@ const SegmentedHub = memo(({
 
         {/* Chromium-style Dropdown */}
         {isFocused && suggestions.length > 0 && (
-          <div className="absolute top-[calc(100%+8px)] -left-4 -right-4 bg-nexus-hub-bg border border-nexus-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl z-2000">
+          <div className="absolute top-[calc(100%+8px)] -left-4 -right-4 bg-nexus-hub-bg border border-nexus-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl z-9999">
             <div className="py-2">
               {suggestions.map((item, index) => (
                 <div
@@ -232,7 +233,7 @@ const SegmentedHub = memo(({
             <button 
               type="button"
               onClick={(e) => { e.stopPropagation(); window.orbit.tabs.reload({ id: activeTab.id }); }}
-              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-30 hover:opacity-100 transition-all ${activeTab?.isLoading ? 'opacity-100 text-nexus-accent' : ''}`}
+              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all ${activeTab?.isLoading ? 'opacity-100 text-nexus-accent' : ''}`}
               title="Reload Page"
             >
               <RefreshCw size={13} strokeWidth={2.5} className={activeTab?.isLoading ? 'animate-spin' : ''} />
@@ -241,7 +242,7 @@ const SegmentedHub = memo(({
             <button 
               type="button" 
               onClick={toggleBookmark}
-              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 transition-all ${isPinned ? 'text-orbit-accent opacity-100' : 'text-nexus-text opacity-30 hover:opacity-100'}`}
+              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 transition-all ${isPinned ? 'text-orbit-accent opacity-100' : 'text-nexus-text opacity-70 hover:opacity-100'}`}
               title={isPinned ? "Remove Bookmark" : "Bookmark this page"}
             >
               <Bookmark size={13} strokeWidth={2.5} className={isPinned ? 'fill-current' : ''} />
@@ -249,7 +250,7 @@ const SegmentedHub = memo(({
           </>
         )}
         
-        <button type="button" className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-30 hover:opacity-100 transition-all">
+        <button type="button" className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all">
           <Share size={13} strokeWidth={2.5} />
         </button>
       </div>

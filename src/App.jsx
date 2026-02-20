@@ -19,8 +19,11 @@ const App = () => {
     isLoading: false,
     canGoBack: false,
     canGoForward: false,
+    preview: null,
   }]);
   const [activeTabId, setActiveTabId] = useState('default');
+  const [hoveredTabId, setHoveredTabId] = useState(null);
+  const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
   const [isOverview, setIsOverview] = useState(false);
   const [isAISidekickOpen, setIsAISidekickOpen] = useState(false);
   const [isExtensionsOpen, setIsExtensionsOpen] = useState(false);
@@ -194,6 +197,54 @@ const App = () => {
               <span className="text-nexus-text">Workspace</span>
             </div> */}
 
+            {/* Tab Preview Overlay */}
+            <AnimatePresence>
+              {hoveredTabId && tabs.find(t => t.id === hoveredTabId)?.url !== 'about:blank' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                  style={{ 
+                    position: 'fixed',
+                    left: previewPos.x,
+                    top: previewPos.y,
+                    transform: 'translateX(-50%)',
+                    zIndex: 9999,
+                    pointerEvents: 'none'
+                  }}
+                  className="w-56 overflow-hidden rounded-xl bg-orbit-surface border border-orbit-border shadow-2xl backdrop-blur-xl"
+                >
+                  <div className="h-32 w-full bg-orbit-card relative overflow-hidden">
+                    {tabs.find(t => t.id === hoveredTabId)?.preview ? (
+                      <img 
+                        src={tabs.find(t => t.id === hoveredTabId).preview} 
+                        className="w-full h-full object-cover"
+                        alt="Preview"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-20">
+                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-orbit-text" />
+                        <span className="text-[10px] uppercase tracking-widest font-bold">Capturing...</span>
+                      </div>
+                    )}
+                    {/* Glass Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-orbit-surface/50" />
+                  </div>
+                  <div className="p-3 bg-orbit-surface/90">
+                    <div className="flex items-center gap-2 truncate">
+                      {tabs.find(t => t.id === hoveredTabId)?.favicon && (
+                        <img src={tabs.find(t => t.id === hoveredTabId).favicon} className="w-3 h-3 object-contain" alt="" />
+                      )}
+                      <span className="text-[11px] font-bold truncate text-orbit-text">
+                        {tabs.find(t => t.id === hoveredTabId)?.title || 'Untitled'}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Seamless Tab Tray */}
             <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
               <div className="nexus-tabs-tray">
@@ -201,7 +252,13 @@ const App = () => {
                   <div 
                     key={tab.id}
                     onClick={() => handleSelectTab(tab.id)}
-                    className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab`}
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setHoveredTabId(tab.id);
+                      setPreviewPos({ x: rect.left + rect.width / 2, y: rect.bottom + 12 });
+                    }}
+                    onMouseLeave={() => setHoveredTabId(null)}
+                    className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab relative`}
                   >
                     {tab.favicon ? (
                       <img src={tab.favicon} className="w-3.5 h-3.5 object-contain rounded-sm" alt="" />
@@ -236,26 +293,26 @@ const App = () => {
           <div className="flex items-center gap-0.5 no-drag pl-4">
              <button 
                 onClick={() => setIsExtensionsOpen(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100 transition-all duration-200 cursor-pointer"
                 title="Extensions"
              >
                <Puzzle size={15} strokeWidth={2.2} />
              </button>
              <button 
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100 transition-all duration-200 cursor-pointer"
                 title="Downloads"
              >
                <Download size={15} strokeWidth={2.2} />
              </button>
              <button 
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100 transition-all duration-200 cursor-pointer"
                 title="History"
              >
                <History size={15} strokeWidth={2.2} />
              </button>
              <button 
                 onClick={() => setIsSettingsOpen(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text-dim hover:text-nexus-text transition-all duration-200 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100 transition-all duration-200 cursor-pointer"
                 title="Settings"
              >
                <Settings size={15} strokeWidth={2.2} />
@@ -263,7 +320,7 @@ const App = () => {
              
              <div className="w-px h-4 bg-nexus-border mx-2" />
 
-             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 border border-nexus-border text-[10px] font-bold text-nexus-text-dim hover:text-nexus-text transition-all cursor-pointer">
+             <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-gray-200/60 dark:hover:bg-white/10 border border-nexus-border text-[10px] font-bold text-nexus-text opacity-60 hover:opacity-100 transition-all cursor-pointer">
                 <User size={12} strokeWidth={2.5} className="opacity-40" />
                 <span className="opacity-70 tracking-tight">sample@gmail.com</span>
              </div>
