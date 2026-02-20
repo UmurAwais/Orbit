@@ -98,7 +98,9 @@ const TabOverview = ({
               <div className="px-5 py-3.5 flex items-center justify-between border-b border-orbit-border/30 bg-orbit-surface/50">
                 <div className="flex items-center gap-3 truncate">
                   <div className="w-6 h-6 rounded-lg bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0 shadow-sm border border-orbit-border/20">
-                    {tab.favicon ? (
+                    {tab.url === 'about:blank' ? (
+                      <OrbitLogo size={14} variant="icon" />
+                    ) : tab.favicon ? (
                       <img src={tab.favicon} className="w-3.5 h-3.5 object-contain" alt="" />
                     ) : (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-20 text-orbit-text">

@@ -230,7 +230,9 @@ const App = () => {
                     onMouseLeave={() => setHoveredTabId(null)}
                     className={`nexus-tab ${activeTabId === tab.id ? 'active' : ''} no-drag group/tab relative`}
                   >
-                    {tab.favicon ? (
+                    {tab.url === 'about:blank' ? (
+                      <OrbitLogo size={14} variant="icon" />
+                    ) : tab.favicon ? (
                       <img src={tab.favicon} className="w-3.5 h-3.5 object-contain rounded-sm" alt="" />
                     ) : (
                       <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/10" />
@@ -423,7 +425,9 @@ const App = () => {
             </div>
             <div className="p-3 bg-orbit-surface/90 rounded-b-xl">
               <div className="flex items-center gap-2 truncate">
-                {tabs.find(t => t.id === hoveredTabId)?.favicon && (
+                {tabs.find(t => t.id === hoveredTabId)?.url === 'about:blank' ? (
+                  <OrbitLogo size={12} variant="icon" />
+                ) : tabs.find(t => t.id === hoveredTabId)?.favicon && (
                   <img src={tabs.find(t => t.id === hoveredTabId).favicon} className="w-3 h-3 object-contain" alt="" />
                 )}
                 <span className="text-[11px] font-bold truncate text-orbit-text">
