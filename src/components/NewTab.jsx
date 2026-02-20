@@ -82,14 +82,6 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
 
   return (
     <div className="nt">
-      {/* ── Layered CSS Background ── */}
-      <div className="nt-bg" aria-hidden="true">
-        <div className="nt-bg-1" />
-        <div className="nt-bg-2" />
-        <div className="nt-bg-3" />
-        <div className="nt-bg-grid" />
-      </div>
-
       <div className="nt-body">
 
         {/* ── Greeting (Firefox NTP style) ── */}

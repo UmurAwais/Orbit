@@ -146,14 +146,16 @@ body {
 /* Orbital Nexus Search Hub */
 .nexus-hub {
   background: var(--nexus-hub-bg);
-  border-radius: 20px;
-  height: 32px;
+  border-radius: 50px;
+  height: 34px;
   width: 100%;
   max-width: 860px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   padding: 0 4px;
+  border: 1.5px solid var(--orbit-border);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .nexus-hub-inner-nav {
@@ -180,7 +182,8 @@ body {
 }
 
 .nexus-hub:focus-within {
-  background: var(--nexus-hub-bg); /* Keep it matching the idle state */
+  background: var(--nexus-hub-bg);
+  border-color: var(--orbit-accent);
 }
 
 /* Nexus Workspace Control */
@@ -603,58 +606,11 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--orbit-bg);
+  background: none;
   font-family: -apple-system, 'Segoe UI Variable', 'Inter', 'Helvetica Neue', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   display: flex;
   flex-direction: column;
-}
-
-/* ══════════════════════════════
-   BACKGROUND  — three-orb aura
-   + subtle dot grid overlay
-   ══════════════════════════════ */
-.nt-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-/* Orbs */
-.nt-bg-1, .nt-bg-2, .nt-bg-3 {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.9;
-}
-
-.nt-bg-1 {
-  width: 65vw; height: 65vw;
-  top: -22vw; left: -12vw;
-  background: color-mix(in srgb, var(--orbit-accent) 12%, transparent);
-}
-
-.nt-bg-2 {
-  width: 50vw; height: 50vw;
-  top: -10vw; right: -12vw;
-  background: color-mix(in srgb, #4f46e5 9%, transparent);
-}
-
-.nt-bg-3 {
-  width: 55vw; height: 35vw;
-  bottom: -8vw; left: 50%;
-  transform: translateX(-50%);
-  background: color-mix(in srgb, var(--orbit-accent) 5%, transparent);
-}
-
-/* Dot grid (Edge NTP-inspired) */
-.nt-bg-grid {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--orbit-text) 6%, transparent) 1px, transparent 1px);
-  background-size: 28px 28px;
 }
 
 /* ══════════════════════════
@@ -739,10 +695,7 @@ body {
 .nt-omnibox--focus {
   background: color-mix(in srgb, var(--orbit-bg) 97%, transparent);
   border-color: var(--orbit-accent);
-  box-shadow:
-    0 1px 0px rgba(255,255,255,0.4) inset,
-    0 0 0 4px color-mix(in srgb, var(--orbit-accent) 13%, transparent),
-    0 8px 32px -6px rgba(0,0,0,0.09);
+  box-shadow: 0 1px 0px rgba(255,255,255,0.4) inset;
 }
 
 .dark .nt-omnibox {
@@ -753,10 +706,8 @@ body {
 }
 
 .dark .nt-omnibox--focus {
-  box-shadow:
-    0 1px 0px rgba(255,255,255,0.04) inset,
-    0 0 0 4px color-mix(in srgb, var(--orbit-accent) 20%, transparent),
-    0 8px 32px -6px rgba(0,0,0,0.3);
+  border-color: var(--orbit-accent);
+  box-shadow: 0 1px 0px rgba(255,255,255,0.04) inset;
 }
 
 .nt-omnibox-icon {
