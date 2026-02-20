@@ -68,91 +68,96 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
   const timeString = time.toLocaleTimeString('en-US', { 
     hour: 'numeric', 
     minute: '2-digit', 
-    hour12: true 
+    hour12: false 
   });
 
   return (
-    <div className="h-full w-full relative flex flex-col items-center bg-orbit-bg overflow-hidden font-sans">
-      <DashboardHeader onNavigate={onNavigate} />
+    <div className="relative w-full h-full flex flex-col bg-orbit-bg overflow-hidden font-sans selection:bg-orbit-accent selection:text-white">
+      
+      {/* Subtle Animated Background - Zen Mode */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-50%] left-[-20%] w-[80vw] h-[80vw] bg-orbit-accent/5 rounded-full blur-[150px] animate-pulse duration-10000" />
+        <div className="absolute bottom-[-50%] right-[-20%] w-[80vw] h-[80vw] bg-blue-500/5 rounded-full blur-[150px] animate-pulse duration-75" />
+      </div>
 
+      {/* <DashboardHeader onNavigate={onNavigate} /> */}
 
-
-
-
-
-
-      <div className="w-full max-w-4xl h-full flex flex-col items-center z-10 pt-24">
+      <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-6 pb-24 w-full max-w-7xl mx-auto">
         
-        {/* Dynamic Time Centerpiece */}
-        <div className="mb-12 flex flex-col items-center">
-            <h1 className="text-[96px] font-medium text-orbit-text tracking-[-0.04em] leading-none mb-2">
-              {timeString.split(' ')[0]}
-              <span className="text-[32px] font-normal text-orbit-text-dim ml-2 uppercase">{timeString.split(' ')[1]}</span>
-            </h1>
-            <div className="flex items-center gap-3">
-               <OrbitLogo size={30} />
-               <span className="text-[12px] font-bold text-orbit-text-dim tracking-widest uppercase">System Active</span>
-            </div>
+        {/* Typographic Centerpiece */}
+        <div className="flex flex-col items-center mb-16 select-none">
+          <h1 className="text-[12rem] leading-none font-thin text-orbit-text tracking-tighter opacity-90" style={{ fontVariationSettings: '"wght" 100' }}>
+            {timeString}
+          </h1>
+          <p className="text-sm font-bold uppercase tracking-[0.3em] text-orbit-text-dim mt-4">
+            {time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
         </div>
 
-        {/* The Orbit Hub Search */}
-        <div className="w-full max-w-xl mb-16 z-20">
-          <form 
-            onSubmit={handleInternalSubmit}
-            className="group relative"
-          >
-            <div className="h-14 w-full bg-orbit-surface rounded-2xl border border-orbit-border flex items-center px-5 gap-4 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_0_0_1px_rgba(0,0,0,0.02)] focus-within:shadow-[0_12px_48px_rgba(0,0,0,0.08)] focus-within:border-orbit-border transition-all duration-500 ease-out">
-              <Search size={18} className="text-orbit-text opacity-60 group-focus-within:text-orbit-accent group-focus-within:opacity-100 transition-colors" />
+        {/* The Omni-Bar (Simplified/Static) */}
+        <div className="w-full max-w-2xl relative group z-20 mb-20">
+          <form onSubmit={handleInternalSubmit} className="relative">
+            {/* Static container without scaling or glows */}
+            <div className="relative h-16 w-full bg-orbit-surface/80 backdrop-blur-3xl rounded-full border border-orbit-border flex items-center px-8 gap-5 transition-colors focus-within:bg-orbit-surface">
+              <Search size={24} strokeWidth={1.5} className="text-orbit-text-dim" />
+              
               <input 
                 type="text" 
-                placeholder="Search Orbit or enter URL..."
+                placeholder="Search or enter URL..."
                 value={localQuery}
                 onChange={(e) => setLocalQuery(e.target.value)}
-                className="bg-transparent border-none outline-none w-full text-[16px] font-medium text-orbit-text placeholder:text-orbit-text-dim"
+                className="bg-transparent border-none outline-none w-full text-xl text-orbit-text placeholder:text-orbit-text-dim/50 font-medium h-full"
                 autoFocus
                 spellCheck={false}
               />
-              <div className="flex items-center gap-2">
-                 {isSearching && (
-                   <Loader2 size={16} className="text-orbit-accent animate-spin" />
-                 )}
-                 {localQuery.length > 0 && (
-                   <button className="p-2 rounded-full hover:bg-orbit-card text-orbit-text opacity-70 hover:opacity-100 transition-colors animate-in fade-in zoom-in duration-200">
-                      <DownloadCloud size={18} />
+              
+              <div className="flex items-center gap-3">
+                 {isSearching ? (
+                   <Loader2 size={20} className="text-orbit-accent animate-spin" />
+                 ) : localQuery.length > 0 && (
+                   <button className="p-2.5 rounded-full bg-orbit-text text-orbit-bg hover:scale-110 active:scale-95 transition-all text-sm font-bold">
+                      <Share2 size={16} strokeWidth={2.5} className="rotate-90" />
                    </button>
                  )}
               </div>
             </div>
 
-            {/* AI Search Insight Card */}
+            {/* Intelligent Suggestions */}
             <AnimatePresence>
               {aiInsight && localQuery.length >= 4 && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-4 p-5 bg-orbit-surface shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] border border-orbit-border rounded-4xl z-50 overflow-hidden"
+                  initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: 5, filter: 'blur(10px)' }}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  className="absolute top-full left-4 right-4 mt-6 p-1 bg-orbit-bg/80 backdrop-blur-3xl border border-orbit-border/50 rounded-3xl shadow-2xl overflow-hidden"
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles size={14} className="text-orbit-accent" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-orbit-accent">AI Insight</span>
-                  </div>
-                  
-                  <p className="text-[14px] text-orbit-text/90 mb-4 leading-relaxed font-medium">
-                    {aiInsight.fact}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {aiInsight.suggestions?.map((s, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => { setLocalQuery(s); onNavigate(s); }}
-                        className="px-4 py-2 rounded-full bg-orbit-accent/10 border border-orbit-accent/5 text-orbit-accent text-[11px] font-bold hover:bg-orbit-accent hover:text-orbit-bg transition-all shadow-sm active:scale-95"
-                      >
-                        {s}
-                      </button>
-                    ))}
+                  <div className="p-6 bg-linear-to-b from-white/5 to-transparent rounded-[20px]">
+                    <div className="flex gap-4">
+                      <div className="mt-1">
+                        <Sparkles size={18} className="text-orbit-accent animate-pulse" />
+                      </div>
+                      <div className="space-y-4 w-full">
+                        <p className="text-sm text-orbit-text/90 leading-relaxed font-medium">
+                          {aiInsight.fact}
+                        </p>
+                        
+                        {aiInsight.suggestions?.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {aiInsight.suggestions.map((s, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => { setLocalQuery(s); onNavigate(s); }}
+                                className="px-4 py-2 rounded-xl bg-orbit-surface hover:bg-orbit-text hover:text-orbit-bg border border-orbit-border hover:border-transparent text-orbit-text text-xs font-semibold tracking-wide transition-all duration-300"
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -160,10 +165,10 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
           </form>
         </div>
 
-        {/* Semantic Shortcuts Grid */}
-        <main className="w-full max-w-4xl px-8 flex justify-center">
-          <div className="flex flex-wrap justify-center gap-x-2 gap-y-3">
-            <AnimatePresence mode="popLayout">
+        {/* Minimalist Shortcuts */}
+        <div className="w-full">
+          <div className="flex flex-wrap justify-center gap-6">
+            <AnimatePresence layout>
               {bookmarks.map((item) => (
                 <BookmarkCard 
                   key={item.id}
@@ -171,25 +176,26 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
                   url={item.url}
                   onClick={onNavigate}
                   onDelete={() => handleDeleteBookmark(item.id)}
+                  variant="minimal"
                 />
               ))}
-              <AddBookmarkCard onAdd={handleAddBookmark} />
+              <AddBookmarkCard onAdd={handleAddBookmark} variant="minimal" />
             </AnimatePresence>
           </div>
-        </main>
+        </div>
+      </main>
 
-
-        <footer className="w-full h-16 mt-auto flex justify-between items-center text-orbit-text-dim text-[11px] font-bold uppercase tracking-widest px-8">
-           <div className="flex gap-8">
-              <span className="hover:text-orbit-text cursor-pointer transition-colors">Settings</span>
-              <span className="hover:text-orbit-text cursor-pointer transition-colors">Privacy</span>
-           </div>
-           <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#34A853] animate-pulse" />
-              <span>Orbit Logic Engine v2.0</span>
-           </div>
-        </footer>
-      </div>
+      {/* Floating Status Bar */}
+      <footer className="absolute bottom-8 w-full flex justify-center pointer-events-none">
+         <div className="px-6 py-2 rounded-full bg-orbit-surface/50 backdrop-blur-md border border-orbit-border/50 text-[10px] font-bold uppercase tracking-widest text-orbit-text-dim flex items-center gap-4 shadow-sm">
+            <span className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+              Connected
+            </span>
+            <span className="w-px h-3 bg-orbit-border" />
+            <span>v2.5.0</span>
+         </div>
+      </footer>
     </div>
   );
 };

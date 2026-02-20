@@ -170,6 +170,8 @@ const App = () => {
                  onNavigate={handleNavigate}
                  tabCount={tabs.length}
                  isVisible={true}
+                 bookmarks={bookmarks}
+                 onUpdateBookmarks={setBookmarks}
                />
              </div>
            </div>
@@ -247,7 +249,7 @@ const App = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full h-full pt-[92px] relative z-0">
+      <main className="w-full h-full pt-20.5 relative z-0">
         <div 
           className={`flex-1 h-full relative z-0 ${isHome || isOverview || isExtensionsOpen || isSettingsOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         >
@@ -280,6 +282,8 @@ const App = () => {
               >
                 <NewTab 
                   onNavigate={handleNavigate} 
+                  bookmarks={bookmarks}
+                  onUpdateBookmarks={setBookmarks}
                 />
               </motion.div>
             )}

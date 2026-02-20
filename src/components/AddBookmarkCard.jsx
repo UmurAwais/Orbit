@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Check, Globe, Type } from 'lucide-react';
 
-const AddBookmarkCard = ({ onAdd }) => {
+const AddBookmarkCard = ({ onAdd, variant }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState('');
   const [url, setUrl] = useState('');
@@ -60,12 +60,14 @@ const AddBookmarkCard = ({ onAdd }) => {
             exit={{ opacity: 0, scale: 0.9 }}
             whileHover={{ y: -4 }}
             onClick={() => setIsEditing(true)}
-            className="group flex flex-col items-center gap-3 p-4 rounded-4xl hover:bg-orbit-card transition-colors duration-300 cursor-pointer"
+            className={`group flex flex-col items-center gap-3 rounded-2xl hover:bg-orbit-card transition-colors duration-300 cursor-pointer ${variant === 'minimal' ? 'p-2' : 'p-4'}`}
           >
-            <div className="w-18 h-18 rounded-[1.75rem] bg-orbit-card border-2 border-dashed border-orbit-border flex items-center justify-center group-hover:bg-orbit-surface group-hover:border-solid group-hover:border-orbit-border group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
-              <Plus size={24} className="text-orbit-text opacity-40 group-hover:opacity-60 transition-colors" />
+            <div className={`rounded-2xl bg-orbit-card border-2 border-dashed border-orbit-border flex items-center justify-center group-hover:bg-orbit-surface group-hover:border-solid group-hover:border-orbit-border group-hover:shadow-md transition-all duration-300 ease-out ${variant === 'minimal' ? 'w-14 h-14' : 'w-18 h-18'}`}>
+              <Plus size={variant === 'minimal' ? 20 : 24} className="text-orbit-text opacity-40 group-hover:opacity-60 transition-colors" />
             </div>
-            <span className="text-[13px] font-medium text-orbit-text opacity-50 group-hover:opacity-80 transition-colors tracking-tight">Add shortcut</span>
+            {variant !== 'minimal' && (
+              <span className="text-[13px] font-medium text-orbit-text opacity-50 group-hover:opacity-80 transition-colors tracking-tight">Add shortcut</span>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -73,7 +75,7 @@ const AddBookmarkCard = ({ onAdd }) => {
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="group flex flex-col items-center gap-3 p-4 rounded-4xl bg-orbit-surface shadow-[0_32px_64px_-16px_rgba(0,0,0,0.12)] border border-orbit-border z-50 absolute -top-4 -left-4 -right-4 min-w-50"
+            className="group flex flex-col items-center gap-3 p-4 rounded-4xl bg-orbit-surface shadow-2xl border border-orbit-border z-50 absolute -top-4 -left-4 -right-4 min-w-50"
           >
             <div className="w-full flex flex-col gap-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-orbit-card rounded-2xl focus-within:bg-orbit-border/50 transition-colors">

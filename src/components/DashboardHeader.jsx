@@ -8,7 +8,6 @@ import {
   Search,
   LayoutGrid,
   ChevronRight,
-  Zap,
   Puzzle
 } from 'lucide-react';
 

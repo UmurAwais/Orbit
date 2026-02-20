@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect, useMemo } from 'react';
 import { 
   Plus, Search, X, Lock, Shield, RefreshCw, Share, MoreHorizontal, ChevronDown,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Bookmark
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,8 @@ const SegmentedHub = memo(({
   onNavigate,
   isVisible = true,
   tabCount = 1,
+  bookmarks = [],
+  onUpdateBookmarks,
 }) => {
   const [inputValue, setInputValue] = useState(activeTab?.url || '');
   const [isFocused, setIsFocused] = useState(false);
@@ -32,6 +34,24 @@ const SegmentedHub = memo(({
       setSelectedIndex(-1);
     }
   }, [activeTab?.url, isFocused]);
+
+  const isPinned = useMemo(() => {
+    if (!activeTab?.url || activeTab.url === 'about:blank') return false;
+    return bookmarks.some(b => b.url === activeTab.url);
+  }, [bookmarks, activeTab?.url]);
+
+  const toggleBookmark = () => {
+    if (!activeTab?.url || activeTab.url === 'about:blank') return;
+    if (isPinned) {
+      onUpdateBookmarks(bookmarks.filter(b => b.url !== activeTab.url));
+    } else {
+      onUpdateBookmarks([...bookmarks, {
+        id: Date.now().toString(),
+        title: activeTab.title || 'New Bookmark',
+        url: activeTab.url
+      }]);
+    }
+  };
 
   useEffect(() => {
     if (isFocused || inputValue.length > 0) return;
@@ -155,7 +175,7 @@ const SegmentedHub = memo(({
         {/* Domain safe suffix (Only when not focused) */}
         {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-             <span className="text-[13px] font-medium text-nexus-text-dim ml-[180px]"> - safe</span>
+             <span className="text-[13px] font-medium text-nexus-text-dim ml-45"> - safe</span>
           </div>
         )}
         
@@ -208,14 +228,25 @@ const SegmentedHub = memo(({
       {/* Trailing Utility Pod */}
       <div className="flex items-center gap-0.5 pr-2 z-10 no-drag">
         {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
-          <button 
-            type="button"
-            onClick={(e) => { e.stopPropagation(); window.orbit.tabs.reload({ id: activeTab.id }); }}
-            className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-30 hover:opacity-100 transition-all ${activeTab?.isLoading ? 'opacity-100 text-nexus-accent' : ''}`}
-            title="Reload Page"
-          >
-            <RefreshCw size={13} strokeWidth={2.5} className={activeTab?.isLoading ? 'animate-spin' : ''} />
-          </button>
+          <>
+            <button 
+              type="button"
+              onClick={(e) => { e.stopPropagation(); window.orbit.tabs.reload({ id: activeTab.id }); }}
+              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-30 hover:opacity-100 transition-all ${activeTab?.isLoading ? 'opacity-100 text-nexus-accent' : ''}`}
+              title="Reload Page"
+            >
+              <RefreshCw size={13} strokeWidth={2.5} className={activeTab?.isLoading ? 'animate-spin' : ''} />
+            </button>
+
+            <button 
+              type="button" 
+              onClick={toggleBookmark}
+              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 transition-all ${isPinned ? 'text-orbit-accent opacity-100' : 'text-nexus-text opacity-30 hover:opacity-100'}`}
+              title={isPinned ? "Remove Bookmark" : "Bookmark this page"}
+            >
+              <Bookmark size={13} strokeWidth={2.5} className={isPinned ? 'fill-current' : ''} />
+            </button>
+          </>
         )}
         
         <button type="button" className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-30 hover:opacity-100 transition-all">
