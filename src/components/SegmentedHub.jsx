@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect, useMemo } from 'react';
 import { 
   Plus, Search, X, Lock, Shield, RefreshCw, Share, MoreHorizontal, ChevronDown,
-  ChevronLeft, ChevronRight, Bookmark
+  ChevronLeft, ChevronRight, Bookmark, ShieldCheck
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,12 +20,14 @@ const SegmentedHub = memo(({
   tabCount = 1,
   bookmarks = [],
   onUpdateBookmarks,
+  onFocusChange,
 }) => {
   const [inputValue, setInputValue] = useState(activeTab?.url || '');
   const [isFocused, setIsFocused] = useState(false);
   const [commandIndex, setCommandIndex] = useState(0);
   const [suggestions, setSuggestions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [shieldHovered, setShieldHovered] = useState(false);
 
   useEffect(() => {
     if (!isFocused) {
@@ -145,7 +147,7 @@ const SegmentedHub = memo(({
   }, [activeTab?.url, isFocused, inputValue]);
 
   return (
-    <div className={`nexus-hub group no-drag relative w-full overflow-hidden ${!isVisible && !isFocused ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`nexus-hub group no-drag relative w-full ${!isVisible && !isFocused ? 'opacity-0' : 'opacity-100'}`}>
       
       {/* 1. Interior Navigation (Integrated arrows) */}
       <div className="nexus-hub-inner-nav no-drag">
@@ -165,6 +167,33 @@ const SegmentedHub = memo(({
         </button>
       </div>
 
+      {/* Premium Privacy Indicator - Apple Safari Style */}
+      <div className="relative ml-1">
+        <button
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-emerald-500/5 transition-all duration-300"
+          onMouseEnter={() => { setShieldHovered(true); onFocusChange?.(true); }}
+          onMouseLeave={() => { setShieldHovered(false); onFocusChange?.(false); }}
+        >
+          <ShieldCheck size={16} strokeWidth={2.2} className={`text-emerald-500 transition-transform duration-200 ${shieldHovered ? 'scale-110' : ''}`} />
+        </button>
+        {shieldHovered && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 z-[99999] pointer-events-none"
+            style={{ top: 'calc(100% + 10px)', minWidth: '220px', maxWidth: '300px' }}
+          >
+            <div className="bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-2xl px-4 py-2.5 shadow-xl text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <ShieldCheck size={12} className="text-emerald-500" strokeWidth={2.5} />
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Anonymous & Secure</span>
+              </div>
+              <p className="text-[11px] text-nexus-text opacity-70 leading-snug">
+                No account, no tracking — just Orbit. Pure speed.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
       <form onSubmit={handleSubmit} className="flex-1 flex items-center h-full relative">
         {/* Visual URL Display (Centered with Icon) */}
         {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
@@ -182,11 +211,15 @@ const SegmentedHub = memo(({
             setSelectedIndex(-1);
           }}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            setIsFocused(true);
+            onFocusChange?.(true);
+          }}
           onBlur={() => {
             setTimeout(() => {
               setIsFocused(false);
               setSuggestions([]);
+              onFocusChange?.(false);
               window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
             }, 200);
           }}
@@ -272,6 +305,12 @@ const SegmentedHub = memo(({
         
         <button type="button" className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all">
           <Share size={13} strokeWidth={2.5} />
+        </button>
+        
+        <div className="w-1" />
+        
+        <button type="button" className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all" data-orbit-tooltip="Menu">
+          <MoreHorizontal size={15} strokeWidth={2.2} />
         </button>
       </div>
 

@@ -250,29 +250,56 @@ export class ViewManager {
 
     wc.on('did-change-theme-color', () => this.sendStatus(id));
 
+
     wc.on('update-target-url', (event, url) => {
+      const escaped = url.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
       const script = `
         (function() {
-          let bubble = document.getElementById('orbit-link-preview');
-          if (!bubble) {
-            bubble = document.createElement('div');
-            bubble.id = 'orbit-link-preview';
-            Object.assign(bubble.style, {
-              position: 'fixed', bottom: '0', left: '0', maxWidth: '600px',
-              padding: '2px 8px', backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              backdropFilter: 'blur(60px) saturate(210%) brightness(1.05)',
-              borderTopRightRadius: '5px', border: '1px solid rgba(255, 255, 255, 0.4)',
-              color: '#1d1d1f', fontSize: '11px', zIndex: '2147483647',
-              pointerEvents: 'none', opacity: '0', transition: 'opacity 0.1s ease-in-out'
+          let bar = document.getElementById('_orbit_statusbar');
+          if (!bar) {
+            bar = document.createElement('div');
+            bar.id = '_orbit_statusbar';
+            Object.assign(bar.style, {
+              position: 'fixed', bottom: '8px', left: '8px',
+              maxWidth: 'calc(100vw - 120px)',
+              padding: '3px 10px',
+              background: 'rgba(255,255,255,0.82)',
+              backdropFilter: 'blur(40px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              fontSize: '11px',
+              fontFamily: 'Inter, -apple-system, sans-serif',
+              fontWeight: '500',
+              letterSpacing: '-0.01em',
+              color: '#1d1d1f',
+              zIndex: '2147483647',
+              pointerEvents: 'none',
+              opacity: '0',
+              transition: 'opacity 0.1s ease',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             });
-            document.body.appendChild(bubble);
+            // Dark mode
+            const mq = window.matchMedia('(prefers-color-scheme: dark)');
+            const applyDark = (dark) => {
+              bar.style.background = dark ? 'rgba(30,30,32,0.88)' : 'rgba(255,255,255,0.82)';
+              bar.style.color = dark ? '#f5f5f7' : '#1d1d1f';
+              bar.style.border = dark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)';
+            };
+            applyDark(mq.matches);
+            mq.addEventListener('change', e => applyDark(e.matches));
+            document.documentElement.appendChild(bar);
           }
-          if ("${url}") { bubble.textContent = "${url}"; bubble.style.opacity = '1'; }
-          else { bubble.style.opacity = '0'; }
+          if (\`${escaped}\`) { bar.textContent = \`${escaped}\`; bar.style.opacity = '1'; }
+          else { bar.style.opacity = '0'; }
         })();
       `;
       wc.executeJavaScript(script).catch(() => {});
     });
+
 
     this.sendStatus(id);
     this.injectScrollbarStyle(wc);

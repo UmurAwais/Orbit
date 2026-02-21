@@ -47,7 +47,7 @@ function createWindow() {
   // Add uiView now (will be re-raised after every page view addition)
   mainWindow.contentView.addChildView(uiView);
 
-  // Size the UI view to cover the full window
+  // Size the UI view to cover the full window initially
   const [w, h] = mainWindow.getContentSize();
   uiView.setBounds({ x: 0, y: 0, width: w, height: h });
 
@@ -64,7 +64,11 @@ function createWindow() {
 
   mainWindow.on('resize', () => {
     const [width, height] = mainWindow.getContentSize();
-    uiView.setBounds({ x: 0, y: 0, width, height });
+    // Only resize uiView if it's currently at full height (Orbit UI mode)
+    // If it's at header-only height, keep it that way until navigating back
+    const bounds = uiView.getBounds();
+    const isHeaderOnly = bounds.height <= 96;
+    uiView.setBounds({ x: 0, y: 0, width, height: isHeaderOnly ? 92 : height });
     viewManager.updateLayout();
   });
 
@@ -305,6 +309,23 @@ function setupIpcHandlers() {
   // is a WebContentsView rendered above all page views at the OS level.
   // Keeping a stub so existing frontend calls don't cause IPC errors.
   ipcMain.on('ui:dropdown-toggle', () => {});
+
+  // Resize the uiView to only cover the header (92px) when browsing a website.
+  // This is the ONLY working solution on Windows — setIgnoreMouseEvents(true) on
+  // BaseWindow passes clicks to the OS desktop/taskbar causing minimize.
+  // The page WebContentsView sits at y:92 and is directly reachable when uiView
+  // doesn't cover it. Expand back to full height for New Tab / Settings / Overview.
+  ipcMain.on('ui:set-ignore-mouse', (event, shouldPassThrough) => {
+    if (!uiView || !mainWindow) return;
+    const [width, height] = mainWindow.getContentSize();
+    if (shouldPassThrough) {
+      // Browsing: shrink to header only — page is directly clickable below
+      uiView.setBounds({ x: 0, y: 0, width, height: 92 });
+    } else {
+      // Orbit UI panel open: expand to full window
+      uiView.setBounds({ x: 0, y: 0, width, height });
+    }
+  });
 
   // Window Control Handlers
   ipcMain.on('window-minimize', () => mainWindow?.minimize());

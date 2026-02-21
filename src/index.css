@@ -177,8 +177,12 @@ body {
 }
 
 .nexus-hub-nav-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
   color: rgb(46, 46, 46);
+}
+
+.dark .nexus-hub-nav-btn:hover:not(:disabled) {
+  color: #ffffff;
+  background: transparent;
 }
 
 .nexus-hub:focus-within {
@@ -249,7 +253,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 12px; /* Reduced side padding (was 44px) */
+  padding: 0 12px;
   flex: 1;
   min-width: 0;
   height: 100%;
@@ -402,6 +406,64 @@ body {
 
 .dark .nexus-tab-close:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* Orbit Premium Tooltip System - macOS 26 Glassmorphism */
+[data-orbit-tooltip] {
+  position: relative;
+}
+
+[data-orbit-tooltip]::after {
+  content: attr(data-orbit-tooltip);
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.85); /* Slightly more opaque for clarity */
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  padding: 10px 18px; /* High padding as per image */
+  color: #1a1a1a;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center; /* Center text as per image */
+  white-space: normal;
+  width: max-content;
+  max-width: 320px;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16px; /* High border-radius as per image */
+}
+
+[data-orbit-tooltip]:hover::after {
+  opacity: 1;
+  visibility: visible;
+  top: calc(100% + 8px);
+}
+
+/* Smart Alignment for Right-Side Tools to avoid screen clipping */
+.pl-4 [data-orbit-tooltip]::after {
+  left: auto;
+  right: -10px;
+  transform: none;
+}
+
+/* Special centering for the Shield icon to match image */
+.group\/privacy::after {
+  right: -60px !important; /* Move it back towards the center of the shield */
+}
+
+.dark [data-orbit-tooltip]::after {
+  background: rgba(28, 28, 30, 0.85);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
 .no-drag {
