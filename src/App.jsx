@@ -31,6 +31,7 @@ import {
   MoreHorizontal,
   Download,
   ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 import TabSearch from "./components/TabSearch";
 import AISidekick from "./components/AISidekick";
@@ -38,6 +39,7 @@ import ExtensionsManager from "./components/ExtensionsManager";
 import SettingsManager from "./components/SettingsManager";
 import TabOverview from "./components/TabOverview";
 import DownloadsManager from "./components/DownloadsManager";
+import DownloadsPage from "./components/DownloadsPage";
 
 const App = () => {
   const [tabs, setTabs] = useState([
@@ -59,9 +61,11 @@ const App = () => {
   const [isExtensionsOpen, setIsExtensionsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
+  const [isDownloadsPageOpen, setIsDownloadsPageOpen] = useState(false);
   const [isHubFocused, setIsHubFocused] = useState(false);
   const [isHeaderHovered, setIsHeaderHovered] = useState(false);
   const [isFindOpen, setIsFindOpen] = useState(false);
+  const [isUpdateReady, setIsUpdateReady] = useState(false);
   const [historyItems, setHistoryItems] = useState([]); // { url, title }
   const openDownloads = (val) => setIsDownloadsOpen(val);
 
@@ -444,6 +448,14 @@ const App = () => {
     };
   }, [handleAddTab, handleCloseTab, activeTabId]);
 
+  useEffect(() => {
+    const unsubUpdate = window.orbit.ipcRenderer.on('update-ready', () => {
+      console.log('[Orbit UI] Update ready for installation');
+      setIsUpdateReady(true);
+    });
+    return () => unsubUpdate?.();
+  }, []);
+
   return (
     <div
       className={`w-full h-screen overflow-hidden relative transition-colors duration-200`}
@@ -700,10 +712,13 @@ const App = () => {
             </button>
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer relative"
               data-orbit-tooltip="Settings"
             >
               <Settings size={16} strokeWidth={1.8} />
+              {isUpdateReady && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#635BFF] rounded-full border-2 border-orbit-bg shadow-[0_0_8px_#635BFF] animate-pulse" />
+              )}
             </button>
           </div>
         </div>
@@ -721,7 +736,7 @@ const App = () => {
         {/* Only render UI panels when active — keeps the layer transparent for web content clicks */}
         <div
           className={`flex-1 h-full relative z-0 ${
-            isHome || isOverview || isExtensionsOpen || isSettingsOpen
+            isHome || isOverview || isExtensionsOpen || isSettingsOpen || isDownloadsPageOpen
               ? "pointer-events-auto"
               : "pointer-events-none"
           }`}
@@ -753,7 +768,18 @@ const App = () => {
                 onClose={() => setIsOverview(false)}
               />
             )}
-            {isHome && !isOverview && !isExtensionsOpen && !isSettingsOpen && (
+            {isDownloadsPageOpen && (
+              <motion.div
+                key="downloads-page"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.02 }}
+                className="w-full h-full"
+              >
+                <DownloadsPage onClose={() => setIsDownloadsPageOpen(false)} />
+              </motion.div>
+            )}
+            {isHome && !isOverview && !isExtensionsOpen && !isSettingsOpen && !isDownloadsPageOpen && (
               <motion.div
                 key="newtab"
                 layout
@@ -874,10 +900,56 @@ const App = () => {
       </AnimatePresence>
       <AnimatePresence>
         {isDownloadsOpen && (
-          <DownloadsManager
+           <DownloadsManager
             onClose={() => openDownloads(false)}
             anchorRef={downloadBtnRef}
+            onOpenFullHistory={() => {
+              setIsDownloadsPageOpen(true);
+              setIsDownloadsOpen(false);
+            }}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isUpdateReady && (
+          <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] w-[400px]"
+          >
+            <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[2rem] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.3)] relative overflow-hidden group">
+              {/* Liquid Highlight Effect */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#635BFF]/10 blur-[60px] rounded-full group-hover:translate-x-10 group-hover:translate-y-10 transition-transform duration-1000" />
+              
+              <div className="relative z-10 flex flex-col items-center text-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#635BFF] flex items-center justify-center text-white shadow-[0_10px_30px_rgba(99,91,255,0.4)]">
+                  <RefreshCw size={24} className="animate-[spin_3s_linear_infinite]" />
+                </div>
+                
+                <div className="space-y-1">
+                  <h3 className="text-xl font-black text-orbit-text">New Version Ready</h3>
+                  <p className="text-[13px] text-orbit-text-dim font-bold">Experience the next level of Orbit.</p>
+                </div>
+
+                <div className="flex gap-3 w-full mt-2">
+                  <button 
+                    onClick={() => setIsUpdateReady(false)}
+                    className="flex-1 py-3.5 rounded-2xl bg-orbit-card border border-orbit-border text-[12px] font-black uppercase tracking-widest text-orbit-text-dim hover:text-orbit-text transition-all"
+                  >
+                    Later
+                  </button>
+                  <button 
+                    onClick={() => window.orbit.ipcRenderer.send('update:restart-and-apply')}
+                    className="flex-[1.5] py-3.5 rounded-2xl bg-[#635BFF] text-white text-[12px] font-black uppercase tracking-widest shadow-[0_0_0_0_rgba(99,91,255,0.4)] hover:shadow-[0_15px_40px_rgba(99,91,255,0.5)] transition-all relative overflow-hidden animate-[pulse-shadow_3s_infinite]"
+                  >
+                    Restart & Update
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

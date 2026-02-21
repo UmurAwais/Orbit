@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Folder, File, Trash2, CheckCircle2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 
-const DownloadsManager = ({ onClose, anchorRef }) => {
+const DownloadsManager = ({ onClose, anchorRef, onOpenFullHistory }) => {
   const [downloads, setDownloads] = useState([]);
 
   // Compute position from the anchor button's bounding rect
@@ -160,7 +160,10 @@ const DownloadsManager = ({ onClose, anchorRef }) => {
         </div>
 
         <div className="p-3 bg-orbit-surface/30 backdrop-blur-md border-t border-orbit-border/50">
-          <button className="w-full py-2.5 rounded-xl hover:bg-orbit-accent hover:text-white text-orbit-accent text-[12px] font-bold transition-all flex items-center justify-between px-4 group">
+          <button 
+            onClick={onOpenFullHistory}
+            className="w-full py-2.5 rounded-xl hover:bg-orbit-accent hover:text-white text-orbit-accent text-[12px] font-bold transition-all flex items-center justify-between px-4 group"
+          >
             Full download history
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:opacity-100 transition-opacity">
                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />

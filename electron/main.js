@@ -1,6 +1,8 @@
 import { app, BaseWindow, WebContentsView, ipcMain, Menu, shell, nativeTheme, session, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import pkg from 'electron-updater';
+const { autoUpdater } = pkg;
 import { ViewManager } from './ViewManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -79,6 +81,7 @@ function createWindow() {
 
   setupIpcHandlers();
   setupApplicationMenu();
+  setupAutoUpdater();
 
   nativeTheme.on('updated', () => {
     const isDark = nativeTheme.shouldUseDarkColors;
@@ -248,7 +251,32 @@ function setupApplicationMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+
+function setupAutoUpdater() {
+  // Point to GitHub repository (placeholder)
+  // autoUpdater.setFeedURL({
+  //   provider: 'github',
+  //   owner: 'OWNER_NAME',
+  //   repo: 'REPO_NAME'
+  // });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('[Orbit] Update downloaded, notifying UI');
+    if (uiView && !uiView.webContents.isDestroyed()) {
+      uiView.webContents.send('update-ready', info);
+    }
+  });
+
+  autoUpdater.checkForUpdatesAndNotify().catch(err => {
+    console.error('[Orbit] Auto-updater error:', err);
+  });
+}
+
 function setupIpcHandlers() {
+  ipcMain.on('update:restart-and-apply', () => {
+    console.log('[Orbit] Restarting to apply update...');
+    autoUpdater.quitAndInstall();
+  });
   ipcMain.on('theme:update', (event, theme) => {
     nativeTheme.themeSource = theme;
   });
