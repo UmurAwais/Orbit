@@ -10,6 +10,7 @@ import React, {
 import { AnimatePresence, motion } from "framer-motion";
 import SegmentedHub from "./components/SegmentedHub";
 import NewTab from "./components/NewTab";
+import FindBar from "./components/FindBar";
 import OrbitLogo from "./components/OrbitLogo";
 import {
   Search,
@@ -58,8 +59,10 @@ const App = () => {
   const [isExtensionsOpen, setIsExtensionsOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDownloadsOpen, setIsDownloadsOpen] = useState(false);
-  const [isHubFocused, setIsHubFocused] = useState(false); // address bar dropdown open
-  const [isHeaderHovered, setIsHeaderHovered] = useState(false); // any header icon hovered (tooltips extend below 92px)
+  const [isHubFocused, setIsHubFocused] = useState(false);
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const [isFindOpen, setIsFindOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState([]); // { url, title }
   const openDownloads = (val) => setIsDownloadsOpen(val);
 
   const [pinnedExtensions, setPinnedExtensions] = useState(() => {
@@ -148,13 +151,7 @@ const App = () => {
   }, [theme]);
 
   const [passwordPrompt, setPasswordPrompt] = useState(null);
-  useEffect(() => {
-    const handlePasswordPrompt = (data) => {
-      setPasswordPrompt(data);
-      setTimeout(() => setPasswordPrompt(null), 10000);
-    };
-    window.orbit.ipcRenderer.on("password-prompt", handlePasswordPrompt);
-  }, []);
+
 
   const [bookmarks, setBookmarks] = useState(() => {
     const saved = localStorage.getItem("orbit-bookmarks");
@@ -192,9 +189,10 @@ const App = () => {
       isDownloadsOpen ||
       isHubFocused ||
       isHeaderHovered || // any header icon hovered — tooltip extends below 92px
+      isFindOpen ||      // Find in Page bar is visible
       !!hoveredTabId;    // tab preview popup is visible
     window.orbit?.ipcRenderer?.send("ui:set-ignore-mouse", !isShowingOrbitUI);
-  }, [isHome, isOverview, isExtensionsOpen, isSettingsOpen, isAISidekickOpen, isDownloadsOpen, isHubFocused, isHeaderHovered, hoveredTabId]);
+  }, [isHome, isOverview, isExtensionsOpen, isSettingsOpen, isAISidekickOpen, isDownloadsOpen, isHubFocused, isHeaderHovered, isFindOpen, hoveredTabId]);
 
   useEffect(() => {
     window.orbit.tabs.create({ id: "default", url: "about:blank" });
@@ -281,6 +279,171 @@ const App = () => {
     [activeTabId],
   );
 
+
+  // Track navigation history
+  useEffect(() => {
+    const tab = tabs.find(t => t.id === activeTabId);
+    if (!tab?.url || tab.url === 'about:blank') return;
+    setHistoryItems(prev => {
+      const entry = { url: tab.url, title: tab.title || tab.url };
+      const filtered = prev.filter(h => h.url !== tab.url);
+      return [...filtered, entry].slice(-50);
+    });
+  }, [activeTab?.url, activeTab?.title]);
+
+  // ── Keyboard Shortcuts & Global Events ─────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isCmd = e.metaKey || e.ctrlKey;
+      if (isCmd && e.key === 'f') {
+        e.preventDefault();
+        if (isFindOpen) {
+          window.dispatchEvent(new CustomEvent('orbit:focus-find'));
+        } else {
+          setIsFindOpen(true);
+        }
+      } else if (isCmd && e.key === 't') {
+        e.preventDefault();
+        handleAddTab();
+      } else if (isCmd && e.key === 'l') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('orbit:focus-url'));
+      }
+    };
+    const handlePasswordPrompt = (data) => {
+      setPasswordPrompt(data);
+      setTimeout(() => setPasswordPrompt(null), 10000);
+    };
+    window.orbit.ipcRenderer.on("password-prompt", handlePasswordPrompt);
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFindOpen]);
+
+  // ── Menu Action IPC Listeners ──────────────────────────────────────────────
+  // ── Download Animation & Progress Tracking ────────────────────────────────
+  const [activeDownloads, setActiveDownloads] = useState(new Map());
+  const [justStartedDownload, setJustStartedDownload] = useState(false);
+  const [justFinishedDownload, setJustFinishedDownload] = useState(false);
+  
+  const totalDownloadProgress = useMemo(() => {
+    const progressing = Array.from(activeDownloads.values()).filter(d => d.state === 'progressing');
+    if (progressing.length === 0) return 0;
+    
+    // Check if we have any with real progress
+    const withProgress = progressing.filter(d => d.totalBytes > 0);
+    if (withProgress.length === 0) return -1; // -1 indicates Indeterminate
+
+    const total = withProgress.reduce((acc, d) => acc + (d.percentage || 0), 0);
+    return Math.round(total / withProgress.length);
+  }, [activeDownloads]);
+
+  const isDownloading = useMemo(() => {
+    return Array.from(activeDownloads.values()).some(d => d.state === 'progressing');
+  }, [activeDownloads]);
+
+  useEffect(() => {
+    const u1 = window.orbit.ipcRenderer.on('menu:open-downloads', () => {
+      openDownloads(true);
+    });
+    const u2 = window.orbit.ipcRenderer.on('menu:open-settings', () => setIsSettingsOpen(true));
+    const u3 = window.orbit.ipcRenderer.on('menu:new-tab', (url) => {
+      const targetUrl = typeof url === 'string' ? url : "about:blank";
+      handleAddTab(targetUrl);
+    });
+    const u4 = window.orbit.ipcRenderer.on('menu:open-find', () => setIsFindOpen(true));
+    
+    const u5 = window.orbit.ipcRenderer.on('menu:close-tab', () => {
+      setActiveTabId(currentId => {
+        handleCloseTab(currentId);
+        return currentId;
+      });
+    });
+
+    const u6 = window.orbit.ipcRenderer.on('menu:next-tab', () => {
+      setTabs(currentTabs => {
+        setActiveTabId(currentId => {
+          const idx = currentTabs.findIndex(t => t.id === currentId);
+          const nextId = currentTabs[(idx + 1) % currentTabs.length].id;
+          window.orbit.tabs.select({ id: nextId });
+          return nextId;
+        });
+        return currentTabs;
+      });
+    });
+
+    const u7 = window.orbit.ipcRenderer.on('menu:prev-tab', () => {
+      setTabs(currentTabs => {
+        setActiveTabId(currentId => {
+          const idx = currentTabs.findIndex(t => t.id === currentId);
+          const prevId = currentTabs[(idx - 1 + currentTabs.length) % currentTabs.length].id;
+          window.orbit.tabs.select({ id: prevId });
+          return prevId;
+        });
+        return currentTabs;
+      });
+    });
+
+    const u8 = window.orbit.ipcRenderer.on('menu:select-tab', (idx) => {
+      setTabs(currentTabs => {
+        const targetIdx = idx === -1 ? currentTabs.length - 1 : idx;
+        if (currentTabs[targetIdx]) {
+          const targetId = currentTabs[targetIdx].id;
+          setActiveTabId(targetId);
+          window.orbit.tabs.select({ id: targetId });
+        }
+        return currentTabs;
+      });
+    });
+
+    const u9 = window.orbit.ipcRenderer.on('menu:bookmark-tab', () => {
+      setTabs(currentTabs => {
+        setActiveTabId(currentId => {
+          const tab = currentTabs.find(t => t.id === currentId);
+          if (tab && tab.url !== 'about:blank') {
+            setBookmarks(prev => {
+              const exists = prev.some(b => b.url === tab.url);
+              if (exists) return prev.filter(b => b.url !== tab.url);
+              return [...prev, { id: Date.now().toString(), title: tab.title || 'New Bookmark', url: tab.url }];
+            });
+          }
+          return currentId;
+        });
+        return currentTabs;
+      });
+    });
+
+    const unsubStarted = window.orbit.downloads.onStarted((item) => {
+      setActiveDownloads(prev => new Map(prev).set(item.id, item));
+      setJustStartedDownload(true);
+      setTimeout(() => setJustStartedDownload(false), 3000);
+    });
+
+    const unsubUpdated = window.orbit.downloads.onUpdated((item) => {
+      setActiveDownloads(prev => {
+        const next = new Map(prev);
+        if (item.state === 'completed' || item.state === 'failed') {
+          if (item.state === 'completed') {
+            setJustFinishedDownload(true);
+            setTimeout(() => setJustFinishedDownload(false), 4000);
+          }
+          next.delete(item.id);
+        } else {
+          next.set(item.id, item);
+        }
+        return next;
+      });
+    });
+
+    return () => {
+      u1?.(); u2?.(); u3?.(); u4?.(); u5?.(); u6?.(); u7?.(); u8?.(); u9?.(); 
+      unsubStarted?.();
+      unsubUpdated?.();
+    };
+  }, [handleAddTab, handleCloseTab, activeTabId]);
+
   return (
     <div
       className={`w-full h-screen overflow-hidden relative transition-colors duration-200`}
@@ -302,11 +465,13 @@ const App = () => {
               <SegmentedHub
                 activeTab={activeTab}
                 onNavigate={handleNavigate}
+                onAddTab={handleAddTab}
                 tabCount={tabs.length}
                 isVisible={true}
                 bookmarks={bookmarks}
                 onUpdateBookmarks={setBookmarks}
                 onFocusChange={setIsHubFocused}
+                historyItems={historyItems}
               />
             </div>
           </div>
@@ -322,7 +487,7 @@ const App = () => {
                 setIsOverview(newState);
                 window.orbit.ipcRenderer.send("ui:toggle-overview", newState);
               }}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? "bg-orbit-accent text-white shadow-lg" : "hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100"}`}
+              className={`tip-left w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? "bg-orbit-accent text-white shadow-lg" : "hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100"}`}
               data-orbit-tooltip="Show Tab Overview"
             >
               <svg
@@ -426,10 +591,106 @@ const App = () => {
             <button
               ref={downloadBtnRef}
               onClick={() => openDownloads(!isDownloadsOpen)}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 cursor-pointer ${isDownloadsOpen ? "bg-orbit-accent text-white shadow-lg opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100"}`}
-              data-orbit-tooltip="Downloads"
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white shadow-xl opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
+              data-orbit-tooltip={isDownloading ? `Downloading (${totalDownloadProgress === -1 ? '...' : totalDownloadProgress + '%'})` : "Downloads"}
             >
-              <Download size={16} strokeWidth={1.8} />
+              <AnimatePresence>
+                {isDownloading && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.1 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <svg className={`w-full h-full -rotate-90 p-0.5 ${totalDownloadProgress === -1 ? "animate-spin" : ""}`} style={{ animationDuration: '1.2s' }}>
+                      <defs>
+                        <filter id="progress-glow" x="-20%" y="-20%" width="140%" height="140%">
+                          <feGaussianBlur stdDeviation="1" result="blur" />
+                          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                      </defs>
+                      <circle
+                        cx="50%"
+                        cy="50%"
+                        r="38%"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="opacity-10 dark:opacity-20"
+                      />
+                      <motion.circle
+                        cx="50%"
+                        cy="50%"
+                        r="38%"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        filter={isDownloadsOpen ? "" : "url(#progress-glow)"}
+                        style={{
+                          pathLength: totalDownloadProgress === -1 ? 0.35 : Math.max(0.05, totalDownloadProgress / 100),
+                          stroke: isDownloadsOpen ? '#ffffff' : 'var(--orbit-accent)',
+                          filter: isDownloadsOpen ? 'none' : 'drop-shadow(0 0 3px color-mix(in srgb, var(--orbit-accent) 40%, transparent))'
+                        }}
+                        transition={{ 
+                          pathLength: { type: "spring", stiffness: 60, damping: 15 },
+                          stroke: { duration: 0.3 }
+                        }}
+                        strokeDasharray="1 0"
+                      />
+                    </svg>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Success Checkmark overlay */}
+              <AnimatePresence>
+                {justFinishedDownload && !isDownloading && (
+                  <motion.div
+                    initial={{ scale: 0.4, opacity: 0, rotate: -20 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 1.2, opacity: 0 }}
+                    className="absolute inset-0 flex items-center justify-center z-20"
+                    style={{ color: '#34A853' }} // Using vibrant green for success check specifically
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Animated Download Icon */}
+              <motion.div
+                animate={{ 
+                  y: justStartedDownload ? [0, 2, 0] : 0,
+                  opacity: justFinishedDownload ? 0 : 1,
+                  scale: isDownloading ? 0.7 : 1,
+                  rotate: isDownloading ? [0, 5, -5, 0] : 0
+                }}
+                transition={{ 
+                  rotate: { repeat: isDownloading ? Infinity : 0, duration: 2, ease: "easeInOut" },
+                  default: { duration: 0.3 }
+                }}
+                className="relative z-10"
+              >
+                <Download 
+                  size={18} 
+                  strokeWidth={2.2} 
+                />
+              </motion.div>
+              
+              {/* Minimalist Start Dot - Pulses */}
+              <AnimatePresence>
+                {justStartedDownload && !isDownloadsOpen && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 2, opacity: 0 }}
+                    className="absolute top-1 right-1 w-2.5 h-2.5 bg-orbit-accent rounded-full border-2 border-orbit-bg z-25 shadow-lg shadow-orbit-accent/40"
+                  />
+                )}
+              </AnimatePresence>
             </button>
             <button
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
@@ -446,6 +707,14 @@ const App = () => {
             </button>
           </div>
         </div>
+        <AnimatePresence>
+          {isFindOpen && (
+            <FindBar 
+              activeTabId={activeTabId} 
+              onClose={() => setIsFindOpen(false)} 
+            />
+          )}
+        </AnimatePresence>
       </header>
 
       <main className="w-full h-[calc(100vh-92px)] mt-23 relative z-0 pointer-events-none">

@@ -86,7 +86,7 @@ const DownloadsManager = ({ onClose, anchorRef }) => {
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Empty history</span>
             </div>
           ) : (
-            downloads.slice(0, 5).map((item) => (
+            downloads.map((item) => (
               <div 
                 key={item.id}
                 className="p-3 rounded-xl hover:bg-orbit-surface/80 group transition-all cursor-default"
@@ -108,7 +108,7 @@ const DownloadsManager = ({ onClose, anchorRef }) => {
                           </h3>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <span className={`text-[11px] font-medium ${item.state === 'completed' ? 'text-orbit-text-dim' : 'text-orbit-accent'}`}>
-                               {formatSize(item.totalBytes || item.receivedBytes)} • {item.state === 'completed' ? 'Done' : item.state}
+                               {item.totalBytes > 0 ? formatSize(item.totalBytes) : formatSize(item.receivedBytes)} • {item.state === 'completed' ? 'Done' : item.state}
                             </span>
                           </div>
                        </div>
@@ -132,12 +132,24 @@ const DownloadsManager = ({ onClose, anchorRef }) => {
                     </div>
 
                     {item.state === 'progressing' && (
-                      <div className="mt-2 h-1 w-full bg-orbit-card rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-orbit-accent shadow-[0_0_8px_rgba(var(--orbit-accent-rgb),0.5)]"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${item.percentage}%` }}
-                        />
+                      <div className="mt-2 h-1 w-full bg-orbit-card rounded-full overflow-hidden relative">
+                        {item.totalBytes > 0 ? (
+                          <motion.div 
+                            className="h-full bg-orbit-accent shadow-[0_0_8px_rgba(var(--orbit-accent-rgb),0.5)]"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${item.percentage}%` }}
+                            transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+                          />
+                        ) : (
+                          /* Indeterminate progress for unknown file size */
+                          <motion.div 
+                            className="absolute inset-0 bg-orbit-accent shadow-[0_0_8px_rgba(var(--orbit-accent-rgb),0.5)]"
+                            initial={{ x: '-100%' }}
+                            animate={{ x: '100%' }}
+                            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                            style={{ width: '40%' }}
+                          />
+                        )}
                       </div>
                     )}
                   </div>

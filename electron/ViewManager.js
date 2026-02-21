@@ -159,6 +159,18 @@ export class ViewManager {
     
     this.activeIntervals = this.activeIntervals || new Map();
     if (this.activeIntervals.has(id)) clearInterval(this.activeIntervals.get(id));
+    
+    // Chromium-style new tab handling: Intercept window.open or target="_blank"
+    wc.setWindowOpenHandler(({ url, disposition }) => {
+      // disposition can be 'new-window', 'foreground-tab', 'background-tab', etc.
+      // We pipe all of these into our internal tab system.
+      if (url.startsWith('http') || url.startsWith('about:')) {
+        console.log(`[Orbit Engine] Link click triggered new tab: ${url} (disposition: ${disposition})`);
+        this.sendToUI('menu:new-tab', url);
+        return { action: 'deny' }; 
+      }
+      return { action: 'allow' };
+    });
 
     // Poll for Orbit actions (Context Menu commands)
     const checkOrbitActions = setInterval(() => {
@@ -187,6 +199,7 @@ export class ViewManager {
             case 'reload': wc.reload(); break;
             case 'inspect': wc.openDevTools({ mode: 'bottom' }); break;
             case 'savePage': wc.downloadURL(wc.getURL()); break;
+            case 'download': wc.downloadURL(data); break;
             case 'screenshot': this.mainWindow.webContents.send('capture-page'); break;
           }
         });
@@ -246,6 +259,11 @@ export class ViewManager {
       const state = this.tabStates.get(id);
       if (state && favicons?.[0]) { state.favicon = favicons[0]; }
       this.sendStatus(id);
+    });
+
+    wc.on('found-in-page', (event, result) => {
+      console.log(`[ViewManager] Found in page (${id}):`, result);
+      this.sendToUI('page:found-in-page', { ...result, tabId: id });
     });
 
     wc.on('did-change-theme-color', () => this.sendStatus(id));
@@ -427,6 +445,7 @@ export class ViewManager {
             
             if (isImage) {
               items.push({ label: 'Open Image in New Tab', action: 'openImage', data: params.srcURL });
+              items.push({ label: 'Download Image', action: 'download', data: params.srcURL });
               items.push({ label: 'Add Image to Photos', action: 'addToPhotos', data: params.srcURL });
               items.push({ label: 'Copy Image', action: 'copyImage', data: params.srcURL });
               items.push({ type: 'separator' });
@@ -539,10 +558,10 @@ export class ViewManager {
               const action = item.action;
               
               // Backend handled actions
-              const backendActions = ['back', 'forward', 'reload', 'inspect', 'savePage', 'screenshot', 'viewSource'];
+              const backendActions = ['back', 'forward', 'reload', 'inspect', 'savePage', 'download', 'screenshot', 'viewSource'];
               if (backendActions.includes(action)) {
                 window.__orbitActions = window.__orbitActions || [];
-                window.__orbitActions.push({ action, data: item.data });
+                window.__orbitActions.push({ action, data: item.data || params.linkURL || params.srcURL });
                 return;
               }
               

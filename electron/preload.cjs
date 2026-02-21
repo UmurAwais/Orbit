@@ -10,6 +10,10 @@ contextBridge.exposeInMainWorld('orbit', {
     stop: (data) => ipcRenderer.invoke('tab:stop', data),
     goBack: (data) => ipcRenderer.invoke('tab:goBack', data),
     goForward: (data) => ipcRenderer.invoke('tab:goForward', data),
+    zoomIn: (data) => ipcRenderer.invoke('tab:zoomIn', data),
+    zoomOut: (data) => ipcRenderer.invoke('tab:zoomOut', data),
+    resetZoom: (data) => ipcRenderer.invoke('tab:resetZoom', data),
+    getZoom: (data) => ipcRenderer.invoke('tab:getZoom', data),
     onUpdate: (callback) => {
       const subscription = (event, data) => callback(data);
       ipcRenderer.on('tab:update', subscription);

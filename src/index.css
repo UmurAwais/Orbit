@@ -454,6 +454,13 @@ body {
   transform: none;
 }
 
+/* Left-aligned tooltip for buttons at the screen's left edge */
+[data-orbit-tooltip].tip-left::after {
+  left: 0;
+  right: auto;
+  transform: none;
+}
+
 /* Special centering for the Shield icon to match image */
 .group\/privacy::after {
   right: -60px !important; /* Move it back towards the center of the shield */

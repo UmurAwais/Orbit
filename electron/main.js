@@ -1,4 +1,4 @@
-import { app, BaseWindow, WebContentsView, ipcMain, Menu, shell, nativeTheme, session } from 'electron';
+import { app, BaseWindow, WebContentsView, ipcMain, Menu, shell, nativeTheme, session, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ViewManager } from './ViewManager.js';
@@ -92,7 +92,43 @@ function createWindow() {
 }
 
 function setupApplicationMenu() {
+  const isMac = process.platform === 'darwin';
   const template = [
+    ...(isMac ? [{ role: 'appMenu' }] : []),
+    {
+      label: 'File',
+      submenu: [
+        { label: 'New Tab', accelerator: 'CmdOrCtrl+T', click: () => uiView?.webContents.send('menu:new-tab') },
+        { label: 'New Window', accelerator: 'CmdOrCtrl+N', click: () => uiView?.webContents.send('menu:new-tab') },
+        { label: 'Close Tab', accelerator: 'CmdOrCtrl+W', click: () => uiView?.webContents.send('menu:close-tab') },
+        { type: 'separator' },
+        { label: 'Save Page As...', accelerator: 'CmdOrCtrl+S', click: async () => {
+          const view = viewManager?.views?.get(viewManager.activeViewId);
+          console.log(`[Orbit] Menu: Save Page (active=${viewManager.activeViewId})`);
+          if (view) {
+            const { filePath } = await dialog.showSaveDialog(mainWindow, {
+              defaultPath: path.join(app.getPath('downloads'), `${view.webContents.getTitle() || 'page'}.html`),
+              filters: [{ name: 'Webpage, Complete', extensions: ['html'] }]
+            });
+            if (filePath) {
+              view.webContents.savePage(filePath, 'HTMLComplete', (err) => {
+                if (err) console.error('[Orbit] Save Page failed:', err);
+              });
+            }
+          }
+        }},
+        { label: 'Print...', accelerator: 'CmdOrCtrl+P', click: () => {
+          const view = viewManager?.views?.get(viewManager.activeViewId);
+          if (view) view.webContents.print({}, () => {});
+        }},
+        { label: 'Downloads', accelerator: 'CmdOrCtrl+J', click: () => {
+          console.log(`[Orbit] Menu: Open Downloads`);
+          uiView?.webContents.send('menu:open-downloads');
+        }},
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit' }
+      ]
+    },
     {
       label: 'Edit',
       submenu: [
@@ -102,38 +138,108 @@ function setupApplicationMenu() {
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
-        { role: 'selectAll' }
+        { role: 'delete' },
+        { type: 'separator' },
+        { role: 'selectAll' },
+        { type: 'separator' },
+        { label: 'Find...', accelerator: 'CmdOrCtrl+F', click: () => uiView?.webContents.send('menu:open-find') }
       ]
     },
     {
       label: 'View',
       submenu: [
-        {
-          label: 'Reload active page',
-          accelerator: 'CmdOrCtrl+R',
-          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reload()
+        { 
+          label: 'Reload', 
+          accelerator: 'CmdOrCtrl+R', 
+          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reload() 
         },
-        {
-          label: 'Force reload active page',
-          accelerator: 'CmdOrCtrl+Shift+R',
-          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reloadIgnoringCache()
-        },
-        {
-          label: 'Inspect active page',
-          accelerator: 'CmdOrCtrl+Shift+I',
-          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.toggleDevTools()
-        },
-        {
-          label: 'Inspect Browser UI',
-          accelerator: 'Alt+Shift+I',
-          click: () => uiView?.webContents.toggleDevTools()
+        { 
+          label: 'Force Reload', 
+          accelerator: 'CmdOrCtrl+Shift+R', 
+          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reloadIgnoringCache() 
         },
         { type: 'separator' },
         { role: 'resetZoom' },
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
-        { role: 'togglefullscreen' }
+        { role: 'togglefullscreen' },
+        { type: 'separator' },
+        { 
+          label: 'Inspect Page', 
+          accelerator: 'CmdOrCtrl+Shift+I', 
+          click: () => {
+            const id = viewManager.activeViewId;
+            const view = viewManager.views.get(id);
+            if (view) view.webContents.toggleDevTools();
+          }
+        },
+        { 
+          label: 'Inspect Browser UI', 
+          accelerator: 'Alt+Shift+I', 
+          click: () => uiView?.webContents.toggleDevTools() 
+        }
+      ]
+    },
+    {
+      label: 'History',
+      submenu: [
+        { 
+          label: 'Back', 
+          accelerator: isMac ? 'Cmd+[' : 'Alt+Left', 
+          click: () => {
+            const wc = viewManager.views.get(viewManager.activeViewId)?.webContents;
+            if (wc) {
+              if (wc.navigationHistory) wc.navigationHistory.goBack();
+              else if (wc.canGoBack()) wc.goBack();
+            }
+          }
+        },
+        { 
+          label: 'Forward', 
+          accelerator: isMac ? 'Cmd+]' : 'Alt+Right', 
+          click: () => {
+            const wc = viewManager.views.get(viewManager.activeViewId)?.webContents;
+            if (wc) {
+              if (wc.navigationHistory) wc.navigationHistory.goForward();
+              else if (wc.canGoForward()) wc.goForward();
+            }
+          }
+        },
+        { type: 'separator' },
+        { label: 'Show Full History', accelerator: 'CmdOrCtrl+H', click: () => uiView?.webContents.send('menu:open-history') }
+      ]
+    },
+    {
+      label: 'Bookmarks',
+      submenu: [
+        { label: 'Bookmark This Tab', accelerator: 'CmdOrCtrl+D', click: () => uiView?.webContents.send('menu:bookmark-tab') },
+        { label: 'Show All Bookmarks', accelerator: 'CmdOrCtrl+Shift+B', click: () => uiView?.webContents.send('menu:open-bookmarks') }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'zoom' },
+        { type: 'separator' },
+        { label: 'Select Next Tab', accelerator: 'Ctrl+Tab', click: () => uiView?.webContents.send('menu:next-tab') },
+        { label: 'Select Previous Tab', accelerator: 'Ctrl+Shift+Tab', click: () => uiView?.webContents.send('menu:prev-tab') },
+        { type: 'separator' },
+        ...[1,2,3,4,5,6,7,8].map(i => ({
+          label: `Select Tab ${i}`,
+          accelerator: `CmdOrCtrl+${i}`,
+          click: () => uiView?.webContents.send('menu:select-tab', i - 1)
+        })),
+        { label: 'Select Last Tab', accelerator: 'CmdOrCtrl+9', click: () => uiView?.webContents.send('menu:select-tab', -1) },
+        ...(isMac ? [
+          { type: 'separator' },
+          { role: 'front' },
+          { type: 'separator' },
+          { role: 'window' }
+        ] : [
+          { role: 'close' }
+        ])
       ]
     }
   ];
@@ -163,7 +269,7 @@ function setupIpcHandlers() {
   });
 
   ipcMain.handle('tab:navigate', (event, { id, url }) => {
-    console.log('[main.js] tab:navigate called:', { id, url });
+    console.log(`[Orbit] Navigate: tab=${id}, url="${url}"`);
     const view = viewManager.views.get(id);
     if (view) {
       let targetUrl = url;
@@ -264,17 +370,36 @@ function setupIpcHandlers() {
 
   ipcMain.handle('tab:zoomIn', (event, { id }) => {
     const wc = viewManager.views.get(id)?.webContents;
-    if (wc) wc.setZoomLevel(wc.getZoomLevel() + 0.5);
+    if (!wc) return 100;
+    const currentFactor = wc.getZoomFactor();
+    const newFactor = Math.min(currentFactor + 0.1, 5);
+    wc.setZoomFactor(newFactor);
+    console.log(`[Orbit] Zoom In: ${id} -> ${Math.round(newFactor * 100)}%`);
+    return Math.round(newFactor * 100);
   });
 
   ipcMain.handle('tab:zoomOut', (event, { id }) => {
     const wc = viewManager.views.get(id)?.webContents;
-    if (wc) wc.setZoomLevel(wc.getZoomLevel() - 0.5);
+    if (!wc) return 100;
+    const currentFactor = wc.getZoomFactor();
+    const newFactor = Math.max(currentFactor - 0.1, 0.25);
+    wc.setZoomFactor(newFactor);
+    console.log(`[Orbit] Zoom Out: ${id} -> ${Math.round(newFactor * 100)}%`);
+    return Math.round(newFactor * 100);
   });
 
   ipcMain.handle('tab:resetZoom', (event, { id }) => {
     const wc = viewManager.views.get(id)?.webContents;
-    if (wc) wc.setZoomLevel(0);
+    if (!wc) return 100;
+    wc.setZoomFactor(1);
+    console.log(`[Orbit] Zoom Reset: ${id}`);
+    return 100;
+  });
+
+  ipcMain.handle('tab:getZoom', (event, { id }) => {
+    const wc = viewManager.views.get(id)?.webContents;
+    if (!wc) return 100;
+    return Math.round(wc.getZoomFactor() * 100);
   });
 
   ipcMain.handle('tab:getPageText', async (event, { id }) => {
@@ -310,6 +435,83 @@ function setupIpcHandlers() {
   // Keeping a stub so existing frontend calls don't cause IPC errors.
   ipcMain.on('ui:dropdown-toggle', () => {});
 
+  // ── Page Menu Actions ──────────────────────────────────────────────────────
+
+  // Print: open the native print dialog for the active page
+  ipcMain.on('page:print', (event, { id }) => {
+    const view = viewManager?.views?.get(id);
+    if (view) view.webContents.print({}, () => {});
+  });
+
+  // Save Page As: trigger native save dialog
+  ipcMain.on('page:save', (event, { id }) => {
+    const view = viewManager?.views?.get(id);
+    if (view) view.webContents.downloadURL(view.webContents.getURL());
+  });
+
+  // ── Find in Page ──────────────────────────────────────────────────────────
+
+  // Start/Update find in page
+  ipcMain.on('page:find-start', (event, { text }) => {
+    const activeView = viewManager?.views?.get(viewManager.activeViewId);
+    console.log(`[Orbit] Find Start: text="${text}", activeTab=${viewManager.activeViewId}`);
+    if (activeView && text) {
+      activeView.webContents.findInPage(text);
+    }
+  });
+
+  // Find Next instance
+  ipcMain.on('page:find-next', (event, { text }) => {
+    const activeView = viewManager?.views?.get(viewManager.activeViewId);
+    if (activeView && text) {
+      activeView.webContents.findInPage(text, { forward: true, findNext: true });
+    }
+  });
+
+  // Find Previous instance
+  ipcMain.on('page:find-prev', (event, { text }) => {
+    const activeView = viewManager?.views?.get(viewManager.activeViewId);
+    if (activeView && text) {
+      activeView.webContents.findInPage(text, { forward: false, findNext: true });
+    }
+  });
+
+  // Stop finding and clear highlights
+  ipcMain.on('page:find-stop', () => {
+    const activeView = viewManager?.views?.get(viewManager.activeViewId);
+    if (activeView) {
+      activeView.webContents.stopFindInPage('clearSelection');
+    }
+  });
+
+  // ── Find in Page ──────────────────────────────────────────────────────────
+
+  // Relay of events is now handled inside ViewManager.setupEvents for robustness.
+
+  // Handle the initial "Open Find" request from menu
+  ipcMain.on('page:find', () => {
+    uiView?.webContents?.send('menu:open-find');
+  });
+
+  ipcMain.handle('tab:getActiveId', () => {
+    return viewManager.activeViewId;
+  });
+
+  // New Tab: create a blank tab (React handles actual creation; this is a fallback)
+  ipcMain.on('tab:new', () => {
+    uiView?.webContents?.send('menu:new-tab');
+  });
+
+  // Open Downloads panel from menu
+  ipcMain.on('ui:open-downloads', () => {
+    uiView?.webContents?.send('menu:open-downloads');
+  });
+
+  // Open Settings panel from menu
+  ipcMain.on('ui:open-settings', () => {
+    uiView?.webContents?.send('menu:open-settings');
+  });
+
   // Resize the uiView to only cover the header (92px) when browsing a website.
   // This is the ONLY working solution on Windows — setIgnoreMouseEvents(true) on
   // BaseWindow passes clicks to the OS desktop/taskbar causing minimize.
@@ -339,47 +541,84 @@ function setupIpcHandlers() {
   const downloads = new Map();
 
   const setupDownloadHandler = (ses) => {
+    if (!ses) return;
+    console.log(`[Orbit] Attaching download handler to session: ${ses.getStoragePath() || 'default'}`);
+    
     ses.on('will-download', (event, item) => {
       const id = Date.now().toString();
       const filename = item.getFilename();
       const totalBytes = item.getTotalBytes();
       const savePath = item.getSavePath() || path.join(app.getPath('downloads'), filename);
 
-      if (!item.getSavePath()) item.setSavePath(savePath);
+      console.log(`[Orbit] Download starting: ${filename} (Total: ${totalBytes} bytes)`);
+
+      if (!item.getSavePath()) {
+        item.setSavePath(savePath);
+      }
 
       const downloadInfo = {
-        id, filename, totalBytes,
-        receivedBytes: 0, percentage: 0,
-        state: 'progressing', path: savePath,
+        id, 
+        filename, 
+        totalBytes,
+        receivedBytes: 0, 
+        percentage: 0,
+        state: 'progressing', 
+        path: savePath,
         startTime: Date.now()
       };
 
       downloads.set(id, downloadInfo);
+      
+      // Ensure UI is notified even if it was closed
+      console.log(`[Orbit] Sending download:started for ${id}`);
       uiView.webContents.send('download:started', downloadInfo);
 
       item.on('updated', (event, state) => {
         if (state === 'interrupted') {
+          console.log(`[Orbit] Download interrupted: ${id}`);
           downloadInfo.state = 'interrupted';
         } else if (state === 'progressing') {
           downloadInfo.receivedBytes = item.getReceivedBytes();
-          downloadInfo.percentage = totalBytes > 0 ? Math.floor((downloadInfo.receivedBytes / totalBytes) * 100) : 0;
+          if (totalBytes > 0) {
+            downloadInfo.percentage = Math.floor((downloadInfo.receivedBytes / totalBytes) * 100);
+          } else {
+            // If total size unknown, we just report progress bytes
+            downloadInfo.percentage = 0;
+          }
           downloadInfo.state = 'progressing';
+          
+          // Re-verify filename and path in case they changed during Save As
+          downloadInfo.filename = item.getFilename();
+          downloadInfo.path = item.getSavePath();
         }
         uiView.webContents.send('download:updated', downloadInfo);
       });
 
       item.once('done', (event, state) => {
+        console.log(`[Orbit] Download done: ${id} (State: ${state})`);
         downloadInfo.state = state === 'completed' ? 'completed' : 'failed';
-        if (state === 'completed') downloadInfo.percentage = 100;
+        if (state === 'completed') {
+          downloadInfo.percentage = 100;
+          // Final path/name check
+          downloadInfo.filename = item.getFilename();
+          downloadInfo.path = item.getSavePath();
+        }
         uiView.webContents.send('download:updated', downloadInfo);
       });
     });
   };
 
-  setupDownloadHandler(nativeTheme.session || session.defaultSession);
-  app.on('session-created', (ses) => setupDownloadHandler(ses));
+  // Correctly target the default session and future sessions
+  setupDownloadHandler(session.defaultSession);
+  app.on('session-created', (ses) => {
+    setupDownloadHandler(ses);
+  });
 
-  ipcMain.handle('downloads:list', () => Array.from(downloads.values()).reverse());
+  ipcMain.handle('downloads:list', () => {
+    const list = Array.from(downloads.values()).sort((a, b) => b.startTime - a.startTime);
+    console.log(`[Orbit] Downloads requested, returning ${list.length} items`);
+    return list;
+  });
 
   ipcMain.on('downloads:openFile', (event, id) => {
     const item = downloads.get(id);
@@ -393,7 +632,8 @@ function setupIpcHandlers() {
 
   ipcMain.on('downloads:remove', (event, id) => {
     downloads.delete(id);
-    uiView.webContents.send('downloads:list-updated', Array.from(downloads.values()).reverse());
+    const list = Array.from(downloads.values()).sort((a, b) => b.startTime - a.startTime);
+    uiView.webContents.send('downloads:list-updated', list);
   });
 }
 
