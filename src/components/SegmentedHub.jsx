@@ -531,9 +531,19 @@ const SegmentedHub = memo(({
         </div>
       </div>
 
-      {activeTab?.isLoading && (
-        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-orbit-accent animate-pulse z-20" />
-      )}
+      <div className="absolute inset-0 pointer-events-none rounded-[50px] overflow-hidden z-20" style={{ transform: 'translateZ(0)' }}>
+        <AnimatePresence>
+          {activeTab?.isLoading && (
+            <motion.div
+              initial={{ width: "5%", opacity: 1 }}
+              animate={{ width: "85%", opacity: 1 }}
+              exit={{ width: "100%", opacity: 0 }}
+              transition={{ width: { duration: 4, ease: "easeOut" }, opacity: { duration: 0.3 } }}
+              className="absolute bottom-0 left-0 h-[2.5px] bg-orbit-accent"
+            />
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 });
