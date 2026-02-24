@@ -441,8 +441,20 @@ const App = () => {
       });
     });
 
+    const u10 = window.orbit.ipcRenderer.on('tab:toggle-pin', (id) => {
+      setHoveredTabId(null);
+      setTabs(currentTabs => {
+        const newTabs = currentTabs.map(t => t.id === id ? { ...t, isPinned: !t.isPinned } : t);
+        return [...newTabs].sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return 0;
+        });
+      });
+    });
+
     return () => {
-      u1?.(); u2?.(); u3?.(); u4?.(); u5?.(); u6?.(); u7?.(); u8?.(); u9?.(); 
+      u1?.(); u2?.(); u3?.(); u4?.(); u5?.(); u6?.(); u7?.(); u8?.(); u9?.(); u10?.();
       unsubStarted?.();
       unsubUpdated?.();
     };
@@ -544,7 +556,12 @@ const App = () => {
                         setPreviewPos({ x: rect.left, y: rect.bottom });
                       }}
                       onMouseLeave={() => setHoveredTabId(null)}
-                      className={`nexus-tab ${activeTabId === tab.id ? "active" : ""} no-drag group/tab relative`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setHoveredTabId(null);
+                        window.orbit.ipcRenderer.send('tab:context-menu', { id: tab.id, isPinned: !!tab.isPinned });
+                      }}
+                      className={`nexus-tab ${activeTabId === tab.id ? "active" : ""} ${tab.isPinned ? "pinned" : ""} no-drag group/tab relative`}
                     >
                       {tab.url === "about:blank" ? (
                         <OrbitLogo size={14} variant="icon" />
@@ -557,18 +574,22 @@ const App = () => {
                       ) : (
                         <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/10" />
                       )}
-                      <span className="flex-1 truncate text-[11px] font-bold tracking-tight">
-                        {tab.title || "New Tab"}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCloseTab(tab.id);
-                        }}
-                        className="nexus-tab-close"
-                      >
-                        <X size={10} strokeWidth={3} />
-                      </button>
+                      {!tab.isPinned && (
+                        <span className="flex-1 truncate text-[11px] font-bold tracking-tight">
+                          {tab.title || "New Tab"}
+                        </span>
+                      )}
+                      {!tab.isPinned && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCloseTab(tab.id);
+                          }}
+                          className="nexus-tab-close"
+                        >
+                          <X size={10} strokeWidth={3} />
+                        </button>
+                      )}
                     </div>
                   ))}
                   <button

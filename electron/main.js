@@ -521,6 +521,21 @@ function setupIpcHandlers() {
     uiView?.webContents?.send('menu:open-find');
   });
 
+  ipcMain.on('tab:context-menu', (event, { id, isPinned }) => {
+    const template = [
+      {
+        label: isPinned ? 'Unpin Tab' : 'Pin Tab',
+        click: () => {
+          if (uiView && !uiView.webContents.isDestroyed()) {
+            uiView.webContents.send('tab:toggle-pin', id);
+          }
+        }
+      }
+    ];
+    const menu = Menu.buildFromTemplate(template);
+    menu.popup();
+  });
+
   ipcMain.handle('tab:getActiveId', () => {
     return viewManager.activeViewId;
   });

@@ -4,11 +4,18 @@
   "description": "A custom desktop browser",
   "main": "electron/main.js",
   "type": "module",
+  "productName": "Orbit",
+  "appId": "com.orbit.browser",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && nodemon --watch electron --ext js,cjs --exec cross-env VITE_DEV_SERVER_URL=http://localhost:3000 electron .\"",
-    "build": "vite build && electron-builder",
+    "build": "vite build",
+    "make": "npm run build && electron-forge make",
+    "package": "npm run build && electron-forge package",
     "preview": "vite preview",
     "test": "vitest run"
+  },
+  "config": {
+    "forge": "./forge.config.cjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -20,6 +27,9 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.11.1",
+    "@electron-forge/maker-squirrel": "^7.11.1",
+    "@electron-forge/maker-zip": "^7.11.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -28,6 +38,7 @@
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^40.4.1",
+    "electron-builder": "^26.8.1",
     "jsdom": "^28.1.0",
     "nodemon": "^3.1.11",
     "postcss": "^8.5.6",
