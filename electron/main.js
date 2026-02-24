@@ -524,12 +524,50 @@ function setupIpcHandlers() {
   ipcMain.on('tab:context-menu', (event, { id, isPinned }) => {
     const template = [
       {
-        label: isPinned ? 'Unpin Tab' : 'Pin Tab',
+        label: 'New tab to the right',
+        click: () => uiView?.webContents.send('tab:new-right', id)
+      },
+      { type: 'separator' },
+      {
+        label: 'Reload',
+        accelerator: 'CmdOrCtrl+R',
+        click: () => viewManager.views.get(id)?.webContents.reload()
+      },
+      {
+        label: 'Duplicate',
+        click: () => uiView?.webContents.send('tab:duplicate', id)
+      },
+      {
+        label: isPinned ? 'Unpin' : 'Pin',
         click: () => {
           if (uiView && !uiView.webContents.isDestroyed()) {
             uiView.webContents.send('tab:toggle-pin', id);
           }
         }
+      },
+      {
+        label: 'Mute site',
+        click: () => {
+          const view = viewManager.views.get(id);
+          if (view) {
+            const isMuted = view.webContents.audioMuted;
+            view.webContents.setAudioMuted(!isMuted);
+          }
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Close',
+        accelerator: 'CmdOrCtrl+W',
+        click: () => uiView?.webContents.send('tab:close-specific', id)
+      },
+      {
+        label: 'Close other tabs',
+        click: () => uiView?.webContents.send('tab:close-other', id)
+      },
+      {
+        label: 'Close tabs to the right',
+        click: () => uiView?.webContents.send('tab:close-right', id)
       }
     ];
     const menu = Menu.buildFromTemplate(template);
@@ -538,6 +576,14 @@ function setupIpcHandlers() {
 
   ipcMain.handle('tab:getActiveId', () => {
     return viewManager.activeViewId;
+  });
+
+  ipcMain.on('tab:mute', (event, id) => {
+    const view = viewManager.views.get(id);
+    if (view) {
+       const isMuted = view.webContents.audioMuted;
+       view.webContents.setAudioMuted(!isMuted);
+    }
   });
 
   // New Tab: create a blank tab (React handles actual creation; this is a fallback)

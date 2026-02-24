@@ -40,6 +40,7 @@ import SettingsManager from "./components/SettingsManager";
 import TabOverview from "./components/TabOverview";
 import DownloadsManager from "./components/DownloadsManager";
 import DownloadsPage from "./components/DownloadsPage";
+import TabContextMenu from "./components/TabContextMenu";
 
 const App = () => {
   const [tabs, setTabs] = useState([
@@ -55,6 +56,7 @@ const App = () => {
   ]);
   const [activeTabId, setActiveTabId] = useState("default");
   const [hoveredTabId, setHoveredTabId] = useState(null);
+  const [tabContextMenu, setTabContextMenu] = useState(null);
   const [previewPos, setPreviewPos] = useState({ x: 0, y: 0 });
   const [isOverview, setIsOverview] = useState(false);
   const [isAISidekickOpen, setIsAISidekickOpen] = useState(false);
@@ -194,9 +196,10 @@ const App = () => {
       isHubFocused ||
       isHeaderHovered || // any header icon hovered — tooltip extends below 92px
       isFindOpen ||      // Find in Page bar is visible
-      !!hoveredTabId;    // tab preview popup is visible
+      !!hoveredTabId ||  // tab preview popup is visible
+      !!tabContextMenu;  // tab context menu popup is visible
     window.orbit?.ipcRenderer?.send("ui:set-ignore-mouse", !isShowingOrbitUI);
-  }, [isHome, isOverview, isExtensionsOpen, isSettingsOpen, isAISidekickOpen, isDownloadsOpen, isHubFocused, isHeaderHovered, isFindOpen, hoveredTabId]);
+  }, [isHome, isOverview, isExtensionsOpen, isSettingsOpen, isAISidekickOpen, isDownloadsOpen, isHubFocused, isHeaderHovered, isFindOpen, hoveredTabId, tabContextMenu]);
 
   useEffect(() => {
     window.orbit.tabs.create({ id: "default", url: "about:blank" });
@@ -320,11 +323,17 @@ const App = () => {
     };
     window.orbit.ipcRenderer.on("password-prompt", handlePasswordPrompt);
 
+    const handleGlobalClick = () => {
+      if (tabContextMenu) setTabContextMenu(null);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('mousedown', handleGlobalClick);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mousedown', handleGlobalClick);
     };
-  }, [isFindOpen]);
+  }, [isFindOpen, tabContextMenu]);
 
   // ── Menu Action IPC Listeners ──────────────────────────────────────────────
   // ── Download Animation & Progress Tracking ────────────────────────────────
@@ -453,8 +462,80 @@ const App = () => {
       });
     });
 
+    const u11 = window.orbit.ipcRenderer.on('tab:new-right', (targetId) => {
+      setTabs(currentTabs => {
+        const idx = currentTabs.findIndex(t => t.id === targetId);
+        if (idx !== -1) {
+          const id = Date.now().toString();
+          const newTab = { id, title: "New Tab", url: "about:blank", isLoading: false, canGoBack: false, canGoForward: false };
+          window.orbit.tabs.create({ id, url: "about:blank" });
+          setTimeout(() => handleSelectTab(id), 0);
+          const newTabs = [...currentTabs];
+          newTabs.splice(idx + 1, 0, newTab);
+          return newTabs;
+        }
+        return currentTabs;
+      });
+    });
+
+    const u12 = window.orbit.ipcRenderer.on('tab:duplicate', (targetId) => {
+      setTabs(currentTabs => {
+        const targetTab = currentTabs.find(t => t.id === targetId);
+        if (targetTab) {
+          const id = Date.now().toString();
+          const newTab = { ...targetTab, id, isLoading: false };
+          window.orbit.tabs.create({ id, url: targetTab.url });
+          setTimeout(() => handleSelectTab(id), 0);
+          const idx = currentTabs.findIndex(t => t.id === targetId);
+          const newTabs = [...currentTabs];
+          newTabs.splice(idx + 1, 0, newTab);
+          return newTabs;
+        }
+        return currentTabs;
+      });
+    });
+
+    const u13 = window.orbit.ipcRenderer.on('tab:close-specific', (targetId) => {
+      setActiveTabId(currentId => {
+        handleCloseTab(targetId);
+        return currentId;
+      });
+    });
+
+    const u14 = window.orbit.ipcRenderer.on('tab:close-other', (targetId) => {
+      setTabs(currentTabs => {
+        const tabsToClose = currentTabs.filter(t => t.id !== targetId && !t.isPinned);
+        if (tabsToClose.length === 0) return currentTabs;
+        tabsToClose.forEach(t => window.orbit.tabs.close({ id: t.id }));
+        setTimeout(() => handleSelectTab(targetId), 0);
+        return currentTabs.filter(t => t.id === targetId || t.isPinned);
+      });
+    });
+
+    const u15 = window.orbit.ipcRenderer.on('tab:close-right', (targetId) => {
+      setTabs(currentTabs => {
+        const idx = currentTabs.findIndex(t => t.id === targetId);
+        if (idx !== -1) {
+          const tabsToClose = currentTabs.slice(idx + 1).filter(t => !t.isPinned);
+          if (tabsToClose.length === 0) return currentTabs;
+          tabsToClose.forEach(t => window.orbit.tabs.close({ id: t.id }));
+          
+          setActiveTabId(currentId => {
+            const activeIsClosing = tabsToClose.some(t => t.id === currentId);
+            if (activeIsClosing) {
+              setTimeout(() => handleSelectTab(targetId), 0);
+            }
+            return currentId;
+          });
+          
+          return currentTabs.filter(t => !tabsToClose.some(closing => closing.id === t.id));
+        }
+        return currentTabs;
+      });
+    });
+
     return () => {
-      u1?.(); u2?.(); u3?.(); u4?.(); u5?.(); u6?.(); u7?.(); u8?.(); u9?.(); u10?.();
+      u1?.(); u2?.(); u3?.(); u4?.(); u5?.(); u6?.(); u7?.(); u8?.(); u9?.(); u10?.(); u11?.(); u12?.(); u13?.(); u14?.(); u15?.();
       unsubStarted?.();
       unsubUpdated?.();
     };
@@ -561,7 +642,7 @@ const App = () => {
                       onContextMenu={(e) => {
                         e.preventDefault();
                         setHoveredTabId(null);
-                        window.orbit.ipcRenderer.send('tab:context-menu', { id: tab.id, isPinned: !!tab.isPinned });
+                        setTabContextMenu({ id: tab.id, isPinned: !!tab.isPinned, x: e.clientX, y: e.clientY });
                       }}
                       className={`nexus-tab ${activeTabId === tab.id ? "active" : ""} ${tab.isPinned ? "pinned" : ""} no-drag group/tab relative`}
                     >
@@ -921,6 +1002,14 @@ const App = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        <TabContextMenu 
+          menu={tabContextMenu} 
+          onClose={() => setTabContextMenu(null)} 
+        />
+      </AnimatePresence>
+
       <AnimatePresence>
         {isDownloadsOpen && (
            <DownloadsManager

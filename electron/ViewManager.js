@@ -463,6 +463,7 @@ export class ViewManager {
             
             if (items[items.length - 1]?.type === 'separator') items.pop();
             
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const menu = document.createElement('div');
             menu.id = 'orbit-context-menu';
             Object.assign(menu.style, {
@@ -470,47 +471,50 @@ export class ViewManager {
               top: params.y + 'px',
               left: params.x + 'px',
               zIndex: '2147483647',
-              minWidth: '180px',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              backdropFilter: 'blur(60px) saturate(210%) brightness(1.05)',
-              webkitBackdropFilter: 'blur(60px) saturate(210%) brightness(1.05)',
-              borderRadius: '12px',
+              minWidth: '220px',
+              backgroundColor: isDark ? 'rgba(26, 26, 26, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+              backdropFilter: 'blur(40px)',
+              webkitBackdropFilter: 'blur(40px)',
+              borderRadius: '16px',
               padding: '6px',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.5) inset',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif',
               fontSize: '13px',
-              fontWeight: '400',
-              color: '#1d1d1f',
+              fontWeight: '500',
+              color: isDark ? '#f5f5f5' : '#1d1d1f',
+              border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
               opacity: '0',
-              transform: 'scale(0.95)',
-              transition: 'opacity 0.12s cubic-bezier(0.2, 0, 0, 1), transform 0.12s cubic-bezier(0.2, 0, 0, 1)',
+              transform: 'translateY(-5px) scale(0.95)',
+              transition: 'opacity 0.15s cubic-bezier(0.2, 0, 0, 1), transform 0.15s cubic-bezier(0.2, 0, 0, 1)',
               userSelect: 'none',
-              pointerEvents: 'auto',
-              border: 'none'
+              pointerEvents: 'auto'
             });
             
             items.forEach(item => {
               if (item.type === 'separator') {
                 const sep = document.createElement('div');
-                sep.style.cssText = 'height: 0.5px; background: rgba(0, 0, 0, 0.08); margin: 6px 10px;';
+                sep.style.cssText = \`height: 1px; background: \${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}; margin: 6px 4px;\`;
                 menu.appendChild(sep);
               } else {
                 const div = document.createElement('div');
                 div.textContent = item.label;
                 
                 div.style.cssText = \`
-                  padding: 5px 12px;
-                  borderRadius: 5px;
-                  cursor: default;
-                  transition: all 0.1s ease-out;
-                  fontSize: 13px;
-                  lineHeight: 1.5;
-                  color: '#1d1d1f',
-                  fontWeight: '400',
+                  padding: 6px 12px;
+                  border-radius: 6px;
+                  cursor: pointer;
+                  transition: background-color 0.1s ease;
+                  font-size: 13px;
+                  line-height: 1.5;
+                  color: inherit;
+                  font-weight: 500;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
                 \`;
                 
                 div.onmouseenter = () => {
-                  div.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+                  div.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
                 };
                 div.onmouseleave = () => {
                   div.style.backgroundColor = 'transparent';
