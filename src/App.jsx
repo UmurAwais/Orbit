@@ -551,9 +551,11 @@ const App = () => {
                       key={tab.id}
                       onClick={() => handleSelectTab(tab.id)}
                       onMouseEnter={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setHoveredTabId(tab.id);
-                        setPreviewPos({ x: rect.left, y: rect.bottom });
+                        if (activeTabId !== tab.id) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setHoveredTabId(tab.id);
+                          setPreviewPos({ x: rect.left, y: rect.bottom });
+                        }
                       }}
                       onMouseLeave={() => setHoveredTabId(null)}
                       onContextMenu={(e) => {
