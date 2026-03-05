@@ -232,14 +232,14 @@ const SegmentedHub = memo(({
         <button 
            onClick={() => window.orbit.tabs.goBack({ id: activeTab?.id })}
            disabled={!activeTab?.canGoBack}
-           className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text"
+           className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text outline-none"
         >
           <ChevronLeft size={16} strokeWidth={2.5} />
         </button>
         <button 
            onClick={() => window.orbit.tabs.goForward({ id: activeTab?.id })}
            disabled={!activeTab?.canGoForward}
-           className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text"
+           className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text outline-none"
         >
           <ChevronRight size={16} strokeWidth={2.5} />
         </button>
@@ -248,7 +248,7 @@ const SegmentedHub = memo(({
       {/* Premium Privacy Indicator - Apple Safari Style */}
       <div className="relative ml-1">
         <button
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-emerald-500/5 transition-all duration-300"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-emerald-500/5 transition-all duration-300 outline-none"
           onMouseEnter={() => { setShieldHovered(true); onFocusChange?.(true); }}
           onMouseLeave={() => { setShieldHovered(false); onFocusChange?.(false); }}
         >

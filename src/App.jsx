@@ -32,6 +32,7 @@ import {
   Download,
   ShieldCheck,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import TabSearch from "./components/TabSearch";
 import AISidekick from "./components/AISidekick";
@@ -183,8 +184,9 @@ const App = () => {
   // ── Critical Electron Fix: Mouse Click-Through ──────────────────────────
   // The React uiView is resized to 92px (header only) when browsing, so the
   // page WebContentsView at y:92 is directly reachable by mouse clicks.
-  // IMPORTANT: Any open dropdown/panel must also expand the uiView so it
-  // isn't clipped at the 92px boundary.
+  // When the sidekick is open, uiView expands to full height so the browser
+  // header remains visible. The page becomes view-only while sidekick is open
+  // (same behaviour as Arc, Edge Copilot, and other browser sidekicks).
   useEffect(() => {
     const isShowingOrbitUI =
       isHome ||
@@ -194,12 +196,15 @@ const App = () => {
       isAISidekickOpen ||
       isDownloadsOpen ||
       isHubFocused ||
-      isHeaderHovered || // any header icon hovered — tooltip extends below 92px
-      isFindOpen ||      // Find in Page bar is visible
-      !!hoveredTabId ||  // tab preview popup is visible
-      !!tabContextMenu;  // tab context menu popup is visible
+      isHeaderHovered ||
+      isFindOpen ||
+      !!hoveredTabId ||
+      !!tabContextMenu;
     window.orbit?.ipcRenderer?.send("ui:set-ignore-mouse", !isShowingOrbitUI);
   }, [isHome, isOverview, isExtensionsOpen, isSettingsOpen, isAISidekickOpen, isDownloadsOpen, isHubFocused, isHeaderHovered, isFindOpen, hoveredTabId, tabContextMenu]);
+
+
+
 
   useEffect(() => {
     window.orbit.tabs.create({ id: "default", url: "about:blank" });
@@ -698,6 +703,17 @@ const App = () => {
             onMouseLeave={() => setIsHeaderHovered(false)}
           >
             <button
+              onClick={() => {
+                const newState = !isAISidekickOpen;
+                setIsAISidekickOpen(newState);
+                window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
+              }}
+              className={`h-8 flex items-center gap-2 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]' : 'bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 text-nexus-text shadow-sm hover:shadow hover:border-black/20 dark:hover:border-white/20'}`}
+            >
+              <img src="/assets/orbit.png" className="w-4 h-4 object-contain brightness-110" alt="Orbit Logo" />
+              <span className="text-[12.5px] font-bold tracking-tight">Ask Orbit</span>
+            </button>
+            <button
               onClick={() => setIsExtensionsOpen(true)}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
               data-orbit-tooltip="Extensions"
@@ -901,13 +917,69 @@ const App = () => {
             )}
           </AnimatePresence>
         </div>
-        {/* AISidekick floats independently with its own pointer-events */}
+
+
+
+
         <AISidekick
           isOpen={isAISidekickOpen}
-          onClose={() => setIsAISidekickOpen(false)}
+          onClose={() => {
+            setIsAISidekickOpen(false);
+            window.orbit.ipcRenderer.send('ui:toggle-sidekick', false);
+          }}
           activeTab={activeTab}
         />
       </main>
+
+      {/* Page-click forwarding overlay — rendered at ROOT level (outside pointer-events-none main).
+          Intercepts mouse events in the page area and forwards them via IPC to the
+          page WebContentsView using sendInputEvent(). This is the only way to keep
+          the page interactive while the full-height uiView is covering the window. */}
+      {isAISidekickOpen && !isHome && !isOverview && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 92,
+            left: 0,
+            right: 384,
+            bottom: 0,
+            zIndex: 5000,
+            cursor: 'auto',
+            background: 'transparent',
+            pointerEvents: 'auto',
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            window.orbit.ipcRenderer.send('input:forward-to-page', {
+              type: 'mouseDown', x: e.clientX, y: e.clientY,
+              button: e.button === 2 ? 'right' : 'left', clickCount: 1,
+            });
+          }}
+          onMouseUp={(e) => {
+            e.stopPropagation();
+            window.orbit.ipcRenderer.send('input:forward-to-page', {
+              type: 'mouseUp', x: e.clientX, y: e.clientY,
+              button: e.button === 2 ? 'right' : 'left', clickCount: 1,
+            });
+          }}
+          onMouseMove={(e) => {
+            const now = Date.now();
+            if (!window._lastMoveTime || now - window._lastMoveTime > 16) {
+              window._lastMoveTime = now;
+              window.orbit.ipcRenderer.send('input:forward-to-page', {
+                type: 'mouseMoved', x: e.clientX, y: e.clientY,
+              });
+            }
+          }}
+          onWheel={(e) => {
+            window.orbit.ipcRenderer.send('input:forward-to-page', {
+              type: 'mouseWheel', x: e.clientX, y: e.clientY,
+              deltaX: -e.deltaX, deltaY: -e.deltaY,
+            });
+          }}
+          onContextMenu={(e) => e.preventDefault()}
+        />
+      )}
 
       <AnimatePresence>
         {passwordPrompt && (

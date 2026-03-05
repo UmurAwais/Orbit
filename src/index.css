@@ -165,6 +165,10 @@ body {
   padding-left: 2px;
 }
 
+.nexus-hub button {
+  outline: none;
+}
+
 .nexus-hub-nav-btn {
   width: 28px;
   height: 28px;
@@ -174,6 +178,7 @@ body {
   border-radius: 50%;
   color: #888;
   transition: all 0.2s;
+  outline: none;
 }
 
 .nexus-hub-nav-btn:hover:not(:disabled) {
@@ -1461,4 +1466,50 @@ body {
   justify-content: center;
   gap: 10px;
 }
+
+/* ── AI Sidekick Typography (Minimal Prose) ── */
+.prose {
+  color: var(--orbit-text);
+  line-height: 1.6;
+}
+
+.prose strong {
+  font-weight: 700;
+  color: var(--orbit-accent);
+}
+
+.prose ul {
+  list-style-type: none;
+  padding-left: 0;
+  margin: 12px 0;
+}
+
+.prose li {
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.prose li::before {
+  content: "•";
+  position: absolute;
+  left: 4px;
+  color: var(--orbit-accent);
+  font-weight: bold;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  font-weight: 800;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  color: var(--orbit-text);
+  letter-spacing: -0.02em;
+}
+
+.prose h3 { font-size: 14px; }
+
+.dark .prose strong { color: #818cf8; }
+.dark .prose li::before { color: #818cf8; }
+
 

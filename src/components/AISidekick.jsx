@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, MessageSquare, BookOpen, Send, Loader2, Bot, User, Trash2 } from 'lucide-react';
-import { summarizeText, askAI } from '../services/ai';
+import { Sparkles, X, BookOpen, Send, Loader2, User, Trash2 } from 'lucide-react';
+import Markdown from 'markdown-to-jsx';
 
 const AISidekick = ({ isOpen, onClose, activeTab }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [summary, setSummary] = useState('');
+  const [summaryData, setSummaryData] = useState(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const scrollRef = useRef(null);
 
@@ -18,7 +18,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
   }, [messages, isLoading]);
 
   useEffect(() => {
-    if (isOpen && activeTab?.url !== 'about:blank' && !summary) {
+    if (isOpen && activeTab?.url !== 'about:blank' && !summaryData) {
       handleSummarize();
     }
   }, [isOpen, activeTab?.id]);
@@ -28,8 +28,8 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
     setIsSummarizing(true);
     try {
       const text = await window.orbit.ipcRenderer.invoke('tab:getPageText', { id: activeTab.id });
-      const result = await summarizeText(text);
-      setSummary(result);
+      const result = await window.orbit.ipcRenderer.invoke('ai:summarize', text);
+      setSummaryData(result);
     } catch (error) {
       console.error(error);
     } finally {
@@ -37,13 +37,13 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
     }
   };
 
-  const handleSend = async (e) => {
+  const handleSend = async (e, forcedInput = null) => {
     if (e) e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    const messageToSend = forcedInput || input.trim();
+    if (!messageToSend || isLoading) return;
 
-    const userMessage = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    if (!forcedInput) setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: messageToSend }]);
     setIsLoading(true);
 
     try {
@@ -52,7 +52,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
         context = await window.orbit.ipcRenderer.invoke('tab:getPageText', { id: activeTab.id });
       }
       
-      const response = await askAI(userMessage, context);
+      const response = await window.orbit.ipcRenderer.invoke('ai:ask', { question: messageToSend, context });
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'assistant', content: "I encountered an error processing your request." }]);
@@ -63,7 +63,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
 
   const clearChat = () => {
     setMessages([]);
-    setSummary('');
+    setSummaryData(null);
   };
 
   const lastSentWidth = useRef(0);
@@ -91,63 +91,97 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
               window.orbit.ipcRenderer.send('ui:sidekick-resize', 0);
             }
           }}
-          className="h-full bg-white border-l border-black/5 flex flex-col overflow-hidden relative pointer-events-auto shadow-[-20px_0_40px_rgba(0,0,0,0.02)]"
+          className="absolute right-0 top-0 bottom-0 h-full bg-[#fcfcfc] dark:bg-[#1c1c1e] border-l border-black/5 dark:border-white/5 flex flex-col overflow-hidden pointer-events-auto shadow-2xl z-9999"
         >
           {/* Internal wrapper to prevent content squishing during width animation */}
           <div className="w-96 h-full flex flex-col shrink-0">
-            {/* Header (ChatGPT Atlas Inspired) */}
-            <div className="h-13 px-4 border-b border-black/5 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-10">
+            <div className="flex items-center justify-between bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-md sticky top-0 z-10 px-4 h-13 border-b border-black/5 dark:border-white/5">
               <div className="flex items-center gap-2.5">
                 <img src="/assets/orbit.png" className="w-8 h-8 object-contain" alt="Orbit" />
                 <div className="flex flex-col">
-                  <span className="text-[13px] font-bold text-black tracking-tight leading-tight">Orbit AI</span>
-                  <span className="text-[10px] font-medium text-black/50 tracking-tight">Supercharge your browsing</span>
+                  <span className="text-[13px] font-bold text-black dark:text-white tracking-tight leading-tight">Orbit AI</span>
+                  <span className="text-[10px] font-medium text-black/50 dark:text-white/50 tracking-tight">Supercharge your browsing</span>
                 </div>
               </div>
               
               <div className="flex items-center gap-0.5">
                 <button 
                   onClick={clearChat}
-                  className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-black/5 text-black/40 hover:text-black transition-all cursor-pointer"
+                  className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/10 text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white transition-all cursor-pointer"
                   title="Clear Chat"
                 >
                   <Trash2 size={14} strokeWidth={2} />
                 </button>
                 <button 
                   onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-black/5 text-black/40 hover:text-black transition-all cursor-pointer"
+                  className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/10 text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white transition-all cursor-pointer"
                   title="Close"
                 >
                   <X size={15} strokeWidth={2.5} />
                 </button>
               </div>
+
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" ref={scrollRef}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#f8f8f8] dark:bg-[#161618]" ref={scrollRef}>
               {/* Quick Summary Section */}
               {activeTab?.url !== 'about:blank' && (
-                <div className="bg-orbit-surface/50 rounded-xl p-3 border border-black/5">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="bg-white dark:bg-white/5 rounded-xl p-3.5 border border-black/5 dark:border-white/8 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2.5">
                     <BookOpen size={13} className="text-orbit-accent" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-black/60">Intelligence</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-black/50 dark:text-white/50">Intelligence</span>
                   </div>
                   {isSummarizing ? (
-                    <div className="flex items-center gap-2 py-1">
+                    <div className="flex items-center gap-2.5 py-2">
                       <Loader2 size={14} className="animate-spin text-orbit-accent" />
-                      <span className="text-[12px] text-black/40 italic">Synthesizing...</span>
+                      <span className="text-[12px] text-black/40 dark:text-white/40 italic">Analyzing page...</span>
                     </div>
-                  ) : summary ? (
-                    <div className="text-[13px] text-black/80 leading-relaxed max-w-none whitespace-pre-wrap">
-                      {summary}
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={handleSummarize}
-                      className="text-[12px] font-bold text-orbit-accent hover:underline flex items-center gap-2"
+                  ) : summaryData ? (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex flex-col gap-3"
                     >
-                      Analyze Page
-                    </button>
+                      <div className="text-[13px] text-black/80 dark:text-white/80 leading-relaxed max-w-none prose prose-sm dark:prose-invert">
+                        <Markdown>{summaryData.summary}</Markdown>
+                      </div>
+                      
+                      {summaryData.questions && summaryData.questions.length > 0 && (
+                        <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-black/5 dark:border-white/5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Sparkles size={11} className="text-orbit-accent animate-pulse" />
+                            <span className="text-[10px] font-bold text-black/40 dark:text-white/40 uppercase tracking-widest">Suggested For You</span>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            {summaryData.questions.map((q, idx) => (
+                              <motion.button
+                                key={idx}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.1 * idx }}
+                                onClick={() => handleSend(null, q)}
+                                className="text-left bg-white dark:bg-white/5 hover:bg-orbit-accent hover:text-white dark:hover:bg-orbit-accent border border-black/5 dark:border-white/10 rounded-xl px-3 py-2.5 text-[12.5px] font-medium text-black/70 dark:text-white/80 transition-all duration-200 group shadow-sm hover:shadow-md"
+                              >
+                                {q}
+                              </motion.button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-orbit-accent/10 flex items-center justify-center text-orbit-accent">
+                        <BookOpen size={24} />
+                      </div>
+                      <button 
+                        onClick={handleSummarize}
+                        className="text-[13px] font-bold text-orbit-accent hover:bg-orbit-accent/10 px-4 py-2 rounded-lg transition-all"
+                      >
+                        Deep Scan Page
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
@@ -157,49 +191,61 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
                   key={i}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                 >
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                    msg.role === 'user' ? 'bg-black text-white' : 'bg-orbit-accent text-white'
-                  }`}>
-                    {msg.role === 'user' ? <User size={12} /> : <Bot size={12} />}
-                  </div>
-                  <div className={`max-w-[85%] rounded-xl p-3 text-[13px] leading-relaxed whitespace-pre-wrap ${
-                    msg.role === 'user' 
-                      ? 'bg-black text-white rounded-tr-none' 
-                      : 'bg-white border border-black/5 shadow-sm rounded-tl-none text-black/90'
-                  }`}>
-                    {msg.content}
-                  </div>
+                  {/* Avatar */}
+                  {msg.role === 'user' ? (
+                    <div className="w-7 h-7 rounded-full bg-black dark:bg-white flex items-center justify-center shrink-0">
+                      <User size={13} className="text-white dark:text-black" />
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-orbit-accent/10 flex items-center justify-center border border-orbit-accent/20">
+                      <img src="/assets/orbit.png" alt="Orbit" className="w-5 h-5 object-contain" />
+                    </div>
+                  )}
+
+                  {/* Bubble: user = plain text (no prose overrides), AI = markdown */}
+                  {msg.role === 'user' ? (
+                    <div className="max-w-[82%] rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-[13px] leading-relaxed bg-black dark:bg-white text-white dark:text-black">
+                      {msg.content}
+                    </div>
+                  ) : (
+                    <div className="max-w-[82%] rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-[13px] leading-relaxed bg-white dark:bg-white/[0.07] border border-black/6 dark:border-white/10 shadow-sm text-black/90 dark:text-white/90 prose prose-sm dark:prose-invert">
+                      <Markdown>{msg.content}</Markdown>
+                    </div>
+                  )}
                 </motion.div>
+
               ))}
 
               {isLoading && (
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-full bg-orbit-accent text-white flex items-center justify-center shrink-0">
-                    <Bot size={12} />
+                <div className="flex gap-2.5">
+                  <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-orbit-accent/10 flex items-center justify-center border border-orbit-accent/20">
+                    <img src="/assets/orbit.png" alt="Orbit" className="w-5 h-5 object-contain" />
                   </div>
-                  <div className="bg-white border border-black/5 shadow-sm rounded-xl rounded-tl-none p-3">
-                    <Loader2 size={14} className="animate-spin text-orbit-accent" />
+                  <div className="bg-white dark:bg-white/8 border border-black/6 dark:border-white/10 shadow-sm rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orbit-accent animate-bounce" style={{animationDelay: '0ms'}} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-orbit-accent animate-bounce" style={{animationDelay: '150ms'}} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-orbit-accent animate-bounce" style={{animationDelay: '300ms'}} />
                   </div>
                 </div>
               )}
             </div>
 
             {/* Input Area */}
-            <div className="p-3 bg-white/50 border-t border-black/5">
+            <div className="p-3 bg-white/60 dark:bg-black/20 border-t border-black/5 dark:border-white/5">
               <form onSubmit={handleSend} className="relative">
                 <input 
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask Orbit..."
-                  className="w-full bg-white border border-black/10 rounded-xl py-2.5 pl-3 pr-10 text-[13px] outline-none focus:ring-2 focus:ring-orbit-accent/10 focus:border-orbit-accent transition-all"
+                  placeholder="Ask Orbit anything..."
+                  className="w-full bg-white dark:bg-white/6 border border-black/10 dark:border-white/10 rounded-xl py-2.5 pl-3.5 pr-11 text-[13px] text-black dark:text-white placeholder-black/30 dark:placeholder-white/30 outline-none focus:ring-2 focus:ring-orbit-accent/20 focus:border-orbit-accent transition-all"
                 />
                 <button 
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black text-white rounded-lg flex items-center justify-center hover:bg-orbit-accent transition-all disabled:opacity-20"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black dark:bg-white text-white dark:text-black rounded-lg flex items-center justify-center hover:bg-orbit-accent dark:hover:bg-orbit-accent dark:hover:text-white transition-all disabled:opacity-20"
                 >
                   <Send size={12} />
                 </button>

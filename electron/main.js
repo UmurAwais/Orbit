@@ -1,12 +1,33 @@
 import { app, BaseWindow, WebContentsView, ipcMain, Menu, shell, nativeTheme, session, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
 import { ViewManager } from './ViewManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load .env manually at runtime (Vite only bundles env for the renderer, not main process)
+try {
+  const envPath = path.join(__dirname, '../.env');
+  const envFile = readFileSync(envPath, 'utf-8');
+  envFile.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx > 0) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        const val = trimmed.slice(eqIdx + 1).trim();
+        if (!process.env[key]) process.env[key] = val;
+      }
+    }
+  });
+  console.log('[Orbit] .env loaded. Gemini key length:', (process.env.VITE_GEMINI_API_KEY || '').length);
+} catch (e) {
+  console.warn('[Orbit] Could not load .env:', e.message);
+}
 
 let mainWindow;
 let uiView;      // WebContentsView for the React browser UI — always on top
@@ -66,11 +87,17 @@ function createWindow() {
 
   mainWindow.on('resize', () => {
     const [width, height] = mainWindow.getContentSize();
-    // Only resize uiView if it's currently at full height (Orbit UI mode)
-    // If it's at header-only height, keep it that way until navigating back
     const bounds = uiView.getBounds();
-    const isHeaderOnly = bounds.height <= 96;
-    uiView.setBounds({ x: 0, y: 0, width, height: isHeaderOnly ? 92 : height });
+    const isHeaderOnly = bounds.height <= 96 && bounds.x === 0;
+    const isSidekickColumn = bounds.x > 0; // sidekick-only mode
+    
+    if (isSidekickColumn) {
+      // Sidekick open: keep right column at new window size
+      const sidekickWidth = bounds.width;
+      uiView.setBounds({ x: width - sidekickWidth, y: 0, width: sidekickWidth, height });
+    } else {
+      uiView.setBounds({ x: 0, y: 0, width, height: isHeaderOnly ? 92 : height });
+    }
     viewManager.updateLayout();
   });
 
@@ -272,7 +299,107 @@ function setupAutoUpdater() {
   });
 }
 
+function callGroq(apiKey, messages, maxTokens = 2048) {
+  return fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      max_tokens: maxTokens,
+      temperature: 0.3
+    })
+  });
+}
+
 function setupIpcHandlers() {
+  ipcMain.handle('ai:summarize', async (event, text) => {
+
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return { summary: 'Groq API key not configured. Please add GROQ_API_KEY to your .env file.', questions: [] };
+    if (!text || text.length < 50) return { summary: 'Not enough content to analyze on this page.', questions: [] };
+
+    const trimmedText = text.substring(0, 14000);
+    const systemPrompt = `You are Orbit AI, an elite browser intelligence assistant. You analyze webpages and return structured responses.
+
+You MUST respond EXACTLY in this format with no extra text outside the markers:
+
+SUMMARY_START
+1. **High-Level Intent:** [one sentence what this page is about]
+2. **Key Insights:**
+   - [key insight 1]
+   - [key insight 2]
+   - [key insight 3]
+3. **Quick Verdict:** [one sentence categorizing the page type]
+SUMMARY_END
+QUESTIONS_START
+[a natural follow-up question about this page]
+[another different follow-up question]
+[a third follow-up question]
+QUESTIONS_END`;
+
+    try {
+      const res = await callGroq(apiKey, [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Analyze this webpage content:\n\n${trimmedText}` }
+      ]);
+      const data = await res.json();
+      if (!res.ok) {
+        const errMsg = data?.error?.message || `HTTP ${res.status}`;
+        console.error('[Orbit AI] Groq error:', errMsg);
+        return { summary: `**Analysis Failed**\n\nGroq said: ${errMsg}`, questions: [] };
+      }
+      const output = data.choices?.[0]?.message?.content || '';
+      console.log('[Orbit AI] Groq response received, length:', output.length);
+
+      let summaryText = output;
+      let questionsList = [];
+
+      const summaryMatch = output.match(/SUMMARY_START([\s\S]*?)SUMMARY_END/);
+      if (summaryMatch) summaryText = summaryMatch[1].trim();
+
+      const questionsMatch = output.match(/QUESTIONS_START([\s\S]*?)QUESTIONS_END/);
+      if (questionsMatch) {
+        questionsList = questionsMatch[1]
+          .split('\n')
+          .map(q => q.replace(/^[-*]\s*/, '').replace(/^\d+\.\s*/, '').replace(/^\[|\]$/g, '').trim())
+          .filter(q => q.length > 5);
+      }
+
+      return { summary: summaryText, questions: questionsList };
+    } catch (err) {
+      console.error('[Orbit AI] Fetch failed:', err);
+      return { summary: `**Network Error:** ${err.message}`, questions: [] };
+    }
+  });
+
+  ipcMain.handle('ai:ask', async (event, { question, context }) => {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return 'Groq API key not configured.';
+
+    const messages = context
+      ? [
+          { role: 'system', content: `You are Orbit AI, a helpful browser assistant. Use the provided page context to answer questions. If the answer is not in the context, use your knowledge but mention it. Be concise and direct.` },
+          { role: 'user', content: `Page Context:\n${context.substring(0, 12000)}\n\nQuestion: ${question}` }
+        ]
+      : [
+          { role: 'system', content: 'You are Orbit AI, a helpful and concise browser assistant.' },
+          { role: 'user', content: question }
+        ];
+
+    try {
+      const res = await callGroq(apiKey, messages);
+      const data = await res.json();
+      if (!res.ok) return `Error: ${data?.error?.message || 'Unknown error'}`;
+      return data.choices?.[0]?.message?.content || 'No response.';
+    } catch (err) {
+      return `Network error: ${err.message}`;
+    }
+  });
+
   ipcMain.on('update:restart-and-apply', () => {
     console.log('[Orbit] Restarting to apply update...');
     autoUpdater.quitAndInstall();
@@ -617,6 +744,52 @@ function setupIpcHandlers() {
       uiView.setBounds({ x: 0, y: 0, width, height });
     }
   });
+
+  // NOTE: We cannot use a right-column-only uiView when the sidekick is open
+  // because the browser header (URL bar, tabs) lives in the same uiView.
+  // ui:sidekick-bounds is a no-op kept for IPC compatibility.
+  ipcMain.on('ui:sidekick-bounds', () => { /* no-op */ });
+
+  // Forward mouse/scroll events from the React overlay to the active page view.
+  // When the sidekick is open, the uiView covers the full window (so the browser
+  // header is visible). A transparent React overlay div catches clicks/scrolls in
+  // the page area and sends them here to be forwarded via sendInputEvent().
+  ipcMain.on('input:forward-to-page', (event, { x, y, type, button, deltaX, deltaY, clickCount }) => {
+    const view = viewManager?.views?.get(viewManager?.activeViewId);
+    if (!view || view.webContents.isDestroyed()) return;
+
+    const HEADER_HEIGHT = 92;
+    const pageX = Math.round(x);
+    const pageY = Math.round(y - HEADER_HEIGHT);
+    if (pageY < 0) return; // ignore events above the page area
+
+    try {
+      if (type === 'mouseWheel') {
+        view.webContents.sendInputEvent({
+          type: 'mouseWheel',
+          x: pageX,
+          y: pageY,
+          deltaX: Math.round(deltaX || 0),
+          deltaY: Math.round(deltaY || 0),
+          canScroll: true,
+        });
+      } else if (type === 'mouseMoved') {
+        view.webContents.sendInputEvent({ type: 'mouseMove', x: pageX, y: pageY });
+      } else {
+        view.webContents.sendInputEvent({
+          type,
+          x: pageX,
+          y: pageY,
+          button: button || 'left',
+          clickCount: clickCount || 1,
+        });
+      }
+    } catch (e) {
+      // sendInputEvent can throw if view is being destroyed
+    }
+  });
+
+
 
   // Window Control Handlers
   ipcMain.on('window-minimize', () => mainWindow?.minimize());
