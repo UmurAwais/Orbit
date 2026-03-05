@@ -225,7 +225,7 @@ const SegmentedHub = memo(({
   }, [activeTab?.url, isFocused, inputValue]);
 
   return (
-    <div className={`nexus-hub group no-drag relative w-full ${!isVisible && !isFocused ? 'opacity-0' : 'opacity-100'}`}>
+    <div className={`nexus-hub group no-drag relative w-full ${!isVisible && !isFocused ? 'opacity-0' : 'opacity-100'} ${isFocused ? 'focused' : ''}`}>
       
       {/* 1. Interior Navigation (Integrated arrows) */}
       <div className="nexus-hub-inner-nav no-drag">

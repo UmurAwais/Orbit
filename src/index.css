@@ -190,7 +190,7 @@ body {
   background: transparent;
 }
 
-.nexus-hub:focus-within {
+.nexus-hub.focused {
   background: var(--nexus-hub-bg);
   border-color: var(--orbit-accent);
 }
