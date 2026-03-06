@@ -12,6 +12,7 @@ import SegmentedHub from "./components/SegmentedHub";
 import NewTab from "./components/NewTab";
 import FindBar from "./components/FindBar";
 import OrbitLogo from "./components/OrbitLogo";
+import { TooltipWrapper } from "./components/Tooltip";
 import {
   Search,
   ArrowRight,
@@ -591,31 +592,32 @@ const App = () => {
         </div>
         <div className="nexus-row nexus-bottom-row pointer-events-auto px-4">
           <div className="flex-1 flex items-center gap-1 no-drag min-w-0">
-            <button
-              onClick={() => {
-                const newState = !isOverview;
-                setIsOverview(newState);
-                window.orbit.ipcRenderer.send("ui:toggle-overview", newState);
-              }}
-              className={`tip-left w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? "bg-orbit-accent text-white shadow-lg" : "hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100"}`}
-              data-orbit-tooltip="Show Tab Overview"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+            <TooltipWrapper text="Show Tab Overview">
+              <button
+                onClick={() => {
+                  const newState = !isOverview;
+                  setIsOverview(newState);
+                  window.orbit.ipcRenderer.send("ui:toggle-overview", newState);
+                }}
+                className={`tip-left w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? "bg-orbit-accent text-white shadow-lg" : "hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100"}`}
               >
-                <rect x="3" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="3" width="7" height="7" rx="1.5" />
-                <rect x="14" y="14" width="7" height="7" rx="1.5" />
-                <rect x="3" y="14" width="7" height="7" rx="1.5" />
-              </svg>
-            </button>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+              </button>
+            </TooltipWrapper>
             <div className="w-px h-4 bg-nexus-border/20 mx-0.5 shrink-0" />
             <div className="flex-1 flex items-center min-w-0 z-10 px-1 overflow-hidden">
               <div className="nexus-tabs-container">
@@ -702,19 +704,20 @@ const App = () => {
             onMouseEnter={() => setIsHeaderHovered(true)}
             onMouseLeave={() => setIsHeaderHovered(false)}
           >
-            <button
-              onClick={() => setIsExtensionsOpen(true)}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
-              data-orbit-tooltip="Extensions"
-            >
-              <Puzzle size={16} strokeWidth={1.8} />
-            </button>
-            <button
-              ref={downloadBtnRef}
-              onClick={() => openDownloads(!isDownloadsOpen)}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white shadow-xl opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
-              data-orbit-tooltip={isDownloading ? `Downloading (${totalDownloadProgress === -1 ? '...' : totalDownloadProgress + '%'})` : "Downloads"}
-            >
+            <TooltipWrapper text="Extensions">
+              <button
+                onClick={() => setIsExtensionsOpen(true)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
+              >
+                <Puzzle size={16} strokeWidth={1.8} />
+              </button>
+            </TooltipWrapper>
+            <TooltipWrapper text={isDownloading ? `Downloading (${totalDownloadProgress === -1 ? '...' : totalDownloadProgress + '%'})` : "Downloads"}>
+              <button
+                ref={downloadBtnRef}
+                onClick={() => openDownloads(!isDownloadsOpen)}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white shadow-xl opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
+              >
               <AnimatePresence>
                 {isDownloading && (
                   <motion.div
@@ -813,36 +816,33 @@ const App = () => {
                 )}
               </AnimatePresence>
             </button>
-            {/* <button
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
-              data-orbit-tooltip="History"
-            >
-              <History size={16} strokeWidth={1.8} />
-            </button> */}
+          </TooltipWrapper>
+
+          <TooltipWrapper text="Settings">
             <button
               onClick={() => setIsSettingsOpen(true)}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer relative"
-              data-orbit-tooltip="Settings"
             >
               <Settings size={16} strokeWidth={1.8} />
               {isUpdateReady && (
                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#635BFF] rounded-full border-2 border-orbit-bg shadow-[0_0_8px_#635BFF] animate-pulse" />
               )}
             </button>
+          </TooltipWrapper>
 
-            <button
-              onClick={() => {
-                const newState = !isAISidekickOpen;
-                setIsAISidekickOpen(newState);
-                window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
-              }}
-              className={`h-8 flex items-center gap-2 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]' : 'bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 text-nexus-text shadow-sm hover:shadow hover:border-black/20 dark:hover:border-white/20'}`}
-            >
-              <img src="/assets/orbit.png" className="w-4 h-4 object-contain brightness-110" alt="Orbit Logo" />
-              <span className="text-[12.5px] font-bold tracking-tight">Ask Orbit</span>
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              const newState = !isAISidekickOpen;
+              setIsAISidekickOpen(newState);
+              window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
+            }}
+            className={`h-8 flex items-center gap-2 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]' : 'bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 text-nexus-text shadow-sm hover:shadow hover:border-black/20 dark:hover:border-white/20'}`}
+          >
+            <img src="/assets/orbit.png" className="w-4 h-4 object-contain brightness-110" alt="Orbit Logo" />
+            <span className="text-[12.5px] font-bold tracking-tight">Ask Orbit</span>
+          </button>
         </div>
+      </div>
           {isFindOpen && (
             <FindBar 
               activeTabId={activeTabId} 
@@ -1057,8 +1057,8 @@ const App = () => {
         )}
 
         {isUpdateReady && (
-          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] w-[400px]">
-            <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[2rem] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.3)] relative overflow-hidden group">
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-10000 w-100">
+            <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-4xl p-6 shadow-[0_30px_100px_rgba(0,0,0,0.3)] relative overflow-hidden group">
               {/* Liquid Highlight Effect */}
               <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#635BFF]/10 blur-[60px] rounded-full group-hover:translate-x-10 group-hover:translate-y-10 transition-transform duration-1000" />
               

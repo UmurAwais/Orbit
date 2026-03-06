@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { TooltipWrapper } from './Tooltip';
 
 const COMMANDS = [
   "Ask Orbit to plan your trip...",
@@ -229,20 +230,24 @@ const SegmentedHub = memo(({
       
       {/* 1. Interior Navigation (Integrated arrows) */}
       <div className="nexus-hub-inner-nav no-drag">
-        <button 
-           onClick={() => window.orbit.tabs.goBack({ id: activeTab?.id })}
-           disabled={!activeTab?.canGoBack}
-           className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text outline-none"
-        >
-          <ChevronLeft size={16} strokeWidth={2.5} />
-        </button>
-        <button 
-           onClick={() => window.orbit.tabs.goForward({ id: activeTab?.id })}
-           disabled={!activeTab?.canGoForward}
-           className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text outline-none"
-        >
-          <ChevronRight size={16} strokeWidth={2.5} />
-        </button>
+        <TooltipWrapper text="Go back">
+          <button 
+             onClick={() => window.orbit.tabs.goBack({ id: activeTab?.id })}
+             disabled={!activeTab?.canGoBack}
+             className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text outline-none"
+          >
+            <ChevronLeft size={16} strokeWidth={2.5} />
+          </button>
+        </TooltipWrapper>
+        <TooltipWrapper text="Go forward">
+          <button 
+             onClick={() => window.orbit.tabs.goForward({ id: activeTab?.id })}
+             disabled={!activeTab?.canGoForward}
+             className="nexus-hub-nav-btn disabled:opacity-30 text-orbit-text outline-none"
+          >
+            <ChevronRight size={16} strokeWidth={2.5} />
+          </button>
+        </TooltipWrapper>
       </div>
 
       {/* Premium Privacy Indicator - Apple Safari Style */}
@@ -379,50 +384,54 @@ const SegmentedHub = memo(({
       <div className="flex items-center gap-0.5 pr-2 z-10 no-drag">
         {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
           <>
-            <button 
-              type="button"
-              onClick={(e) => { e.stopPropagation(); window.orbit.tabs.reload({ id: activeTab.id }); }}
-              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all ${activeTab?.isLoading ? 'opacity-100 text-nexus-accent' : ''}`}
-              title="Reload Page"
-            >
-              <RefreshCw size={13} strokeWidth={2.5} className={activeTab?.isLoading ? 'animate-spin' : ''} />
-            </button>
+            <TooltipWrapper text="Reload Page">
+              <button 
+                type="button"
+                onClick={(e) => { e.stopPropagation(); window.orbit.tabs.reload({ id: activeTab.id }); }}
+                className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all ${activeTab?.isLoading ? 'opacity-100 text-nexus-accent' : ''}`}
+              >
+                <RefreshCw size={13} strokeWidth={2.5} className={activeTab?.isLoading ? 'animate-spin' : ''} />
+              </button>
+            </TooltipWrapper>
 
-            <button 
-              type="button" 
-              onClick={toggleBookmark}
-              className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 transition-all ${isPinned ? 'text-orbit-accent opacity-100' : 'text-nexus-text opacity-70 hover:opacity-100'}`}
-              title={isPinned ? "Remove Bookmark" : "Bookmark this page"}
-            >
-              <Bookmark size={13} strokeWidth={2.5} className={isPinned ? 'fill-current' : ''} />
-            </button>
+            <TooltipWrapper text={isPinned ? "Remove Bookmark" : "Bookmark this page"}>
+              <button 
+                type="button" 
+                onClick={toggleBookmark}
+                className={`w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 transition-all ${isPinned ? 'text-orbit-accent opacity-100' : 'text-nexus-text opacity-70 hover:opacity-100'}`}
+              >
+                <Bookmark size={13} strokeWidth={2.5} className={isPinned ? 'fill-current' : ''} />
+              </button>
+            </TooltipWrapper>
           </>
         )}
         
         {/* Share / Copy URL */}
-        <button
-          type="button"
-          onClick={handleCopyUrl}
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all"
-          title={copied ? 'Copied!' : 'Copy URL'}
-        >
-          {copied ? <Check size={13} strokeWidth={2.5} className="text-emerald-500" /> : <Share size={13} strokeWidth={2.5} />}
-        </button>
+        <TooltipWrapper text={copied ? 'Copied!' : 'Copy URL'}>
+          <button
+            type="button"
+            onClick={handleCopyUrl}
+            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all"
+          >
+            {copied ? <Check size={13} strokeWidth={2.5} className="text-emerald-500" /> : <Share size={13} strokeWidth={2.5} />}
+          </button>
+        </TooltipWrapper>
         
         <div className="w-1" />
         
         {/* ⋮ Page Menu */}
         <div className="relative" ref={menuBtnRef}>
-          <button
-            type="button"
-            onClick={openMenu}
-            className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
-              menuOpen ? 'bg-nexus-text/10 text-nexus-text opacity-100' : 'hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100'
-            }`}
-            title="More options"
-          >
-            <MoreHorizontal size={15} strokeWidth={2.2} />
-          </button>
+          <TooltipWrapper text="More options">
+            <button
+              type="button"
+              onClick={openMenu}
+              className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
+                menuOpen ? 'bg-nexus-text/10 text-nexus-text opacity-100' : 'hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100'
+              }`}
+            >
+              <MoreHorizontal size={15} strokeWidth={2.2} />
+            </button>
+          </TooltipWrapper>
 
           <AnimatePresence>
             {menuOpen && (

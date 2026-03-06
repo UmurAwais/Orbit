@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, X, Clock, File, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TooltipWrapper } from './Tooltip';
 import OrbitLogo from './OrbitLogo';
 
 const TabSearch = ({ 
@@ -75,14 +76,15 @@ const TabSearch = ({
 
   return (
     <div className="relative pointer-events-auto z-3000" ref={containerRef}>
-      <button 
-        className={`h-9 w-9 rounded-xl hover:bg-orbit-card hover:shadow-sm flex items-center justify-center text-orbit-text-dim hover:text-orbit-text transition-all cursor-pointer ${isOpen ? 'bg-orbit-surface text-orbit-text shadow-sm' : ''}`} 
-        title="Search Tabs"
-        onClick={() => setIsOpen(!isOpen)}
-        style={{ WebkitAppRegion: 'no-drag' }}
-      >
-        <ChevronDown size={18} strokeWidth={2} />
-      </button>
+      <TooltipWrapper text="Search Tabs">
+        <button 
+          className={`h-9 w-9 rounded-xl hover:bg-orbit-card hover:shadow-sm flex items-center justify-center text-orbit-text-dim hover:text-orbit-text transition-all cursor-pointer ${isOpen ? 'bg-orbit-surface text-orbit-text shadow-sm' : ''}`} 
+          onClick={() => setIsOpen(!isOpen)}
+          style={{ WebkitAppRegion: 'no-drag' }}
+        >
+          <ChevronDown size={18} strokeWidth={2} />
+        </button>
+      </TooltipWrapper>
 
         {isOpen && (
           <div
