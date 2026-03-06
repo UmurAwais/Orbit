@@ -277,7 +277,18 @@ const SegmentedHub = memo(({
         {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 gap-1.5">
              <Lock size={11} className="text-nexus-text opacity-50 stroke-[2.5]" />
-             <span className="text-[13px] font-medium text-nexus-text opacity-90">{displayUrl}</span>
+             <AnimatePresence mode="wait">
+               <motion.span 
+                 key={displayUrl}
+                 initial={{ opacity: 0, y: 3 }}
+                 animate={{ opacity: 0.9, y: 0 }}
+                 exit={{ opacity: 0, y: -3 }}
+                 transition={{ duration: 0.25, ease: "easeOut" }}
+                 className="text-[13px] font-medium text-nexus-text"
+               >
+                 {displayUrl}
+               </motion.span>
+             </AnimatePresence>
           </div>
         )}
 
@@ -311,14 +322,21 @@ const SegmentedHub = memo(({
         
         {/* Orbit Placeholder */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none top-1/2 -translate-y-1/2 h-full">
-          {showPlaceholder && (
-            <span
-              className="text-[12px] font-medium text-nexus-text-dim pl-7"
-              style={{ letterSpacing: '-0.02em' }}
-            >
-              {COMMANDS[commandIndex]}
-            </span>
-          )}
+          <AnimatePresence mode="wait">
+            {showPlaceholder && (
+              <motion.span
+                key={commandIndex}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="text-[12px] font-medium text-nexus-text-dim pl-7"
+                style={{ letterSpacing: '-0.02em' }}
+              >
+                {COMMANDS[commandIndex]}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Chromium-style Dropdown */}
