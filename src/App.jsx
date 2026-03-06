@@ -698,21 +698,10 @@ const App = () => {
             </div>
           </div>
           <div
-            className="flex items-center gap-3 no-drag pl-6"
+            className="flex items-center gap-1 no-drag pl-6"
             onMouseEnter={() => setIsHeaderHovered(true)}
             onMouseLeave={() => setIsHeaderHovered(false)}
           >
-            <button
-              onClick={() => {
-                const newState = !isAISidekickOpen;
-                setIsAISidekickOpen(newState);
-                window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
-              }}
-              className={`h-8 flex items-center gap-2 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]' : 'bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 text-nexus-text shadow-sm hover:shadow hover:border-black/20 dark:hover:border-white/20'}`}
-            >
-              <img src="/assets/orbit.png" className="w-4 h-4 object-contain brightness-110" alt="Orbit Logo" />
-              <span className="text-[12.5px] font-bold tracking-tight">Ask Orbit</span>
-            </button>
             <button
               onClick={() => setIsExtensionsOpen(true)}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
@@ -723,7 +712,7 @@ const App = () => {
             <button
               ref={downloadBtnRef}
               onClick={() => openDownloads(!isDownloadsOpen)}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white shadow-xl opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white shadow-xl opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
               data-orbit-tooltip={isDownloading ? `Downloading (${totalDownloadProgress === -1 ? '...' : totalDownloadProgress + '%'})` : "Downloads"}
             >
               <AnimatePresence>
@@ -824,12 +813,12 @@ const App = () => {
                 )}
               </AnimatePresence>
             </button>
-            <button
+            {/* <button
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer"
               data-orbit-tooltip="History"
             >
               <History size={16} strokeWidth={1.8} />
-            </button>
+            </button> */}
             <button
               onClick={() => setIsSettingsOpen(true)}
               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-50 hover:opacity-100 transition-all duration-300 cursor-pointer relative"
@@ -839,6 +828,18 @@ const App = () => {
               {isUpdateReady && (
                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#635BFF] rounded-full border-2 border-orbit-bg shadow-[0_0_8px_#635BFF] animate-pulse" />
               )}
+            </button>
+
+            <button
+              onClick={() => {
+                const newState = !isAISidekickOpen;
+                setIsAISidekickOpen(newState);
+                window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
+              }}
+              className={`h-8 flex items-center gap-2 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]' : 'bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 text-nexus-text shadow-sm hover:shadow hover:border-black/20 dark:hover:border-white/20'}`}
+            >
+              <img src="/assets/orbit.png" className="w-4 h-4 object-contain brightness-110" alt="Orbit Logo" />
+              <span className="text-[12.5px] font-bold tracking-tight">Ask Orbit</span>
             </button>
           </div>
         </div>
