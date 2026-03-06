@@ -591,7 +591,7 @@ const App = () => {
           </div>
         </div>
         <div className="nexus-row nexus-bottom-row pointer-events-auto px-4">
-          <div className="flex-1 flex items-center gap-1 no-drag min-w-0">
+          <div className="flex-1 flex items-center gap-0 no-drag min-w-0">
             <TooltipWrapper text="Show Tab Overview">
               <button
                 onClick={() => {
@@ -618,8 +618,8 @@ const App = () => {
                 </svg>
               </button>
             </TooltipWrapper>
-            <div className="w-px h-4 bg-nexus-border/20 mx-0.5 shrink-0" />
-            <div className="flex-1 flex items-center min-w-0 z-10 px-1 overflow-hidden">
+            <div className="w-px h-4 bg-nexus-border/10 shrink-0" />
+            <div className="flex-1 flex items-center min-w-0 z-10 overflow-hidden">
               <div className="nexus-tabs-container">
                 <button
                   className={`nexus-tab-nav-btn left no-drag ${showScrollLeft ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
