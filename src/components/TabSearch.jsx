@@ -84,13 +84,8 @@ const TabSearch = ({
         <ChevronDown size={18} strokeWidth={2} />
       </button>
 
-      <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
+          <div
             className="absolute top-full left-0 mt-3 w-[320px] bg-orbit-surface/90 backdrop-blur-3xl rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5)] border border-orbit-border z-3000 overflow-hidden flex flex-col max-h-150 ring-1 ring-orbit-border"
           >
             <div className="p-4 border-b border-orbit-border bg-orbit-bg/50 backdrop-blur-md">
@@ -217,9 +212,8 @@ const TabSearch = ({
                 </div>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 };

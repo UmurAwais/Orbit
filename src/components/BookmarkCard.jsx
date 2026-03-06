@@ -11,14 +11,7 @@ const BookmarkCard = memo(({ title, url, onClick, onDelete }) => {
   const shortTitle = title.length > 12 ? title.slice(0, 12) + '…' : title;
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.85 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.85 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-      className="bm-card group"
-    >
+    <div className="bm-card group">
       {/* Delete */}
       <button
         className="bm-delete"
@@ -45,7 +38,7 @@ const BookmarkCard = memo(({ title, url, onClick, onDelete }) => {
 
       {/* Label */}
       <span className="bm-label">{shortTitle}</span>
-    </motion.div>
+    </div>
   );
 });
 

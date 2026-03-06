@@ -5,11 +5,7 @@ const TabContextMenu = ({ menu, onClose }) => {
   if (!menu) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: -5 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: -5 }}
-      transition={{ type: "spring", stiffness: 450, damping: 25 }}
+    <div
       style={{
         position: "fixed",
         left: Math.min(menu.x, window.innerWidth - 250),
@@ -65,7 +61,7 @@ const TabContextMenu = ({ menu, onClose }) => {
       >
         Close tabs to the right
       </button>
-    </motion.div>
+    </div>
   );
 };
 

@@ -843,14 +843,12 @@ const App = () => {
             </button>
           </div>
         </div>
-        <AnimatePresence>
           {isFindOpen && (
             <FindBar 
               activeTabId={activeTabId} 
               onClose={() => setIsFindOpen(false)} 
             />
           )}
-        </AnimatePresence>
       </header>
 
       <main className="w-full h-[calc(100vh-92px)] mt-23 relative z-0 pointer-events-none">
@@ -862,61 +860,40 @@ const App = () => {
               : "pointer-events-none"
           }`}
         >
-          <AnimatePresence mode="wait">
-            {isSettingsOpen && (
-              <motion.div
-                key="settings"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full h-full"
-              >
-                <SettingsManager
-                  onNavigate={handleNavigate}
-                  theme={theme}
-                  setTheme={setTheme}
-                  onClose={() => setIsSettingsOpen(false)}
+          {isSettingsOpen && (
+                <div className="w-full h-full">
+                  <SettingsManager
+                    onNavigate={handleNavigate}
+                    theme={theme}
+                    setTheme={setTheme}
+                    onClose={() => setIsSettingsOpen(false)}
+                  />
+                </div>
+              )}
+              {isOverview && (
+                <TabOverview
+                  tabs={tabs}
+                  activeTabId={activeTabId}
+                  onSelectTab={handleSelectTab}
+                  onCloseTab={handleCloseTab}
+                  onAddTab={handleAddTab}
+                  onClose={() => setIsOverview(false)}
                 />
-              </motion.div>
-            )}
-            {isOverview && (
-              <TabOverview
-                tabs={tabs}
-                activeTabId={activeTabId}
-                onSelectTab={handleSelectTab}
-                onCloseTab={handleCloseTab}
-                onAddTab={handleAddTab}
-                onClose={() => setIsOverview(false)}
-              />
-            )}
-            {isDownloadsPageOpen && (
-              <motion.div
-                key="downloads-page"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.02 }}
-                className="w-full h-full"
-              >
-                <DownloadsPage onClose={() => setIsDownloadsPageOpen(false)} />
-              </motion.div>
-            )}
-            {isHome && !isOverview && !isExtensionsOpen && !isSettingsOpen && !isDownloadsPageOpen && (
-              <motion.div
-                key="newtab"
-                layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full h-full flex flex-col items-center justify-center bg-orbit-bg"
-              >
-                <NewTab
-                  onNavigate={handleNavigate}
-                  bookmarks={bookmarks}
-                  onUpdateBookmarks={setBookmarks}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+              {isDownloadsPageOpen && (
+                <div className="w-full h-full">
+                  <DownloadsPage onClose={() => setIsDownloadsPageOpen(false)} />
+                </div>
+              )}
+              {isHome && !isOverview && !isExtensionsOpen && !isSettingsOpen && !isDownloadsPageOpen && (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-orbit-bg">
+                  <NewTab
+                    onNavigate={handleNavigate}
+                    bookmarks={bookmarks}
+                    onUpdateBookmarks={setBookmarks}
+                  />
+                </div>
+              )}
         </div>
 
 
@@ -982,14 +959,8 @@ const App = () => {
         />
       )}
 
-      <AnimatePresence>
         {passwordPrompt && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed top-24 right-4 w-80 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-2xl border border-orbit-border z-3000 p-4 text-orbit-text"
-          >
+          <div className="fixed top-24 right-4 w-80 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-2xl border border-orbit-border z-3000 p-4 text-orbit-text">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-full bg-orbit-accent/10 flex items-center justify-center text-orbit-accent">
                 <Key size={20} />
@@ -1015,17 +986,11 @@ const App = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
         {hoveredTabId && tabs.some((t) => t.id === hoveredTabId) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+          <div
             style={{
               position: "fixed",
               left: previewPos.x,
@@ -1072,18 +1037,14 @@ const App = () => {
                 </span>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
         <TabContextMenu 
           menu={tabContextMenu} 
           onClose={() => setTabContextMenu(null)} 
         />
-      </AnimatePresence>
 
-      <AnimatePresence>
         {isDownloadsOpen && (
            <DownloadsManager
             onClose={() => openDownloads(false)}
@@ -1094,16 +1055,9 @@ const App = () => {
             }}
           />
         )}
-      </AnimatePresence>
 
-      <AnimatePresence>
         {isUpdateReady && (
-          <motion.div
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] w-[400px]"
-          >
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] w-[400px]">
             <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-[2rem] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.3)] relative overflow-hidden group">
               {/* Liquid Highlight Effect */}
               <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#635BFF]/10 blur-[60px] rounded-full group-hover:translate-x-10 group-hover:translate-y-10 transition-transform duration-1000" />
@@ -1134,9 +1088,8 @@ const App = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 };

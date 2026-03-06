@@ -180,14 +180,7 @@ const SettingsManager = ({ onNavigate, theme: activeTheme, setTheme }) => {
         {/* Dynamic Content Area */}
         <main className="flex-1 h-full overflow-y-auto bg-orbit-bg p-12 lg:p-20 scroll-smooth">
           <div className="max-w-3xl mx-auto pb-40">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
+            <div className="max-w-3xl mx-auto py-12 px-6">
                 <h2 className="text-3xl font-black tracking-tight text-orbit-text mb-12">{menuItems.find(i => i.id === activeSection)?.label}</h2>
 
                 {activeSection === 'general' && (
@@ -399,8 +392,7 @@ const SettingsManager = ({ onNavigate, theme: activeTheme, setTheme }) => {
                     <p className="text-xl font-bold text-orbit-text-dim">No matching settings found for "{searchQuery}"</p>
                   </div>
                 )}
-              </motion.div>
-            </AnimatePresence>
+              </div>
           </div>
         </main>
       </div>

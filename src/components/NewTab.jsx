@@ -85,26 +85,16 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
       <div className="nt-body">
 
         {/* ── Greeting (Firefox NTP style) ── */}
-        <motion.div
-          className="nt-greeting-row"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <div className="nt-greeting-row">
           <div className="nt-brand">
             <OrbitLogo size={34} />
             <span className="nt-brand-name">Orbit</span>
           </div>
           <span className="nt-greeting-text">{greeting}</span>
-        </motion.div>
+        </div>
 
         {/* ── Omnibox Search (Chrome + Edge hybrid) ── */}
-        <motion.div
-          className="nt-omnibox-wrap"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <div className="nt-omnibox-wrap">
           <form onSubmit={handleSubmit} className={`nt-omnibox ${focused ? 'nt-omnibox--focus' : ''}`}>
             <Search size={17} strokeWidth={2} className="nt-omnibox-icon" />
             <input
@@ -121,85 +111,59 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
               spellCheck={false}
               autoComplete="off"
             />
-            <AnimatePresence>
-              {query.length > 0 && (
-                <motion.button
-                  type="submit"
-                  className="nt-omnibox-go"
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.6 }}
-                  transition={{ duration: 0.12 }}
-                >
-                  <ArrowUpRight size={15} strokeWidth={2.5} />
-                </motion.button>
-              )}
-            </AnimatePresence>
+            {query.length > 0 && (
+              <button
+                type="submit"
+                className="nt-omnibox-go"
+              >
+                <ArrowUpRight size={15} strokeWidth={2.5} />
+              </button>
+            )}
           </form>
 
           {/* Chrome-style Suggestion Dropdown */}
-          <AnimatePresence>
-            {focused && suggestions.length > 0 && (
-              <motion.div
-                className="nt-suggestions"
-                initial={{ opacity: 0, y: 4, scaleY: 0.96 }}
-                animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                exit={{ opacity: 0, y: 4, scaleY: 0.96 }}
-                transition={{ duration: 0.15 }}
-              >
-                {suggestions.map((item, i) => (
-                  <div
-                    key={i}
-                    className={`nt-suggestion-row ${selIdx === i ? 'nt-suggestion-row--active' : ''}`}
-                    onMouseDown={() => navigate(item.text)}
-                    onMouseEnter={() => setSelIdx(i)}
-                  >
-                    <div className="nt-suggestion-icon">
-                      {item.type === 'url' ? <Globe size={13} /> : <Search size={13} />}
-                    </div>
-                    <span className="nt-suggestion-text">{item.text}</span>
-                    {item.type === 'url' && <span className="nt-suggestion-tag">Visit</span>}
+          {focused && suggestions.length > 0 && (
+            <div className="nt-suggestions">
+              {suggestions.map((item, i) => (
+                <div
+                  key={i}
+                  className={`nt-suggestion-row ${selIdx === i ? 'nt-suggestion-row--active' : ''}`}
+                  onMouseDown={() => navigate(item.text)}
+                  onMouseEnter={() => setSelIdx(i)}
+                >
+                  <div className="nt-suggestion-icon">
+                    {item.type === 'url' ? <Globe size={13} /> : <Search size={13} />}
                   </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+                  <span className="nt-suggestion-text">{item.text}</span>
+                  {item.type === 'url' && <span className="nt-suggestion-tag">Visit</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* ── Top Sites (Chrome + Firefox style) ── */}
-        <motion.section
-          className="nt-topsites"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <section className="nt-topsites">
           {bookmarks.length > 0 && (
             <div className="nt-section-label">Favourites</div>
           )}
           <div className="nt-topsites-grid">
-            <AnimatePresence mode="popLayout">
-              {bookmarks.map(item => (
-                <BookmarkCard
-                  key={item.id}
-                  title={item.title}
-                  url={item.url}
-                  onClick={onNavigate}
-                  onDelete={() => delBookmark(item.id)}
-                  variant="minimal"
-                />
-              ))}
-            </AnimatePresence>
+            {bookmarks.map(item => (
+              <BookmarkCard
+                key={item.id}
+                title={item.title}
+                url={item.url}
+                onClick={onNavigate}
+                onDelete={() => delBookmark(item.id)}
+                variant="minimal"
+              />
+            ))}
             <AddBookmarkCard onAdd={addBookmark} variant="minimal" />
           </div>
-        </motion.section>
+        </section>
 
         {/* ── Privacy + Performance Stats (Brave + Edge) ── */}
-        <motion.div
-          className="nt-stats-row"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-        >
+        <div className="nt-stats-row">
           {STATS.map(({ icon: Icon, value, label, accent }, i) => (
             <div className="nt-stat-card" key={i}>
               <div className="nt-stat-icon" style={{ '--accent': accent }}>
@@ -211,20 +175,15 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
               </div>
             </div>
           ))}
-        </motion.div>
+        </div>
 
       </div>
 
       {/* ── Status ── */}
-      <motion.div
-        className="nt-status"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
+      <div className="nt-status">
         <span className="nt-status-dot" />
         <span className="nt-status-text">Orbit · Private & Fast</span>
-      </motion.div>
+      </div>
     </div>
   );
 };

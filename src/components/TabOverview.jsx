@@ -21,10 +21,7 @@ const TabOverview = ({
   }, [tabs, searchQuery]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
       className="absolute inset-0 z-6000 bg-orbit-bg/90 backdrop-blur-[50px] overflow-y-auto"
     >
       {/* Safari-style Command Center */}
@@ -68,25 +65,12 @@ const TabOverview = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-12 pb-24 relative z-10">
-        <motion.div 
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: { opacity: 0 },
-            show: {
-              opacity: 1,
-              transition: { staggerChildren: 0.04 }
-            }
-          }}
+        <div 
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
         >
           {filteredTabs.map((tab) => (
-            <motion.div
+            <div
               key={tab.id}
-              variants={{
-                hidden: { y: 20, opacity: 0, scale: 0.9 },
-                show: { y: 0, opacity: 1, scale: 1 }
-              }}
               onClick={() => onSelectTab(tab.id)}
               className={`group cursor-pointer relative rounded-3xl border-2 transition-all duration-500 flex flex-col overflow-hidden ${
                 activeTabId === tab.id 
@@ -142,12 +126,12 @@ const TabOverview = ({
               {activeTabId === tab.id && (
                 <div className="absolute -inset-0.5 rounded-[26px] border-2 border-orbit-accent/50 pointer-events-none" />
               )}
-            </motion.div>
+            </div>
           ))}
 
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

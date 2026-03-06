@@ -26,66 +26,54 @@ const AddBookmarkCard = ({ onAdd }) => {
 
   return (
     <div className="bm-add-wrap">
-      <AnimatePresence mode="wait">
-        {!isEditing ? (
-          <motion.div
-            key="btn"
-            className="bm-card bm-add-btn group"
-            onClick={() => setIsEditing(true)}
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-          >
-            <div className="bm-tile bm-tile--add">
-              <Plus size={20} strokeWidth={2} className="bm-add-icon" />
-            </div>
-            <span className="bm-label">Add</span>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="form"
-            className="bm-panel"
-            initial={{ opacity: 0, scale: 0.94, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 8 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="bm-field">
-              <Type size={13} className="bm-field-icon" />
-              <input
-                ref={inputRef}
-                className="bm-field-input"
-                type="text"
-                placeholder="Name"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                onKeyDown={e => e.key === 'Escape' && cancel()}
-              />
-            </div>
-            <div className="bm-field">
-              <Globe size={13} className="bm-field-icon" />
-              <input
-                className="bm-field-input"
-                type="text"
-                placeholder="URL"
-                value={url}
-                onChange={e => setUrl(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') cancel(); }}
-              />
-            </div>
-            {error && <p className="bm-error">{error}</p>}
-            <div className="bm-actions">
-              <button className="bm-btn-save" onClick={submit}>
-                <Check size={14} strokeWidth={3} /> Save
-              </button>
-              <button className="bm-btn-cancel" onClick={cancel}>
-                <X size={14} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!isEditing ? (
+        <div
+          className="bm-card bm-add-btn group"
+          onClick={() => setIsEditing(true)}
+        >
+          <div className="bm-tile bm-tile--add">
+            <Plus size={20} strokeWidth={2} className="bm-add-icon" />
+          </div>
+          <span className="bm-label">Add</span>
+        </div>
+      ) : (
+        <div
+          className="bm-panel"
+        >
+          <div className="bm-field">
+            <Type size={13} className="bm-field-icon" />
+            <input
+              ref={inputRef}
+              className="bm-field-input"
+              type="text"
+              placeholder="Name"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              onKeyDown={e => e.key === 'Escape' && cancel()}
+            />
+          </div>
+          <div className="bm-field">
+            <Globe size={13} className="bm-field-icon" />
+            <input
+              className="bm-field-input"
+              type="text"
+              placeholder="URL"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') cancel(); }}
+            />
+          </div>
+          {error && <p className="bm-error">{error}</p>}
+          <div className="bm-actions">
+            <button className="bm-btn-save" onClick={submit}>
+              <Check size={14} strokeWidth={3} /> Save
+            </button>
+            <button className="bm-btn-cancel" onClick={cancel}>
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -139,10 +139,7 @@ const DownloadsPage = ({ onClose }) => {
               </div>
             ) : (
               filteredDownloads.map((item, idx) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
+                <div 
                   key={item.id}
                   className="group bg-orbit-card hover:bg-orbit-bg border border-orbit-border hover:border-orbit-accent/30 p-5 rounded-3xl transition-all hover:shadow-2xl hover:shadow-black/5"
                 >
@@ -226,7 +223,7 @@ const DownloadsPage = ({ onClose }) => {
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))
             )}
           </div>

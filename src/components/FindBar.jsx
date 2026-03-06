@@ -61,10 +61,7 @@ const FindBar = ({ activeTabId, onClose }) => {
   };
 
   return (
-    <motion.div
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -50, opacity: 0 }}
+    <div
       className="absolute top-24 right-6 z-1000 no-drag"
     >
       <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#2c2c2e] border border-black/10 dark:border-white/10 rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.15)]">
@@ -108,7 +105,7 @@ const FindBar = ({ activeTabId, onClose }) => {
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
