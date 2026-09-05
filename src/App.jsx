@@ -163,13 +163,26 @@ const App = () => {
 
   const [bookmarks, setBookmarks] = useState(() => {
     const saved = localStorage.getItem("orbit-bookmarks");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          { id: "1", title: "Google", url: "https://google.com" },
-          { id: "2", title: "YouTube", url: "https://youtube.com" },
-          { id: "3", title: "GitHub", url: "https://github.com" },
-        ];
+    const defaultList = [
+      { id: "1", title: "Worcco", url: "https://worcco.com" },
+      { id: "2", title: "Google", url: "https://google.com" },
+      { id: "3", title: "YouTube", url: "https://youtube.com" },
+      { id: "4", title: "GitHub", url: "https://github.com" },
+    ];
+    if (!saved) return defaultList;
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        const hasWorcco = parsed.some((b) => b.url?.includes("worcco.com"));
+        if (!hasWorcco) {
+          return [{ id: "worcco-default", title: "Worcco", url: "https://worcco.com" }, ...parsed];
+        }
+        return parsed;
+      }
+      return defaultList;
+    } catch {
+      return defaultList;
+    }
   });
 
   useEffect(() => {

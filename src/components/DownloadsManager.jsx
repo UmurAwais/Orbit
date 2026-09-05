@@ -60,7 +60,7 @@ const DownloadsManager = ({ onClose, anchorRef, onOpenFullHistory }) => {
       
       <div
         style={{ top: pos.top, right: pos.right }}
-        className="fixed w-90 max-h-120 bg-orbit-bg border border-orbit-border shadow-[0_20px_70px_rgba(0,0,0,0.4)] rounded-2xl z-9000 flex flex-col overflow-hidden backdrop-blur-3xl"
+        className="fixed w-90 max-h-120 bg-orbit-bg border border-orbit-border shadow-[0_20px_70px_rgba(0,0,0,0.4)] rounded-xl z-9000 flex flex-col overflow-hidden backdrop-blur-3xl"
       >
         {/* Decorative Indicator Arrow - Perfectly aligned with the right edge of the icon */}
         <div className="absolute -top-1.5 right-2.5 w-3 h-3 bg-orbit-bg border-t border-l border-orbit-border rotate-45 z-20" />

@@ -9,38 +9,12 @@ import OrbitLogo from './OrbitLogo';
 import BookmarkCard from './BookmarkCard';
 import AddBookmarkCard from './AddBookmarkCard';
 
-/* ─── Greeting ─── */
-const getGreeting = () => {
-  const h = new Date().getHours();
-  if (h < 5)  return { text: 'Good Night',     emoji: '🌙' };
-  if (h < 12) return { text: 'Good Morning',   emoji: '☀️' };
-  if (h < 17) return { text: 'Good Afternoon', emoji: '🌤' };
-  if (h < 21) return { text: 'Good Evening',   emoji: '🌆' };
-  return       { text: 'Good Night',           emoji: '🌙' };
-};
-
-/* ─── Hardcoded session stats (like Brave/Edge) ─── */
-const STATS = [
-  { icon: Shield,      value: '2,847', label: 'Trackers Blocked',   accent: 'var(--orbit-accent)' },
-  { icon: Zap,         value: '184ms', label: 'Avg. Page Load',      accent: 'var(--orbit-accent)' },
-  { icon: Globe,       value: '99.9%', label: 'Secure Connections',  accent: 'var(--orbit-accent)' },
-];
-
-
-/* ─── Quick-nav items (inspired by Edge top bar links) ─── */
-const QUICK_NAV = [
-  { label: 'Bookmarks', icon: Bookmark,  action: null },
-  { label: 'History',   icon: History,   action: null },
-  { label: 'Downloads', icon: Download,  action: null },
-];
-
 const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
   const [query, setQuery]     = useState('');
   const [focused, setFocused] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [selIdx, setSelIdx]   = useState(-1);
   const inputRef              = useRef(null);
-  const { text: greeting }    = getGreeting();
 
   /* ── Suggestions (Chrome-style omnibox) ── */
   useEffect(() => {
@@ -84,13 +58,10 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
     <div className="nt">
       <div className="nt-body">
 
-        {/* ── Greeting (Firefox NTP style) ── */}
-        <div className="nt-greeting-row">
-          <div className="nt-brand">
-            <OrbitLogo size={34} />
-            <span className="nt-brand-name">Orbit</span>
-          </div>
-          <span className="nt-greeting-text">{greeting}</span>
+        {/* ── Brand Hero (Chrome NTP style) ── */}
+        <div className="nt-hero">
+          <OrbitLogo size={46} />
+          <span className="nt-brand-name">Orbit</span>
         </div>
 
         {/* ── Omnibox Search (Chrome + Edge hybrid) ── */}
@@ -144,9 +115,9 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
 
         {/* ── Top Sites (Chrome + Firefox style) ── */}
         <section className="nt-topsites">
-          {bookmarks.length > 0 && (
+          {/* {bookmarks.length > 0 && (
             <div className="nt-section-label">Favourites</div>
-          )}
+          )} */}
           <div className="nt-topsites-grid">
             {bookmarks.map(item => (
               <BookmarkCard
@@ -163,7 +134,7 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
         </section>
 
         {/* ── Privacy + Performance Stats (Brave + Edge) ── */}
-        <div className="nt-stats-row">
+        {/* <div className="nt-stats-row">
           {STATS.map(({ icon: Icon, value, label, accent }, i) => (
             <div className="nt-stat-card" key={i}>
               <div className="nt-stat-icon" style={{ '--accent': accent }}>
@@ -175,14 +146,23 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
       </div>
 
-      {/* ── Status ── */}
-      <div className="nt-status">
-        <span className="nt-status-dot" />
-        <span className="nt-status-text">Orbit · Private & Fast</span>
+      {/* ── "from Worcco" Footer ── */}
+      <div 
+        className="nt-status"
+        onClick={() => onNavigate('https://worcco.com')}
+        style={{ cursor: 'pointer' }}
+        title="Visit Worcco"
+      >
+        <span className="nt-from-text">from</span>
+        <img
+          src="/assets/worcco_wordmark.png"
+          alt="Worcco"
+          className="nt-worcco-logo"
+        />
       </div>
     </div>
   );

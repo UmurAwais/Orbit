@@ -346,7 +346,7 @@ const SegmentedHub = memo(({
 
         {/* Chromium-style Dropdown */}
         {isFocused && suggestions.length > 0 && (
-          <div className="absolute top-[calc(100%+8px)] -left-4 -right-4 bg-nexus-hub-bg border border-nexus-border rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl z-5000">
+          <div className="absolute top-[calc(100%+8px)] -left-4 -right-4 bg-nexus-hub-bg border border-nexus-border rounded-xl shadow-2xl overflow-hidden backdrop-blur-3xl z-5000">
             <div className="py-2">
               {suggestions.map((item, index) => (
                 <div
@@ -445,7 +445,7 @@ const SegmentedHub = memo(({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -6 }}
                   transition={{ duration: 0.13, ease: 'easeOut' }}
-                  className="absolute right-0 z-99999 mt-2 w-64 rounded-2xl bg-white/95 dark:bg-[#28292d]/95 backdrop-blur-xl border border-black/8 dark:border-white/10 shadow-2xl overflow-hidden"
+                  className="absolute right-0 z-99999 mt-2 w-64 rounded-xl bg-white/95 dark:bg-[#28292d]/95 backdrop-blur-xl border border-black/8 dark:border-white/10 shadow-2xl overflow-hidden"
                   style={{ top: '100%' }}
                 >
                    {/* Zoom row */}
