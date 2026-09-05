@@ -86,13 +86,13 @@ export default function AppMenu({
         <button
           type="button"
           onClick={openMenu}
-          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 cursor-pointer relative ${
+          className={`w-7 h-7 flex items-center justify-center rounded-full transition-all duration-200 cursor-pointer relative ${
             menuOpen 
               ? 'bg-black/10 dark:bg-white/15 text-nexus-text opacity-100' 
               : 'hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-60 hover:opacity-100'
           }`}
         >
-          <MoreVertical size={17} strokeWidth={2} />
+          <MoreVertical size={16} strokeWidth={2} />
           {isUpdateReady && (
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#635BFF] rounded-full border-2 border-orbit-bg shadow-[0_0_8px_#635BFF] animate-pulse" />
           )}

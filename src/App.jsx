@@ -800,7 +800,7 @@ const App = () => {
             {/* [+] New Tab button positioned directly adjacent to tabs */}
             <button
               onClick={() => handleAddTab()}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/8 dark:hover:bg-white/10 active:bg-black/15 dark:active:bg-white/15 text-nexus-text-dim hover:text-nexus-text transition-all duration-150 no-drag shrink-0 ml-0.5 cursor-pointer"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/8 dark:hover:bg-white/10 active:bg-black/15 dark:active:bg-white/15 text-nexus-text-dim hover:text-nexus-text transition-all duration-150 no-drag shrink-0 ml-0.5 cursor-pointer"
               data-orbit-tooltip="New Tab"
             >
               <Plus size={15} strokeWidth={2.2} />
@@ -822,18 +822,18 @@ const App = () => {
               <button
                 onClick={() => window.orbit?.tabs?.goBack({ id: activeTab?.id })}
                 disabled={!activeTab?.canGoBack}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100 disabled:opacity-25 disabled:hover:bg-transparent transition-all duration-200 cursor-pointer disabled:cursor-default"
+                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100 disabled:opacity-25 disabled:hover:bg-transparent transition-all duration-200 cursor-pointer disabled:cursor-default"
               >
-                <ChevronLeft size={18} strokeWidth={2.2} />
+                <ChevronLeft size={16} strokeWidth={2.2} />
               </button>
             </TooltipWrapper>
             <TooltipWrapper text="Click to go forward">
               <button
                 onClick={() => window.orbit?.tabs?.goForward({ id: activeTab?.id })}
                 disabled={!activeTab?.canGoForward}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100 disabled:opacity-25 disabled:hover:bg-transparent transition-all duration-200 cursor-pointer disabled:cursor-default"
+                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100 disabled:opacity-25 disabled:hover:bg-transparent transition-all duration-200 cursor-pointer disabled:cursor-default"
               >
-                <ChevronRight size={18} strokeWidth={2.2} />
+                <ChevronRight size={16} strokeWidth={2.2} />
               </button>
             </TooltipWrapper>
             <TooltipWrapper text={activeTab?.isLoading ? "Stop loading" : "Reload this page"}>
@@ -845,12 +845,12 @@ const App = () => {
                     window.orbit?.tabs?.reload({ id: activeTab?.id });
                   }
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100 transition-all duration-200 cursor-pointer"
+                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100 transition-all duration-200 cursor-pointer"
               >
                 {activeTab?.isLoading ? (
-                  <X size={15} strokeWidth={2.2} />
+                  <X size={14} strokeWidth={2.2} />
                 ) : (
-                  <RefreshCw size={15} strokeWidth={2.2} />
+                  <RefreshCw size={14} strokeWidth={2.2} />
                 )}
               </button>
             </TooltipWrapper>
@@ -878,7 +878,7 @@ const App = () => {
               <button
                 ref={downloadBtnRef}
                 onClick={() => openDownloads(!isDownloadsOpen)}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
+                className={`w-7 h-7 flex items-center justify-center rounded-full transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
               >
                 <AnimatePresence>
                   {isDownloading && (
@@ -939,7 +939,7 @@ const App = () => {
                       className="absolute inset-0 flex items-center justify-center z-20"
                       style={{ color: '#34A853' }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     </motion.div>
@@ -961,7 +961,7 @@ const App = () => {
                   className="relative z-10"
                 >
                   <Download
-                    size={18}
+                    size={16}
                     strokeWidth={2.2}
                   />
                 </motion.div>
@@ -987,10 +987,10 @@ const App = () => {
                 setIsAISidekickOpen(newState);
                 window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
               }}
-              className={`h-8 flex items-center gap-1.5 px-3 rounded-lg transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent' : 'bg-white dark:bg-[#28292d] border-black/10 dark:border-white/10 text-nexus-text hover:border-black/20 dark:hover:border-white/20'}`}
+              className={`h-7 flex items-center gap-1.5 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent' : 'bg-white dark:bg-[#28292d] border-black/10 dark:border-white/10 text-nexus-text hover:border-black/20 dark:hover:border-white/20'}`}
             >
               <img src={orbitLogo} className="w-3.5 h-3.5 object-contain brightness-110" alt="Orbit Logo" />
-              <span className="text-[12px] font-bold tracking-tight">Ask Orbit</span>
+              <span className="text-[11.5px] font-bold tracking-tight">Ask Orbit</span>
             </button>
 
             {/* Main Menu (3-dots More options) */}

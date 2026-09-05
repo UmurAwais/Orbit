@@ -8,7 +8,7 @@
   --color-orbit-card: var(--orbit-card);
   --color-orbit-text: var(--orbit-text);
   --color-orbit-text-dim: var(--orbit-text-dim);
-  
+
   --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --shadow-hub: 0 10px 40px rgba(0, 0, 0, 0.08);
@@ -28,10 +28,13 @@
   --orbit-text-dim: #5F6368;
 
   /* Chrome Light Header Variables */
-  --nexus-bg: #DEE1E6; /* Chrome tabstrip / titlebar */
-  --nexus-toolbar-bg: #FFFFFF; /* Chrome toolbar / omnibox row */
+  --nexus-bg: #DEE1E6;
+  /* Chrome tabstrip / titlebar */
+  --nexus-toolbar-bg: #FFFFFF;
+  /* Chrome toolbar / omnibox row */
   --nexus-border: rgba(0, 0, 0, 0.12);
-  --nexus-hub-bg: #F1F3F4; /* Chrome omnibox input */
+  --nexus-hub-bg: #F1F3F4;
+  /* Chrome omnibox input */
   --nexus-hub-hover: #E8EAED;
   --nexus-tab-bg: transparent;
   --nexus-tab-active: #FFFFFF;
@@ -46,18 +49,22 @@
   /* Chrome Dark Mode Palette */
   --orbit-bg: #202124;
   --orbit-surface: #292A2D;
-  --orbit-accent: #8AB4F8; /* Chrome dark blue accent */
+  --orbit-accent: #8AB4F8;
+  /* Chrome dark blue accent */
   --orbit-border: rgba(255, 255, 255, 0.08);
   --orbit-card: rgba(255, 255, 255, 0.06);
   --orbit-text: #E8EAED;
   --orbit-text-dim: #9AA0A6;
 
   /* Chrome Dark Header Variables */
-  --nexus-bg: #202124; /* Chrome dark tabstrip */
-  --nexus-toolbar-bg: #292A2D; /* Chrome dark toolbar */
+  --nexus-bg: #202124;
+  /* Chrome dark tabstrip */
+  --nexus-toolbar-bg: #292A2D;
+  /* Chrome dark toolbar */
   --nexus-bg-alt: #35363A;
   --nexus-border: rgba(255, 255, 255, 0.08);
-  --nexus-hub-bg: #202124; /* Chrome dark omnibox */
+  --nexus-hub-bg: #202124;
+  /* Chrome dark omnibox */
   --nexus-hub-hover: #28292C;
   --nexus-tab-bg: transparent;
   --nexus-tab-active: #292A2D;
@@ -111,12 +118,14 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 80px; /* Option A 80px total height */
+  height: 80px;
+  /* Option A 80px total height */
   display: flex;
   flex-direction: column;
   z-index: 5000;
   padding: 0;
-  overflow: visible; /* Allow previews to overflow visually */
+  overflow: visible;
+  /* Allow previews to overflow visually */
   transition: opacity 0.3s ease;
 }
 
@@ -163,40 +172,161 @@ body {
   padding: 0 10px;
 }
 
-/* Orbital Nexus Search Hub */
+/* Orbital Nexus Search Hub (Matching Chrome Searchbar UI) */
 .nexus-hub {
-  background: var(--nexus-hub-bg);
-  border-radius: 8px;
-  height: 34px;
+  background: #ffffff;
+  border-radius: 9999px;
+  height: 28px;
   width: 100%;
   margin: 0;
   display: flex;
   align-items: center;
-  padding: 0 8px;
-  border: 1px solid var(--nexus-border);
-  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 0 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.03);
+  cursor: text;
+  transition: all 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .nexus-hub:hover {
-  background: var(--nexus-hub-hover);
-  border-color: rgba(0, 0, 0, 0.18);
+  border-color: rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.nexus-hub.focused,
+.nexus-hub:focus-within {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 3px 10px -1px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.dark .nexus-hub {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .dark .nexus-hub:hover {
-  background: var(--nexus-hub-hover);
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.nexus-hub.focused {
+.dark .nexus-hub.focused,
+.dark .nexus-hub:focus-within {
+  background: #18181b;
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.nexus-hub-input {
+  font-size: 13px;
+  font-weight: 400;
+  color: #111827;
+  caret-color: #111827;
+  letter-spacing: -0.01em;
+}
+
+.dark .nexus-hub-input {
+  color: #f3f4f6;
+  caret-color: #ffffff;
+}
+
+.nexus-hub-input::placeholder {
+  color: #9ca3af;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.dark .nexus-hub-input::placeholder {
+  color: #71717a;
+}
+
+/* Nexus Hub Dropdown Suggestions */
+.nexus-hub-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
   background: #ffffff;
-  border-color: #1a73e8;
-  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow:
+    0 16px 38px -4px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  backdrop-filter: blur(24px);
+  z-index: 5000;
 }
 
-.dark .nexus-hub.focused {
-  background: #202124;
-  border-color: #8ab4f8;
-  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.25);
+.dark .nexus-hub-dropdown {
+  background: #18181b;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 18px 48px -4px rgba(0, 0, 0, 0.65),
+    0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.nexus-hub-dropdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nexus-hub-dropdown-row:hover,
+.nexus-hub-dropdown-row.active {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark .nexus-hub-dropdown-row:hover,
+.dark .nexus-hub-dropdown-row.active {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.nexus-hub-dropdown-icon {
+  color: var(--orbit-text-dim);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nexus-hub-dropdown-row.active .nexus-hub-dropdown-icon {
+  opacity: 0.9;
+  color: var(--orbit-accent);
+}
+
+.nexus-hub-dropdown-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--orbit-text);
+  letter-spacing: -0.01em;
+}
+
+.nexus-hub-dropdown-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--orbit-text-dim);
+  opacity: 0.6;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dark .nexus-hub-dropdown-badge {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nexus-hub-inner-nav {
@@ -259,7 +389,8 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ff453a; /* iOS-style vibrant red dot */
+  background: #ff453a;
+  /* iOS-style vibrant red dot */
   box-shadow: 0 0 8px rgba(255, 69, 58, 0.4);
 }
 
@@ -299,17 +430,17 @@ body {
 .nexus-tab-nav-btn {
   width: 24px;
   height: 24px;
-  border-radius: 8px;
+  border-radius: 9999px;
   cursor: pointer;
   z-index: 250;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   display: flex !important;
   align-items: center;
   justify-content: center;
   background: white !important;
-  border: 1px solid rgba(0,0,0,0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
   color: var(--nexus-text) !important;
   position: absolute;
   top: 50%;
@@ -346,8 +477,8 @@ body {
   flex: 0 0 150px;
   min-width: 150px;
   max-width: 150px;
-  padding: 0 10px;
-  border-radius: 8px;
+  padding: 0 12px;
+  border-radius: 9999px;
   background: rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
@@ -436,7 +567,8 @@ body {
 }
 
 /* Hide label entirely when tab is very small */
-@media (max-width: 600px) { /* This would be for the window, but we want it per-tab */
+@media (max-width: 600px) {
+  /* This would be for the window, but we want it per-tab */
 }
 
 /* We use the flex-basis: 0 on the tab and min-width: 0 on span to handle this */
@@ -479,16 +611,19 @@ body {
   top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.85); /* Slightly more opaque for clarity */
+  background: rgba(255, 255, 255, 0.85);
+  /* Slightly more opaque for clarity */
   backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
   border: 0.5px solid rgba(0, 0, 0, 0.08);
-  padding: 10px 18px; /* High padding as per image */
+  padding: 10px 18px;
+  /* High padding as per image */
   color: #1a1a1a;
   font-size: 11.5px;
   font-weight: 500;
   line-height: 1.5;
-  text-align: center; /* Center text as per image */
+  text-align: center;
+  /* Center text as per image */
   white-space: normal;
   width: max-content;
   max-width: 320px;
@@ -498,7 +633,8 @@ body {
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 16px; /* High border-radius as per image */
+  border-radius: 16px;
+  /* High border-radius as per image */
 }
 
 [data-orbit-tooltip]:hover::after {
@@ -523,7 +659,8 @@ body {
 
 /* Special centering for the Shield icon to match image */
 .group\/privacy::after {
-  right: -60px !important; /* Move it back towards the center of the shield */
+  right: -60px !important;
+  /* Move it back towards the center of the shield */
 }
 
 .dark [data-orbit-tooltip]::after {
@@ -547,13 +684,25 @@ body {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes pulse-shadow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 91, 255, 0.4); }
-  50% { box-shadow: 0 0 0 15px rgba(99, 91, 255, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 91, 255, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 15px rgba(99, 91, 255, 0);
+  }
 }
 
 /* Safari High-Fidelity Progress Line */
@@ -615,7 +764,7 @@ body {
   justify-content: center;
   overflow: hidden;
   transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   box-shadow: none;
 }
 
@@ -627,15 +776,19 @@ body {
 /* Specular highlight (gives the tile depth/glass feel) */
 .bm-tile-shine {
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 50%;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.18), transparent);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.18), transparent);
   pointer-events: none;
   z-index: 2;
   border-radius: 12px 12px 0 0;
 }
 
-.dark .bm-tile-shine { opacity: 0.08; }
+.dark .bm-tile-shine {
+  opacity: 0.08;
+}
 
 .bm-favicon {
   width: 32px;
@@ -650,14 +803,16 @@ body {
 /* ── Card hover state ── */
 .bm-card:hover .bm-tile {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .dark .bm-card:hover .bm-tile {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.bm-card:hover .bm-favicon { transform: scale(1.08); }
+.bm-card:hover .bm-favicon {
+  transform: scale(1.08);
+}
 
 /* ── Label ── */
 .bm-label {
@@ -674,13 +829,17 @@ body {
   white-space: nowrap;
 }
 
-.bm-card:hover .bm-label { opacity: 0.85; }
+.bm-card:hover .bm-label {
+  opacity: 0.85;
+}
 
 /* ── Delete button ── */
 .bm-delete {
   position: absolute;
-  top: -5px; right: -5px;
-  width: 18px; height: 18px;
+  top: -5px;
+  right: -5px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: none;
   background: #ef4444;
@@ -728,18 +887,21 @@ body {
   transform: rotate(90deg);
 }
 
-.bm-add-wrap { position: relative; }
+.bm-add-wrap {
+  position: relative;
+}
 
 /* ── Add panel (popup form) ── */
 .bm-panel {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   min-width: 220px;
   background: var(--orbit-bg);
   border: 1px solid var(--orbit-border);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   z-index: 500;
   display: flex;
   flex-direction: column;
@@ -747,7 +909,7 @@ body {
 }
 
 .dark .bm-panel {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .bm-field {
@@ -773,7 +935,10 @@ body {
   transition: opacity 0.15s ease;
 }
 
-.bm-field:focus-within .bm-field-icon { opacity: 0.8; color: var(--orbit-accent); }
+.bm-field:focus-within .bm-field-icon {
+  opacity: 0.8;
+  color: var(--orbit-accent);
+}
 
 .bm-field-input {
   flex: 1;
@@ -787,7 +952,10 @@ body {
   letter-spacing: -0.01em;
 }
 
-.bm-field-input::placeholder { color: var(--orbit-text-dim); opacity: 0.4; }
+.bm-field-input::placeholder {
+  color: var(--orbit-text-dim);
+  opacity: 0.4;
+}
 
 .bm-error {
   font-size: 10px;
@@ -821,8 +989,14 @@ body {
   box-shadow: 0 4px 12px color-mix(in srgb, var(--orbit-accent) 30%, transparent);
 }
 
-.bm-btn-save:hover { filter: brightness(1.1); transform: scale(1.02); }
-.bm-btn-save:active { transform: scale(0.97); }
+.bm-btn-save:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.bm-btn-save:active {
+  transform: scale(0.97);
+}
 
 .bm-btn-cancel {
   width: 36px;
@@ -839,7 +1013,10 @@ body {
   transition: opacity 0.15s ease, background 0.15s ease;
 }
 
-.bm-btn-cancel:hover { opacity: 1; background: var(--orbit-card); }
+.bm-btn-cancel:hover {
+  opacity: 1;
+  background: var(--orbit-card);
+}
 
 
 
@@ -881,203 +1058,557 @@ body {
   margin: 0 auto;
 }
 
-/* ══════════════════════════
-   HERO — Brand (Chrome NTP style)
-   ══════════════════════════ */
-.nt-hero {
+/* ═══════════════════════════════════════════════════════════════════
+   HERO SECTION & LOCALIZED GRADIENT GLOW (Just Top of Search Bar)
+   ═══════════════════════════════════════════════════════════════════ */
+.nt-hero-section {
+  position: relative;
+  width: 100%;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nt-ambient-glow {
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 680px;
+  height: 190px;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(55px);
+  border-radius: 40px;
+  opacity: 0.85;
+  background:
+    radial-gradient(ellipse 48% 60% at 10% 70%, rgba(56, 189, 248, 0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 52% 60% at 90% 70%, rgba(168, 85, 247, 0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 30%, rgba(224, 231, 255, 0.6) 0%, transparent 80%);
+}
+
+.dark .nt-ambient-glow {
+  opacity: 0.55;
+  background:
+    radial-gradient(ellipse 48% 60% at 10% 70%, rgba(56, 189, 248, 0.3) 0%, transparent 70%),
+    radial-gradient(ellipse 52% 60% at 90% 70%, rgba(168, 85, 247, 0.3) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 30%, rgba(168, 85, 247, 0.15) 0%, transparent 80%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FLOATING PILL BADGE WITH MOUSE CURSOR (Exact Screenshot Match)
+   ═══════════════════════════════════════════════════════════════════ */
+.nt-badge-wrap {
+  position: relative;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  margin-bottom: 44px;
   user-select: none;
-  margin-bottom: 6px;
 }
 
-.nt-brand-name {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--orbit-text);
-  line-height: 1;
+.nt-badge-cursor {
+  position: absolute;
+  top: -13px;
+  left: -11px;
+  z-index: 10;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28));
 }
 
-.dark .nt-brand-name {
+.nt-badge-pill {
+  background: #000000;
   color: #ffffff;
+  padding: 6px 18px;
+  border-radius: 9999px;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 10px 24px -4px rgba(0, 0, 0, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  height: 33px;
+  box-sizing: border-box;
 }
 
-/* ══════════════════════════════════════════
-   OMNIBOX  — Chrome Omnibox + Edge styling
-   Frosted glass, accent focus ring
-   ══════════════════════════════════════════ */
-.nt-omnibox-wrap {
+.nt-badge-text {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.nt-badge-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 13px;
+  background-color: #ffffff;
+  margin-left: 2.5px;
+  vertical-align: middle;
+  border-radius: 1px;
+  animation: nt-caret-blink 0.9s infinite;
+}
+
+@keyframes nt-caret-blink {
+
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  50%,
+  95% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CHATBOT SEARCH BOX (Exact Screenshot Match: Ask Orbit or type URL)
+   ═══════════════════════════════════════════════════════════════════ */
+.nt-chatbox-wrap {
   width: 100%;
+  max-width: 680px;
   position: relative;
   z-index: 50;
+  margin-top: 0;
 }
 
-.nt-omnibox {
-  height: 54px;
+.nt-chatbox {
   width: 100%;
-  border-radius: 50px;
+  background: #ffffff;
+  border-radius: 26px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 16px 20px 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow:
+    0 4px 24px -2px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.nt-chatbox.focused,
+.nt-chatbox:focus-within {
+  border-color: rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 10px 32px -4px rgba(0, 0, 0, 0.09),
+    0 0 0 1.5px rgba(0, 0, 0, 0.08);
+}
+
+.dark .nt-chatbox {
+  background: #18181b;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 6px 30px -4px rgba(0, 0, 0, 0.45),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark .nt-chatbox.focused,
+.dark .nt-chatbox:focus-within {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 12px 38px -4px rgba(0, 0, 0, 0.65),
+    0 0 0 1.5px rgba(255, 255, 255, 0.15);
+}
+
+.nt-chatbox-input-row {
+  width: 100%;
   display: flex;
   align-items: center;
-  padding: 0 8px 0 20px;
-  gap: 10px;
-  background: color-mix(in srgb, var(--orbit-surface) 90%, transparent);
-  border: 1.5px solid var(--orbit-border);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow:
-    0 1px 0px rgba(255,255,255,0.55) inset,
-    0 4px 20px -6px rgba(0,0,0,0.07);
 }
 
-.nt-omnibox--focus {
-  background: color-mix(in srgb, var(--orbit-bg) 97%, transparent);
-  border-color: var(--orbit-accent);
-  box-shadow: 0 1px 0px rgba(255,255,255,0.4) inset;
-}
-
-.dark .nt-omnibox {
-  background: #ffffff;
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-}
-
-.dark .nt-omnibox .nt-omnibox-input {
-  color: #1f1f1f;
-}
-
-.dark .nt-omnibox .nt-omnibox-input::placeholder {
-  color: #5f6368;
-  opacity: 0.85;
-}
-
-.dark .nt-omnibox .nt-omnibox-icon {
-  color: #5f6368;
-  opacity: 0.75;
-}
-
-.dark .nt-omnibox--focus {
-  background: #ffffff;
-  border-color: #8ab4f8;
-  box-shadow: 0 0 0 4px rgba(138, 180, 248, 0.35), 0 6px 24px rgba(0, 0, 0, 0.3);
-}
-
-.nt-omnibox-icon {
-  flex-shrink: 0;
-  color: var(--orbit-text);
-  opacity: 0.3;
-  transition: opacity 0.2s ease;
-}
-
-.nt-omnibox--focus .nt-omnibox-icon {
-  color: var(--orbit-accent);
-  opacity: 0.8;
-}
-
-.nt-omnibox-input {
-  flex: 1;
+.nt-chatbox-input {
+  width: 100%;
   background: transparent;
   border: none;
   outline: none;
-  font-size: 15px;
-  font-weight: 450;
-  color: var(--orbit-text);
+  font-size: 15.5px;
+  font-weight: 400;
+  color: #111827;
   font-family: inherit;
   letter-spacing: -0.01em;
-  height: 100%;
-  min-width: 0;
+  padding: 0;
+  caret-color: #111827;
 }
 
-.nt-omnibox-input::placeholder {
-  color: var(--orbit-text-dim);
-  opacity: 0.4;
+.dark .nt-chatbox-input {
+  color: #f3f4f6;
+  caret-color: #ffffff;
 }
 
-.nt-omnibox-go {
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
+.nt-chatbox-input::placeholder {
+  color: #9ca3af;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.dark .nt-chatbox-input::placeholder {
+  color: #71717a;
+}
+
+.nt-chatbox-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nt-chatbox-left-actions {
+  display: flex;
+  align-items: center;
+}
+
+.nt-chat-menu-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nt-chat-plus-btn {
+  background: transparent;
   border: none;
-  background: var(--orbit-accent);
-  color: #fff;
+  color: #4b5563;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
-  box-shadow: 0 2px 12px color-mix(in srgb, var(--orbit-accent) 35%, transparent);
+  padding: 2px;
+  border-radius: 4px;
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 
-.nt-omnibox-go:hover  { filter: brightness(1.12); transform: scale(1.07); }
-.nt-omnibox-go:active { transform: scale(0.93); }
+.nt-chat-plus-btn:hover {
+  color: #111827;
+  transform: scale(1.1);
+}
 
-/* ── Chrome-style suggestion dropdown ── */
-.nt-suggestions {
+.nt-chat-plus-btn.active {
+  color: #111827;
+}
+
+.dark .nt-chat-plus-btn {
+  color: #9ca3af;
+}
+
+.dark .nt-chat-plus-btn:hover,
+.dark .nt-chat-plus-btn.active {
+  color: #ffffff;
+}
+
+.nt-chat-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.12);
+  margin: 0 12px;
+}
+
+.dark .nt-chat-divider {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* AI Model Pill Button (Clean, No Icons, Transparent Background) */
+.nt-model-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+}
+
+.nt-model-pill-btn:hover,
+.nt-model-pill-btn.open {
+  background: transparent;
+  color: #111827;
+}
+
+.dark .nt-model-pill-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+}
+
+.dark .nt-model-pill-btn:hover,
+.dark .nt-model-pill-btn.open {
+  background: transparent;
+  color: #ffffff;
+}
+
+.nt-model-pill-text {
+  line-height: 1;
+}
+
+.nt-model-pill-chevron {
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.nt-model-pill-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.dark .nt-model-pill-chevron {
+  color: #9ca3af;
+}
+
+/* AI Model Dropdown Menu (No Icons, Pure Clean Typography) */
+.nt-model-dropdown-menu {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0; right: 0;
-  background: var(--orbit-bg);
-  border: 1px solid var(--orbit-border);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  transform-origin: top center;
+  left: 0;
+  min-width: 220px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px -4px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 6px;
   z-index: 100;
 }
 
-.dark .nt-suggestions {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+.dark .nt-model-dropdown-menu {
+  background: #1e1f22;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.nt-suggestion-row {
+.nt-model-dropdown-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+  padding: 6px 10px 4px;
+  user-select: none;
+}
+
+.dark .nt-model-dropdown-header {
+  color: #9ca3af;
+}
+
+.nt-model-dropdown-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 20px;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.nt-model-dropdown-row:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.nt-model-dropdown-row.selected {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .nt-model-dropdown-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark .nt-model-dropdown-row.selected {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nt-model-dropdown-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.nt-model-dropdown-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #111827;
+  line-height: 1.25;
+}
+
+.dark .nt-model-dropdown-title {
+  color: #f9fafb;
+}
+
+.nt-model-dropdown-badge {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.dark .nt-model-dropdown-badge {
+  color: #9ca3af;
+}
+
+.nt-model-dropdown-check {
+  color: #111827;
+}
+
+.dark .nt-model-dropdown-check {
+  color: #ffffff;
+}
+
+/* Right Actions (Mic / Submit) */
+.nt-chatbox-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nt-chat-mic-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.nt-chat-mic-btn:hover {
+  color: #111827;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark .nt-chat-mic-btn {
+  color: #9ca3af;
+}
+
+.dark .nt-chat-mic-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nt-chat-submit-arrow {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #111827;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.nt-chat-submit-arrow:hover {
+  background: #000000;
+  transform: scale(1.08);
+}
+
+.nt-chat-submit-arrow:active {
+  transform: scale(0.94);
+}
+
+.dark .nt-chat-submit-arrow {
+  background: #ffffff;
+  color: #000000;
+}
+
+.dark .nt-chat-submit-arrow:hover {
+  background: #e4e4e7;
+}
+
+/* ── Suggestions Dropdown ── */
+.nt-search-suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+  z-index: 100;
+}
+
+.dark .nt-search-suggestions {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.nt-search-suggestion-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 18px;
   cursor: pointer;
   transition: background 0.1s ease;
 }
 
-.nt-suggestion-row:first-child { border-radius: 12px 12px 0 0; }
-.nt-suggestion-row:last-child  { border-radius: 0 0 12px 12px; }
+.nt-search-suggestion-row.active,
+.nt-search-suggestion-row:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
 
-.nt-suggestion-row--active,
-.nt-suggestion-row:hover { background: var(--orbit-surface); }
+.dark .nt-search-suggestion-row.active,
+.dark .nt-search-suggestion-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 
-.nt-suggestion-icon {
-  color: var(--orbit-text);
-  opacity: 0.35;
+.nt-search-suggestion-icon {
+  color: #6b7280;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
-.nt-suggestion-row--active .nt-suggestion-icon {
-  color: var(--orbit-accent);
-  opacity: 0.8;
+.dark .nt-search-suggestion-icon {
+  color: #9ca3af;
 }
 
-.nt-suggestion-text {
+.nt-search-suggestion-text {
   flex: 1;
   font-size: 14px;
-  font-weight: 500;
-  color: var(--orbit-text);
-  white-space: nowrap;
+  font-weight: 450;
+  color: #1f2937;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
-.nt-suggestion-tag {
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--orbit-accent);
-  opacity: 0.7;
+.dark .nt-search-suggestion-text {
+  color: #f3f4f6;
 }
+
+.nt-search-suggestion-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dark .nt-search-suggestion-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: #d1d5db;
+}
+
 
 /* ══════════════════════════════════════════
    TOP SITES  — Chrome + Firefox style grid
@@ -1546,7 +2077,9 @@ body {
   font-weight: bold;
 }
 
-.prose h1, .prose h2, .prose h3 {
+.prose h1,
+.prose h2,
+.prose h3 {
   font-weight: 800;
   margin-top: 16px;
   margin-bottom: 8px;
@@ -1554,9 +2087,14 @@ body {
   letter-spacing: -0.02em;
 }
 
-.prose h3 { font-size: 14px; }
+.prose h3 {
+  font-size: 14px;
+}
 
-.dark .prose strong { color: #818cf8; }
-.dark .prose li::before { color: #818cf8; }
+.dark .prose strong {
+  color: #818cf8;
+}
 
-
+.dark .prose li::before {
+  color: #818cf8;
+}
