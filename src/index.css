@@ -912,7 +912,6 @@ body {
    ══════════════════════════════════════════ */
 .nt-omnibox-wrap {
   width: 100%;
-  max-width: 600px;
   position: relative;
   z-index: 50;
 }
