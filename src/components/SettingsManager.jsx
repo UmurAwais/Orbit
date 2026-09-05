@@ -36,8 +36,12 @@ import {
   Accessibility,
   Info,
   Power,
-  Gauge
+  Gauge,
+  Sparkles,
+  Layers,
+  Sliders
 } from 'lucide-react';
+import orbitLogo from '../assets/orbit.png';
 
 const SettingsManager = ({ onNavigate, theme: activeTheme, setTheme }) => {
   const [activeSection, setActiveSection] = useState('general');
@@ -125,7 +129,7 @@ const SettingsManager = ({ onNavigate, theme: activeTheme, setTheme }) => {
       {/* Precision Navigation Header */}
       <header className="w-full h-16 border-b border-orbit-border flex items-center shrink-0 z-100 relative bg-orbit-bg">
         <div className="flex items-center gap-3 px-6 relative z-10">
-          <img src="/assets/orbit.png" className="w-7 h-7" alt="O" />
+          <img src={orbitLogo} className="w-7 h-7" alt="O" />
           <h1 className="text-base font-black tracking-tight text-orbit-text">Settings</h1>
         </div>
 
@@ -356,7 +360,7 @@ const SettingsManager = ({ onNavigate, theme: activeTheme, setTheme }) => {
                   <div className="space-y-12">
                     <div className="flex items-start gap-8">
                        <div className="w-20 h-20 rounded-4xl bg-orbit-text flex items-center justify-center shadow-2xl shrink-0">
-                          <img src="/assets/orbit.png" className="w-12 h-12 invert dark:invert-0" alt="" />
+                          <img src={orbitLogo} className="w-12 h-12 invert dark:invert-0" alt="" />
                        </div>
                        <div className="space-y-4">
                           <div className="space-y-1">

@@ -8,8 +8,10 @@ import {
   Search,
   LayoutGrid,
   ChevronRight,
-  Puzzle
+  Puzzle,
+  Zap
 } from 'lucide-react';
+import orbitLogo from '../assets/orbit.png';
 
 const DashboardHeader = ({ onNavigate }) => {
   return (
@@ -17,7 +19,7 @@ const DashboardHeader = ({ onNavigate }) => {
       {/* Precision Breadcrumb & Version */}
       <div className="flex items-center gap-4 select-none">
         <div className="flex items-center gap-3 group cursor-pointer" onClick={() => onNavigate && onNavigate('about:blank')}>
-          <img src="/assets/orbit.png" alt="Orbit" className="w-9 h-9 rounded-2xl bg-orbit-text flex items-center justify-center text-orbit-bg transition-all group-hover:bg-orbit-accent shadow-lg shadow-black/5" />
+          <img src={orbitLogo} alt="Orbit" className="w-9 h-9 rounded-2xl bg-orbit-text flex items-center justify-center text-orbit-bg transition-all group-hover:bg-orbit-accent shadow-lg shadow-black/5" />
           <div className="flex flex-col">
             <span className="text-[14px] font-extrabold tracking-tight text-orbit-text leading-none">Orbit</span>
             <span className="text-[9px] font-bold text-orbit-text-dim uppercase tracking-[0.15em] mt-1">Beyond the Horizon</span>

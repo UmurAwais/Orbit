@@ -44,12 +44,12 @@ function createWindow() {
     height: 900,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: nativeTheme.shouldUseDarkColors ? '#35363a' : '#ffffff',
+      color: nativeTheme.shouldUseDarkColors ? '#202124' : '#dee1e6',
       symbolColor: nativeTheme.shouldUseDarkColors ? '#e8eaed' : '#1d1d1f',
-      height: 46
+      height: 38
     },
     icon: path.join(__dirname, '../assets/orbit.png'),
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#35363a' : '#ffffff',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#202124' : '#dee1e6',
     show: false,
   });
 
@@ -88,7 +88,7 @@ function createWindow() {
   mainWindow.on('resize', () => {
     const [width, height] = mainWindow.getContentSize();
     const bounds = uiView.getBounds();
-    const isHeaderOnly = bounds.height <= 96 && bounds.x === 0;
+    const isHeaderOnly = bounds.height <= 85 && bounds.x === 0;
     const isSidekickColumn = bounds.x > 0; // sidekick-only mode
     
     if (isSidekickColumn) {
@@ -96,7 +96,7 @@ function createWindow() {
       const sidekickWidth = bounds.width;
       uiView.setBounds({ x: width - sidekickWidth, y: 0, width: sidekickWidth, height });
     } else {
-      uiView.setBounds({ x: 0, y: 0, width, height: isHeaderOnly ? 92 : height });
+      uiView.setBounds({ x: 0, y: 0, width, height: isHeaderOnly ? 80 : height });
     }
     viewManager.updateLayout();
   });
@@ -113,11 +113,11 @@ function createWindow() {
   nativeTheme.on('updated', () => {
     const isDark = nativeTheme.shouldUseDarkColors;
     mainWindow.setTitleBarOverlay({
-      color: isDark ? '#35363a' : '#ffffff',
+      color: isDark ? '#202124' : '#dee1e6',
       symbolColor: isDark ? '#e8eaed' : '#1d1d1f',
-      height: 46
+      height: 38
     });
-    mainWindow.setBackgroundColor(isDark ? '#35363a' : '#ffffff');
+    mainWindow.setBackgroundColor(isDark ? '#202124' : '#dee1e6');
   });
 }
 
@@ -427,20 +427,23 @@ QUESTIONS_END`;
     console.log(`[Orbit] Navigate: tab=${id}, url="${url}"`);
     const view = viewManager.views.get(id);
     if (view) {
-      let targetUrl = url;
-      const hasProtocol = /^([a-z][a-z0-9+\-.]*):/i.test(url);
-      const hasSpace = url.includes(' ');
-      const isLocalhost = /^localhost(:\d+)?$/i.test(url);
-      const isIP = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(url);
-      const hasExtension = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:\d+)?([/?#].*)?$/.test(url);
+      const trimmed = (url || '').trim();
+      if (!trimmed) return;
+
+      let targetUrl = trimmed;
+      const hasProtocol = /^([a-z][a-z0-9+\-.]*):/i.test(trimmed);
+      const hasSpace = trimmed.includes(' ');
+      const isLocalhost = /^localhost(:\d+)?([/?#].*)?$/i.test(trimmed);
+      const isIP = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?([/?#].*)?$/.test(trimmed);
+      const hasExtension = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:\d+)?([/?#].*)?$/.test(trimmed);
 
       if (!hasProtocol) {
         if (isLocalhost || isIP) {
-          targetUrl = `http://${url}`;
+          targetUrl = `http://${trimmed}`;
         } else if (hasExtension && !hasSpace) {
-          targetUrl = `https://${url}`;
+          targetUrl = `https://${trimmed}`;
         } else {
-          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+          targetUrl = `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
         }
       }
 
@@ -713,6 +716,30 @@ QUESTIONS_END`;
     }
   });
 
+  ipcMain.on('tab:new-right', (event, id) => {
+    uiView?.webContents.send('tab:new-right', id);
+  });
+
+  ipcMain.on('tab:duplicate', (event, id) => {
+    uiView?.webContents.send('tab:duplicate', id);
+  });
+
+  ipcMain.on('tab:toggle-pin', (event, id) => {
+    uiView?.webContents.send('tab:toggle-pin', id);
+  });
+
+  ipcMain.on('tab:close-specific', (event, id) => {
+    uiView?.webContents.send('tab:close-specific', id);
+  });
+
+  ipcMain.on('tab:close-other', (event, id) => {
+    uiView?.webContents.send('tab:close-other', id);
+  });
+
+  ipcMain.on('tab:close-right', (event, id) => {
+    uiView?.webContents.send('tab:close-right', id);
+  });
+
   // New Tab: create a blank tab (React handles actual creation; this is a fallback)
   ipcMain.on('tab:new', () => {
     uiView?.webContents?.send('menu:new-tab');
@@ -728,17 +755,17 @@ QUESTIONS_END`;
     uiView?.webContents?.send('menu:open-settings');
   });
 
-  // Resize the uiView to only cover the header (92px) when browsing a website.
+  // Resize the uiView to only cover the header (80px) when browsing a website.
   // This is the ONLY working solution on Windows — setIgnoreMouseEvents(true) on
   // BaseWindow passes clicks to the OS desktop/taskbar causing minimize.
-  // The page WebContentsView sits at y:92 and is directly reachable when uiView
+  // The page WebContentsView sits at y:80 and is directly reachable when uiView
   // doesn't cover it. Expand back to full height for New Tab / Settings / Overview.
   ipcMain.on('ui:set-ignore-mouse', (event, shouldPassThrough) => {
     if (!uiView || !mainWindow) return;
     const [width, height] = mainWindow.getContentSize();
     if (shouldPassThrough) {
       // Browsing: shrink to header only — page is directly clickable below
-      uiView.setBounds({ x: 0, y: 0, width, height: 92 });
+      uiView.setBounds({ x: 0, y: 0, width, height: 80 });
     } else {
       // Orbit UI panel open: expand to full window
       uiView.setBounds({ x: 0, y: 0, width, height });
@@ -758,7 +785,7 @@ QUESTIONS_END`;
     const view = viewManager?.views?.get(viewManager?.activeViewId);
     if (!view || view.webContents.isDestroyed()) return;
 
-    const HEADER_HEIGHT = 92;
+    const HEADER_HEIGHT = 80;
     const pageX = Math.round(x);
     const pageY = Math.round(y - HEADER_HEIGHT);
     if (pageY < 0) return; // ignore events above the page area

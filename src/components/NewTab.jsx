@@ -8,6 +8,7 @@ import {
 import OrbitLogo from './OrbitLogo';
 import BookmarkCard from './BookmarkCard';
 import AddBookmarkCard from './AddBookmarkCard';
+import worccoWordmark from '../assets/worcco_wordmark.png';
 
 const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
   const [query, setQuery]     = useState('');
@@ -159,7 +160,7 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
       >
         <span className="nt-from-text">from</span>
         <img
-          src="/assets/worcco_wordmark.png"
+          src={worccoWordmark}
           alt="Worcco"
           className="nt-worcco-logo"
         />

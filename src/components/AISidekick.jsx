@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, BookOpen, Send, Loader2, User, Trash2 } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
+import orbitLogo from '../assets/orbit.png';
 
 const AISidekick = ({ isOpen, onClose, activeTab }) => {
   const [messages, setMessages] = useState([]);
@@ -97,7 +98,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
           <div className="w-96 h-full flex flex-col shrink-0">
             <div className="flex items-center justify-between bg-white/80 dark:bg-[#28292d]/90 backdrop-blur-md sticky top-0 z-10 px-4 h-13 border-b border-black/5 dark:border-white/8">
               <div className="flex items-center gap-2.5">
-                <img src="/assets/orbit.png" className="w-8 h-8 object-contain" alt="Orbit" />
+                <img src={orbitLogo} className="w-8 h-8 object-contain" alt="Orbit" />
                 <div className="flex flex-col">
                   <span className="text-[13px] font-bold text-black dark:text-[#f1f3f4] tracking-tight leading-tight">Orbit AI</span>
                   <span className="text-[10px] font-medium text-black/50 dark:text-[#9aa0a6] tracking-tight">Supercharge your browsing</span>
@@ -200,7 +201,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
                     </div>
                   ) : (
                     <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-orbit-accent/10 flex items-center justify-center border border-orbit-accent/20">
-                      <img src="/assets/orbit.png" alt="Orbit" className="w-5 h-5 object-contain" />
+                      <img src={orbitLogo} alt="Orbit" className="w-5 h-5 object-contain" />
                     </div>
                   )}
 
@@ -221,7 +222,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
               {isLoading && (
                 <div className="flex gap-2.5">
                   <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-orbit-accent/10 flex items-center justify-center border border-orbit-accent/20">
-                    <img src="/assets/orbit.png" alt="Orbit" className="w-5 h-5 object-contain" />
+                    <img src={orbitLogo} alt="Orbit" className="w-5 h-5 object-contain" />
                   </div>
                   <div className="bg-white dark:bg-[#28292d] border border-black/6 dark:border-white/10 shadow-sm rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-orbit-accent animate-bounce" style={{animationDelay: '0ms'}} />

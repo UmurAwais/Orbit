@@ -2,7 +2,7 @@
   "name": "orbit",
   "version": "1.0.0",
   "author": "Worcco",
-  "description": "A custom desktop browser",
+  "description": "Orbit Desktop Browser by Worcco",
   "main": "electron/main.js",
   "type": "module",
   "productName": "Orbit",
@@ -12,6 +12,7 @@
     "build": "vite build",
     "make": "npm run build && electron-forge make",
     "package": "npm run build && electron-forge package",
+    "dist": "npm run build && electron-builder --config electron-builder.json",
     "preview": "vite preview",
     "test": "vitest run"
   },

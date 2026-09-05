@@ -1,7 +1,10 @@
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: 'assets/worcco_logo',
+    name: 'Orbit',
+    executableName: 'Orbit',
+    icon: 'assets/orbit',
+    appCopyright: 'Copyright © 2026 Worcco',
   },
   rebuildConfig: {},
   makers: [
@@ -11,7 +14,7 @@ module.exports = {
         name: 'Orbit',
         authors: 'Worcco',
         description: 'Orbit Browser by Worcco',
-        setupIcon: 'assets/worcco_logo.ico',
+        setupExe: 'OrbitSetup.exe',
       },
     },
     {

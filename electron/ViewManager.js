@@ -9,7 +9,7 @@ export class ViewManager {
     this.tabStates = new Map();
     this.isOverview = false;
     this.currentSidekickWidth = 0;
-    
+
     this.HIBERNATE_THRESHOLD = 5 * 60 * 1000;
     this.setupHibernation();
   }
@@ -68,13 +68,13 @@ export class ViewManager {
     const wc = view.webContents;
     const tabState = this.tabStates.get(id);
     const currentUrl = wc.getURL();
-    
+
     // Robust URL reporting: during navigation transitions, currentUrl can be empty.
     // We use the most recent intended URL (lastUrl) to prevent the UI from 
     // flickering back to the 'New Tab' state while a page is still loading.
     let urlToSend = currentUrl;
     const isCurrentlyEmpty = !currentUrl || currentUrl === 'about:blank';
-    
+
     if (isCurrentlyEmpty && tabState?.lastUrl && tabState.lastUrl !== 'about:blank') {
       urlToSend = tabState.lastUrl;
     } else if (!isCurrentlyEmpty) {
@@ -85,13 +85,13 @@ export class ViewManager {
     } else {
       urlToSend = 'about:blank';
     }
-    
+
     let displayTitle = wc.getTitle();
-    const isTitleInvalid = !displayTitle || 
-                          displayTitle === 'about:blank' || 
-                          displayTitle === 'New Tab' || 
-                          displayTitle === 'Loading...' || 
-                          displayTitle === '';
+    const isTitleInvalid = !displayTitle ||
+      displayTitle === 'about:blank' ||
+      displayTitle === 'New Tab' ||
+      displayTitle === 'Loading...' ||
+      displayTitle === '';
 
     if (urlToSend === 'about:blank') {
       displayTitle = 'New Tab';
@@ -108,10 +108,10 @@ export class ViewManager {
       }
     }
 
-    this.sendToUI('tab:update', { 
-      id, 
+    this.sendToUI('tab:update', {
+      id,
       isLoading: tabState?.isLoading ?? false,
-      url: urlToSend, 
+      url: urlToSend,
       title: displayTitle,
       favicon: tabState?.favicon,
       preview: tabState?.preview,
@@ -124,7 +124,7 @@ export class ViewManager {
   captureThumbnail(id) {
     const view = this.views.get(id);
     if (!view || view.webContents.isDestroyed()) return;
-    
+
     const wc = view.webContents;
     // Don't capture about:blank or extremely small pages
     if (!wc.getURL() || wc.getURL() === 'about:blank' || wc.isLoading()) return;
@@ -156,10 +156,10 @@ export class ViewManager {
 
   setupEvents(id, view) {
     const wc = view.webContents;
-    
+
     this.activeIntervals = this.activeIntervals || new Map();
     if (this.activeIntervals.has(id)) clearInterval(this.activeIntervals.get(id));
-    
+
     // Chromium-style new tab handling: Intercept window.open or target="_blank"
     wc.setWindowOpenHandler(({ url, disposition }) => {
       // disposition can be 'new-window', 'foreground-tab', 'background-tab', etc.
@@ -167,7 +167,7 @@ export class ViewManager {
       if (url.startsWith('http') || url.startsWith('about:')) {
         console.log(`[Orbit Engine] Link click triggered new tab: ${url} (disposition: ${disposition})`);
         this.sendToUI('menu:new-tab', url);
-        return { action: 'deny' }; 
+        return { action: 'deny' };
       }
       return { action: 'allow' };
     });
@@ -203,7 +203,7 @@ export class ViewManager {
             case 'screenshot': this.mainWindow.webContents.send('capture-page'); break;
           }
         });
-      }).catch(() => {});
+      }).catch(() => { });
     }, 200);
 
     this.activeIntervals.set(id, checkOrbitActions);
@@ -214,20 +214,20 @@ export class ViewManager {
         this.activeIntervals.delete(id);
       }
     });
-    
+
     wc.on('did-start-loading', () => {
       const state = this.tabStates.get(id);
       if (state) state.isLoading = true;
       this.sendStatus(id);
     });
-    
+
     wc.on('did-stop-loading', () => {
       const state = this.tabStates.get(id);
       if (state) state.isLoading = false;
       this.sendStatus(id);
       this.captureThumbnail(id);
     });
-    
+
     wc.on('did-finish-load', () => {
       const state = this.tabStates.get(id);
       if (state) {
@@ -240,7 +240,7 @@ export class ViewManager {
       }
       this.captureThumbnail(id);
     });
-    
+
     wc.on('did-start-navigation', (e, url) => {
       const state = this.tabStates.get(id);
       if (state) { state.isLoading = true; state.lastUrl = url; }
@@ -315,7 +315,7 @@ export class ViewManager {
           else { bar.style.opacity = '0'; }
         })();
       `;
-      wc.executeJavaScript(script).catch(() => {});
+      wc.executeJavaScript(script).catch(() => { });
     });
 
 
@@ -356,7 +356,7 @@ export class ViewManager {
             };
           })();
         `;
-        wc.executeJavaScript(script).catch(() => {});
+        wc.executeJavaScript(script).catch(() => { });
       }
     });
   }
@@ -382,14 +382,14 @@ export class ViewManager {
         background-clip: content-box !important;
       }
     `;
-    
+
     webContents.on('did-finish-load', () => {
-      webContents.insertCSS(css).catch(() => {});
+      webContents.insertCSS(css).catch(() => { });
     });
-    
+
     // Also inject on navigation to ensure it's there early
     webContents.on('did-navigate', () => {
-      webContents.insertCSS(css).catch(() => {});
+      webContents.insertCSS(css).catch(() => { });
     });
   }
 
@@ -595,7 +595,7 @@ export class ViewManager {
           }
         })();
       `;
-      
+
       webContents.executeJavaScript(script).catch(err => {
         console.error('[Orbit] Failed to inject context menu:', err);
       });
@@ -604,8 +604,8 @@ export class ViewManager {
 
   selectView(id) {
     if (this.activeViewId === id) {
-       this.updateLayout();
-       return;
+      this.updateLayout();
+      return;
     }
 
     // Hide old view
@@ -613,7 +613,7 @@ export class ViewManager {
       try {
         const oldView = this.views.get(this.activeViewId);
         this.mainWindow.contentView.removeChildView(oldView);
-      } catch(e) {}
+      } catch (e) { }
     }
 
     this.activeViewId = id;
@@ -622,13 +622,13 @@ export class ViewManager {
     if (view) {
       const state = this.tabStates.get(id);
       state.lastActive = Date.now();
-      
+
       // Wake if hibernated
       if (state.isHibernated) {
         view.webContents.setAudioMuted(false);
         state.isHibernated = false;
       }
-      
+
       this.updateLayout();
     }
   }
@@ -654,18 +654,18 @@ export class ViewManager {
     const [width, height] = this.mainWindow.getContentSize();
     const wc = view.webContents;
     const tabState = this.tabStates.get(this.activeViewId);
-    
+
     // Prioritize lastUrl during navigation phases to prevent UI flickering
     const currentUrl = wc.getURL();
     const targetUrl = (currentUrl && currentUrl !== 'about:blank') ? currentUrl : (tabState?.lastUrl || 'about:blank');
-    
+
     const isLoading = tabState?.isLoading || wc.isLoading();
     const isNewTab = targetUrl === 'about:blank';
     const shouldShowBrowser = !isNewTab && !this.isOverview;
 
     if (shouldShowBrowser) {
       let sidekickWidth = 0;
-      
+
       if (this.sidekickIsOpen && currentSidekickWidth !== null) {
         sidekickWidth = currentSidekickWidth;
         this.currentSidekickWidth = currentSidekickWidth;
@@ -675,7 +675,7 @@ export class ViewManager {
       } else {
         sidekickWidth = this.currentSidekickWidth || 384;
       }
-      
+
       try {
         const children = this.mainWindow.contentView.children || [];
         if (!children.includes(view)) {
@@ -691,11 +691,11 @@ export class ViewManager {
         // Ignored
       }
 
-      view.setBounds({ 
-        x: 0, 
-        y: 92, 
-        width: Math.max(0, width - Math.round(sidekickWidth)), 
-        height: height - 92 
+      view.setBounds({
+        x: 0,
+        y: 80,
+        width: Math.max(0, width - Math.round(sidekickWidth)),
+        height: height - 80
       });
     } else {
       // Hide for New Tab page or overview
