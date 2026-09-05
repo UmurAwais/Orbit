@@ -672,7 +672,7 @@ const App = () => {
       <div className="absolute top-0 left-0 right-0 h-20 drag-area z-0 pointer-events-none" />
       <header className="nexus-chassis drag-area no-drag">
         <div className="nexus-chassis-bg" />
-        
+
         {/* Row 1: Tab Overview + Horizontal Tabs Strip + Draggable Window Region + 140px Window Controls Spacer */}
         <div className="nexus-row nexus-top-row pointer-events-auto px-2 flex items-center drag-area">
           <div className="flex items-center gap-1.5 shrink-0 no-drag mr-1">
@@ -760,34 +760,34 @@ const App = () => {
                     }}
                     className={`nexus-tab ${activeTabId === tab.id ? "active" : ""} ${tab.isPinned ? "pinned" : ""} no-drag group/tab relative cursor-default select-none`}
                   >
-                      {tab.url === "about:blank" ? (
-                        <OrbitLogo size={14} variant="icon" />
-                      ) : tab.favicon ? (
-                        <img
-                          src={tab.favicon}
-                          className="w-3.5 h-3.5 object-contain rounded-xs shrink-0 pointer-events-none"
-                          alt=""
-                        />
-                      ) : (
-                        <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/15 shrink-0 pointer-events-none" />
-                      )}
-                      {!tab.isPinned && (
-                        <span className="flex-1 truncate text-[11px] font-bold tracking-tight pointer-events-none">
-                          {tab.title || "New Tab"}
-                        </span>
-                      )}
-                      {!tab.isPinned && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCloseTab(tab.id);
-                          }}
-                          className="nexus-tab-close"
-                        >
-                          <X size={10} strokeWidth={3} />
-                        </button>
-                      )}
-                    </Reorder.Item>
+                    {tab.url === "about:blank" ? (
+                      <OrbitLogo size={14} variant="icon" />
+                    ) : tab.favicon ? (
+                      <img
+                        src={tab.favicon}
+                        className="w-3.5 h-3.5 object-contain rounded-xs shrink-0 pointer-events-none"
+                        alt=""
+                      />
+                    ) : (
+                      <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/15 shrink-0 pointer-events-none" />
+                    )}
+                    {!tab.isPinned && (
+                      <span className="flex-1 truncate text-[11px] font-bold tracking-tight pointer-events-none">
+                        {tab.title || "New Tab"}
+                      </span>
+                    )}
+                    {!tab.isPinned && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCloseTab(tab.id);
+                        }}
+                        className="nexus-tab-close"
+                      >
+                        <X size={10} strokeWidth={3} />
+                      </button>
+                    )}
+                  </Reorder.Item>
                 ))}
               </Reorder.Group>
               <button
@@ -1020,8 +1020,8 @@ const App = () => {
         {/* Only render UI panels when active — keeps the layer transparent for web content clicks */}
         <div
           className={`flex-1 h-full relative z-0 ${isHome || isOverview || isExtensionsOpen || isSettingsOpen || isDownloadsPageOpen
-              ? "pointer-events-auto"
-              : "pointer-events-none"
+            ? "pointer-events-auto"
+            : "pointer-events-none"
             }`}
         >
           {isSettingsOpen && (

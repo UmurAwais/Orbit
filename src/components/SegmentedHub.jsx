@@ -161,16 +161,21 @@ const SegmentedHub = memo(({
 
   const showPlaceholder = !isFocused && inputValue.length === 0;
 
-  // Safari style: Show only domain when not focused
+  // URL display when not focused
   const displayUrl = useMemo(() => {
-    if (isFocused || !activeTab?.url || activeTab.url === 'about:blank') return inputValue;
+    if (!activeTab?.url || activeTab.url === 'about:blank') return '';
     try {
       const urlObject = new URL(activeTab.url);
-      return urlObject.hostname;
+      if (urlObject.protocol === 'http:' || urlObject.protocol === 'https:') {
+        const path = (urlObject.pathname === '/' || !urlObject.pathname) ? '' : urlObject.pathname;
+        const search = urlObject.search || '';
+        return urlObject.hostname + path + search;
+      }
+      return activeTab.url;
     } catch (e) {
       return activeTab.url;
     }
-  }, [activeTab?.url, isFocused, inputValue]);
+  }, [activeTab?.url]);
 
   return (
     <div
@@ -181,32 +186,17 @@ const SegmentedHub = memo(({
       }}
       className={`nexus-hub group no-drag relative w-full ${!isVisible && !isFocused ? 'opacity-0' : 'opacity-100'} ${isFocused ? 'focused' : ''}`}
     >
+      {/* Left Icon: Lock when browsing website, Search when typing or on New Tab */}
+      <div className="flex items-center justify-center shrink-0 mr-2 pointer-events-none text-nexus-text">
+        {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' ? (
+          <Lock size={12} className="opacity-50 stroke-[2.2]" />
+        ) : (
+          <Search size={12.5} className="opacity-45 stroke-[2.2]" />
+        )}
+      </div>
 
+      {/* Main input & form container */}
       <form onSubmit={handleSubmit} className="flex-1 flex items-center h-full relative min-w-0">
-        {/* Visual URL Display (Centered with Icon when unfocused) */}
-        {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 gap-1.5 px-3">
-            <Lock size={10.5} className="text-nexus-text opacity-50 stroke-[2.5]" />
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={displayUrl}
-                initial={{ opacity: 0, y: 2 }}
-                animate={{ opacity: 0.9, y: 0 }}
-                exit={{ opacity: 0, y: -2 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="text-[12.5px] font-medium text-nexus-text truncate max-w-[80%]"
-              >
-                {displayUrl}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-        )}
-
-        {/* Search Icon when focused */}
-        {isFocused && (
-          <Search size={13} className="text-nexus-text opacity-45 ml-1.5 mr-1.5 shrink-0 pointer-events-none" />
-        )}
-
         <input
           ref={inputRef}
           type="text"
@@ -229,9 +219,8 @@ const SegmentedHub = memo(({
               window.orbit?.ipcRenderer?.send('ui:dropdown-toggle', { isOpen: false, dropdownBottom: 0 });
             }, 200);
           }}
-          className={`nexus-hub-input bg-transparent border-none outline-none w-full text-[12.5px] text-nexus-text z-10 font-normal ${isFocused ? 'text-left pl-0.5 pr-2' : 'text-center text-transparent'
-            }`}
-          placeholder={isFocused ? "Search or enter address" : ""}
+          className="nexus-hub-input bg-transparent border-none outline-none w-full text-[12.5px] text-nexus-text font-normal text-center truncate"
+          placeholder={isFocused ? "Search Google or enter address" : ""}
           spellCheck={false}
           autoComplete="off"
           style={{ letterSpacing: '-0.01em' }}
@@ -246,31 +235,31 @@ const SegmentedHub = memo(({
               setInputValue('');
               inputRef.current?.focus();
             }}
-            className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/15 text-nexus-text opacity-40 hover:opacity-100 mr-1.5 shrink-0 transition-all cursor-pointer z-20"
+            className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/15 text-nexus-text opacity-40 hover:opacity-100 mr-1 shrink-0 transition-all cursor-pointer z-20"
             title="Clear"
           >
             <X size={11} strokeWidth={2.4} />
           </button>
         )}
 
-        {/* Orbit Placeholder */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none top-1/2 -translate-y-1/2 h-full">
-          <AnimatePresence mode="wait">
-            {showPlaceholder && (
+        {/* Animated Rotating Placeholder when on New Tab and not focused */}
+        {showPlaceholder && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <AnimatePresence mode="wait">
               <motion.span
                 key={commandIndex}
-                initial={{ opacity: 0, y: 3 }}
+                initial={{ opacity: 0, y: 2 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -3 }}
+                exit={{ opacity: 0, y: -2 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="text-[12px] font-normal text-nexus-text-dim opacity-55 text-center"
+                className="text-[12px] font-normal text-nexus-text-dim opacity-50 truncate text-center"
                 style={{ letterSpacing: '-0.01em' }}
               >
                 {COMMANDS[commandIndex]}
               </motion.span>
-            )}
-          </AnimatePresence>
-        </div>
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* Dropdown Suggestions matching New Tab style */}
         {isFocused && suggestions.length > 0 && (
@@ -307,7 +296,7 @@ const SegmentedHub = memo(({
         )}
       </form>
 
-      {/* Trailing Utility Pod - Appears when searching or on a website */}
+      {/* Trailing Utility Pod - Appears when on a website */}
       <AnimatePresence>
         {!isFocused && activeTab?.url && activeTab.url !== 'about:blank' && (
           <motion.div
@@ -315,15 +304,15 @@ const SegmentedHub = memo(({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.15 }}
-            className="flex items-center gap-0.5 pr-0.5 z-10 no-drag"
+            className="flex items-center gap-0.5 pl-1.5 shrink-0 z-10 no-drag"
           >
-            <TooltipWrapper text={isPinned ? "Remove Bookmark" : "Bookmark this page"}>
+            <TooltipWrapper text={isPinned ? "Remove Bookmark" : "Bookmark this tab"}>
               <button
                 type="button"
                 onClick={toggleBookmark}
-                className={`w-6 h-6 flex items-center justify-center rounded-full hover:bg-nexus-text/5 transition-all cursor-pointer ${isPinned ? 'text-orbit-accent opacity-100' : 'text-nexus-text opacity-70 hover:opacity-100'}`}
+                className={`w-6 h-6 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all cursor-pointer ${isPinned ? 'text-orbit-accent opacity-100' : 'text-nexus-text opacity-60 hover:opacity-100'}`}
               >
-                <Bookmark size={12} strokeWidth={2.4} className={isPinned ? 'fill-current' : ''} />
+                <Bookmark size={12} strokeWidth={2.2} className={isPinned ? 'fill-current' : ''} />
               </button>
             </TooltipWrapper>
 
@@ -332,15 +321,16 @@ const SegmentedHub = memo(({
               <button
                 type="button"
                 onClick={handleCopyUrl}
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-nexus-text/5 text-nexus-text opacity-70 hover:opacity-100 transition-all cursor-pointer"
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-nexus-text opacity-60 hover:opacity-100 transition-all cursor-pointer"
               >
-                {copied ? <Check size={12} strokeWidth={2.4} className="text-emerald-500" /> : <Share size={12} strokeWidth={2.4} />}
+                {copied ? <Check size={12} strokeWidth={2.2} className="text-emerald-500" /> : <Share size={12} strokeWidth={2.2} />}
               </button>
             </TooltipWrapper>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Loading Progress Bar */}
       <div className="absolute inset-0 pointer-events-none rounded-full overflow-hidden z-20" style={{ transform: 'translateZ(0)' }}>
         <AnimatePresence>
           {activeTab?.isLoading && (

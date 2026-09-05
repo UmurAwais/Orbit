@@ -90,7 +90,7 @@ function createWindow() {
     const bounds = uiView.getBounds();
     const isHeaderOnly = bounds.height <= 85 && bounds.x === 0;
     const isSidekickColumn = bounds.x > 0; // sidekick-only mode
-    
+
     if (isSidekickColumn) {
       // Sidekick open: keep right column at new window size
       const sidekickWidth = bounds.width;
@@ -132,29 +132,35 @@ function setupApplicationMenu() {
         { label: 'New Window', accelerator: 'CmdOrCtrl+N', click: () => uiView?.webContents.send('menu:new-tab') },
         { label: 'Close Tab', accelerator: 'CmdOrCtrl+W', click: () => uiView?.webContents.send('menu:close-tab') },
         { type: 'separator' },
-        { label: 'Save Page As...', accelerator: 'CmdOrCtrl+S', click: async () => {
-          const view = viewManager?.views?.get(viewManager.activeViewId);
-          console.log(`[Orbit] Menu: Save Page (active=${viewManager.activeViewId})`);
-          if (view) {
-            const { filePath } = await dialog.showSaveDialog(mainWindow, {
-              defaultPath: path.join(app.getPath('downloads'), `${view.webContents.getTitle() || 'page'}.html`),
-              filters: [{ name: 'Webpage, Complete', extensions: ['html'] }]
-            });
-            if (filePath) {
-              view.webContents.savePage(filePath, 'HTMLComplete', (err) => {
-                if (err) console.error('[Orbit] Save Page failed:', err);
+        {
+          label: 'Save Page As...', accelerator: 'CmdOrCtrl+S', click: async () => {
+            const view = viewManager?.views?.get(viewManager.activeViewId);
+            console.log(`[Orbit] Menu: Save Page (active=${viewManager.activeViewId})`);
+            if (view) {
+              const { filePath } = await dialog.showSaveDialog(mainWindow, {
+                defaultPath: path.join(app.getPath('downloads'), `${view.webContents.getTitle() || 'page'}.html`),
+                filters: [{ name: 'Webpage, Complete', extensions: ['html'] }]
               });
+              if (filePath) {
+                view.webContents.savePage(filePath, 'HTMLComplete', (err) => {
+                  if (err) console.error('[Orbit] Save Page failed:', err);
+                });
+              }
             }
           }
-        }},
-        { label: 'Print...', accelerator: 'CmdOrCtrl+P', click: () => {
-          const view = viewManager?.views?.get(viewManager.activeViewId);
-          if (view) view.webContents.print({}, () => {});
-        }},
-        { label: 'Downloads', accelerator: 'CmdOrCtrl+J', click: () => {
-          console.log(`[Orbit] Menu: Open Downloads`);
-          uiView?.webContents.send('menu:open-downloads');
-        }},
+        },
+        {
+          label: 'Print...', accelerator: 'CmdOrCtrl+P', click: () => {
+            const view = viewManager?.views?.get(viewManager.activeViewId);
+            if (view) view.webContents.print({}, () => { });
+          }
+        },
+        {
+          label: 'Downloads', accelerator: 'CmdOrCtrl+J', click: () => {
+            console.log(`[Orbit] Menu: Open Downloads`);
+            uiView?.webContents.send('menu:open-downloads');
+          }
+        },
         { type: 'separator' },
         isMac ? { role: 'close' } : { role: 'quit' }
       ]
@@ -178,15 +184,15 @@ function setupApplicationMenu() {
     {
       label: 'View',
       submenu: [
-        { 
-          label: 'Reload', 
-          accelerator: 'CmdOrCtrl+R', 
-          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reload() 
+        {
+          label: 'Reload',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reload()
         },
-        { 
-          label: 'Force Reload', 
-          accelerator: 'CmdOrCtrl+Shift+R', 
-          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reloadIgnoringCache() 
+        {
+          label: 'Force Reload',
+          accelerator: 'CmdOrCtrl+Shift+R',
+          click: () => viewManager.views.get(viewManager.activeViewId)?.webContents.reloadIgnoringCache()
         },
         { type: 'separator' },
         { role: 'resetZoom' },
@@ -195,28 +201,28 @@ function setupApplicationMenu() {
         { type: 'separator' },
         { role: 'togglefullscreen' },
         { type: 'separator' },
-        { 
-          label: 'Inspect Page', 
-          accelerator: 'CmdOrCtrl+Shift+I', 
+        {
+          label: 'Inspect Page',
+          accelerator: 'CmdOrCtrl+Shift+I',
           click: () => {
             const id = viewManager.activeViewId;
             const view = viewManager.views.get(id);
             if (view) view.webContents.toggleDevTools();
           }
         },
-        { 
-          label: 'Inspect Browser UI', 
-          accelerator: 'Alt+Shift+I', 
-          click: () => uiView?.webContents.toggleDevTools() 
+        {
+          label: 'Inspect Browser UI',
+          accelerator: 'Alt+Shift+I',
+          click: () => uiView?.webContents.toggleDevTools()
         }
       ]
     },
     {
       label: 'History',
       submenu: [
-        { 
-          label: 'Back', 
-          accelerator: isMac ? 'Cmd+[' : 'Alt+Left', 
+        {
+          label: 'Back',
+          accelerator: isMac ? 'Cmd+[' : 'Alt+Left',
           click: () => {
             const wc = viewManager.views.get(viewManager.activeViewId)?.webContents;
             if (wc) {
@@ -225,9 +231,9 @@ function setupApplicationMenu() {
             }
           }
         },
-        { 
-          label: 'Forward', 
-          accelerator: isMac ? 'Cmd+]' : 'Alt+Right', 
+        {
+          label: 'Forward',
+          accelerator: isMac ? 'Cmd+]' : 'Alt+Right',
           click: () => {
             const wc = viewManager.views.get(viewManager.activeViewId)?.webContents;
             if (wc) {
@@ -256,7 +262,7 @@ function setupApplicationMenu() {
         { label: 'Select Next Tab', accelerator: 'Ctrl+Tab', click: () => uiView?.webContents.send('menu:next-tab') },
         { label: 'Select Previous Tab', accelerator: 'Ctrl+Shift+Tab', click: () => uiView?.webContents.send('menu:prev-tab') },
         { type: 'separator' },
-        ...[1,2,3,4,5,6,7,8].map(i => ({
+        ...[1, 2, 3, 4, 5, 6, 7, 8].map(i => ({
           label: `Select Tab ${i}`,
           accelerator: `CmdOrCtrl+${i}`,
           click: () => uiView?.webContents.send('menu:select-tab', i - 1)
@@ -382,13 +388,13 @@ QUESTIONS_END`;
 
     const messages = context
       ? [
-          { role: 'system', content: `You are Orbit AI, a helpful browser assistant. Use the provided page context to answer questions. If the answer is not in the context, use your knowledge but mention it. Be concise and direct.` },
-          { role: 'user', content: `Page Context:\n${context.substring(0, 12000)}\n\nQuestion: ${question}` }
-        ]
+        { role: 'system', content: `You are Orbit AI, a helpful browser assistant. Use the provided page context to answer questions. If the answer is not in the context, use your knowledge but mention it. Be concise and direct.` },
+        { role: 'user', content: `Page Context:\n${context.substring(0, 12000)}\n\nQuestion: ${question}` }
+      ]
       : [
-          { role: 'system', content: 'You are Orbit AI, a helpful and concise browser assistant.' },
-          { role: 'user', content: question }
-        ];
+        { role: 'system', content: 'You are Orbit AI, a helpful and concise browser assistant.' },
+        { role: 'user', content: question }
+      ];
 
     try {
       const res = await callGroq(apiKey, messages);
@@ -503,7 +509,7 @@ QUESTIONS_END`;
     viewManager.isOverview = isOverview;
     if (isOverview && viewManager.activeViewId) {
       viewManager.captureThumbnail(viewManager.activeViewId);
-      try { mainWindow.contentView.removeChildView(viewManager.views.get(viewManager.activeViewId)); } catch(e) {}
+      try { mainWindow.contentView.removeChildView(viewManager.views.get(viewManager.activeViewId)); } catch (e) { }
     } else if (viewManager.activeViewId) {
       viewManager.selectView(viewManager.activeViewId);
     }
@@ -591,14 +597,14 @@ QUESTIONS_END`;
   // No longer needed — ui:dropdown-toggle is obsolete now that the React UI
   // is a WebContentsView rendered above all page views at the OS level.
   // Keeping a stub so existing frontend calls don't cause IPC errors.
-  ipcMain.on('ui:dropdown-toggle', () => {});
+  ipcMain.on('ui:dropdown-toggle', () => { });
 
   // ── Page Menu Actions ──────────────────────────────────────────────────────
 
   // Print: open the native print dialog for the active page
   ipcMain.on('page:print', (event, { id }) => {
     const view = viewManager?.views?.get(id);
-    if (view) view.webContents.print({}, () => {});
+    if (view) view.webContents.print({}, () => { });
   });
 
   // Save Page As: trigger native save dialog
@@ -711,8 +717,8 @@ QUESTIONS_END`;
   ipcMain.on('tab:mute', (event, id) => {
     const view = viewManager.views.get(id);
     if (view) {
-       const isMuted = view.webContents.audioMuted;
-       view.webContents.setAudioMuted(!isMuted);
+      const isMuted = view.webContents.audioMuted;
+      view.webContents.setAudioMuted(!isMuted);
     }
   });
 
@@ -832,7 +838,7 @@ QUESTIONS_END`;
   const setupDownloadHandler = (ses) => {
     if (!ses) return;
     console.log(`[Orbit] Attaching download handler to session: ${ses.getStoragePath() || 'default'}`);
-    
+
     ses.on('will-download', (event, item) => {
       const id = Date.now().toString();
       const filename = item.getFilename();
@@ -846,18 +852,18 @@ QUESTIONS_END`;
       }
 
       const downloadInfo = {
-        id, 
-        filename, 
+        id,
+        filename,
         totalBytes,
-        receivedBytes: 0, 
+        receivedBytes: 0,
         percentage: 0,
-        state: 'progressing', 
+        state: 'progressing',
         path: savePath,
         startTime: Date.now()
       };
 
       downloads.set(id, downloadInfo);
-      
+
       // Ensure UI is notified even if it was closed
       console.log(`[Orbit] Sending download:started for ${id}`);
       uiView.webContents.send('download:started', downloadInfo);
@@ -875,7 +881,7 @@ QUESTIONS_END`;
             downloadInfo.percentage = 0;
           }
           downloadInfo.state = 'progressing';
-          
+
           // Re-verify filename and path in case they changed during Save As
           downloadInfo.filename = item.getFilename();
           downloadInfo.path = item.getSavePath();
