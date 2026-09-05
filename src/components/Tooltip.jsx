@@ -36,13 +36,13 @@ const Tooltip = ({ text, isVisible, targetRef }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -2 }}
           transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed z-[1000000] pointer-events-none px-4 py-1.5 bg-white dark:bg-[#2c2c2e] border border-black/10 dark:border-white/10 rounded-full shadow-[0_12px_36px_rgba(0,0,0,0.15)] flex items-center justify-center -translate-x-1/2"
+          className="fixed z-[1000000] pointer-events-none px-4 py-1.5 bg-white dark:bg-[#28282b] border border-black/10 dark:border-white/10 rounded-full shadow-[0_12px_36px_rgba(0,0,0,0.25)] flex items-center justify-center -translate-x-1/2"
           style={{
             top: coords.top,
             left: coords.left,
           }}
         >
-          <span className="text-[12px] font-bold text-[#1d1d1f] dark:text-white/95 whitespace-nowrap tracking-tight">
+          <span className="text-[12px] font-bold text-[#1d1d1f] dark:text-[#e8eaed] whitespace-nowrap tracking-tight">
             {text}
           </span>
         </motion.div>

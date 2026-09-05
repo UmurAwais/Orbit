@@ -566,7 +566,7 @@ const App = () => {
           <div className="flex-1 flex items-center no-drag min-w-0">
             <div className="flex items-center gap-2 shrink-0">
               <OrbitLogo size={20} />
-              <span className="text-[11px] font-black tracking-[0.2em] text-black">
+              <span className="text-[11px] font-black tracking-[0.2em] text-nexus-text">
                 Orbit
               </span>
             </div>
@@ -599,7 +599,7 @@ const App = () => {
                   setIsOverview(newState);
                   window.orbit.ipcRenderer.send("ui:toggle-overview", newState);
                 }}
-                className={`tip-left w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? "bg-orbit-accent text-white shadow-lg" : "hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100"}`}
+                className={`tip-left w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isOverview ? "bg-orbit-accent text-white" : "hover:bg-gray-200/60 dark:hover:bg-white/10 text-nexus-text opacity-70 hover:opacity-100"}`}
               >
                 <svg
                   width="16"
@@ -716,7 +716,7 @@ const App = () => {
               <button
                 ref={downloadBtnRef}
                 onClick={() => openDownloads(!isDownloadsOpen)}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white shadow-xl opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-500 cursor-pointer relative ${isDownloadsOpen ? "bg-orbit-accent text-white opacity-100" : "hover:bg-black/5 dark:hover:bg-white/5 text-nexus-text opacity-70 hover:opacity-100"}`}
               >
               <AnimatePresence>
                 {isDownloading && (
@@ -836,7 +836,7 @@ const App = () => {
               setIsAISidekickOpen(newState);
               window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
             }}
-            className={`h-8 flex items-center gap-2 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]' : 'bg-white dark:bg-[#1c1c1e] border-black/10 dark:border-white/10 text-nexus-text shadow-sm hover:shadow hover:border-black/20 dark:hover:border-white/20'}`}
+            className={`h-8 flex items-center gap-2 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent' : 'bg-white dark:bg-[#28292d] border-black/10 dark:border-white/10 text-nexus-text hover:border-black/20 dark:hover:border-white/20'}`}
           >
             <img src="/assets/orbit.png" className="w-4 h-4 object-contain brightness-110" alt="Orbit Logo" />
             <span className="text-[12.5px] font-bold tracking-tight">Ask Orbit</span>
@@ -960,7 +960,7 @@ const App = () => {
       )}
 
         {passwordPrompt && (
-          <div className="fixed top-24 right-4 w-80 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-2xl border border-orbit-border z-3000 p-4 text-orbit-text">
+          <div className="fixed top-24 right-4 w-80 bg-white dark:bg-[#28292d] rounded-xl shadow-2xl border border-orbit-border z-3000 p-4 text-orbit-text">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-full bg-orbit-accent/10 flex items-center justify-center text-orbit-accent">
                 <Key size={20} />
@@ -1058,7 +1058,7 @@ const App = () => {
 
         {isUpdateReady && (
           <div className="fixed top-24 left-1/2 -translate-x-1/2 z-10000 w-100">
-            <div className="bg-white/40 dark:bg-black/40 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-4xl p-6 shadow-[0_30px_100px_rgba(0,0,0,0.3)] relative overflow-hidden group">
+            <div className="bg-white/40 dark:bg-[#202124]/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-4xl p-6 shadow-[0_30px_100px_rgba(0,0,0,0.3)] relative overflow-hidden group">
               {/* Liquid Highlight Effect */}
               <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#635BFF]/10 blur-[60px] rounded-full group-hover:translate-x-10 group-hover:translate-y-10 transition-transform duration-1000" />
               

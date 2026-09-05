@@ -13,7 +13,7 @@ const TabContextMenu = ({ menu, onClose }) => {
         zIndex: 30000,
       }}
       onMouseDown={(e) => e.stopPropagation()}
-      className="w-64 bg-white/70 dark:bg-[#1a1a1a]/70 border border-black/5 dark:border-white/10 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] p-1.5 backdrop-blur-2xl text-[13px] text-nexus-text flex flex-col font-medium"
+      className="w-64 bg-white/80 dark:bg-[#28282b]/95 border border-black/5 dark:border-white/10 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.25)] p-1.5 backdrop-blur-2xl text-[13px] text-nexus-text flex flex-col font-medium"
     >
       <button 
         onClick={() => { onClose(); window.orbit.ipcRenderer.send('tab:new-right', menu.id); }} 

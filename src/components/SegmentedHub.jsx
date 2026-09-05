@@ -264,7 +264,7 @@ const SegmentedHub = memo(({
             className="absolute left-1/2 -translate-x-1/2 z-99999 pointer-events-none"
             style={{ top: 'calc(100% + 10px)', minWidth: '220px', maxWidth: '300px' }}
           >
-            <div className="bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-2xl px-4 py-2.5 shadow-xl text-center">
+            <div className="bg-white/90 dark:bg-[#28292d]/95 backdrop-blur-xl border border-black/8 dark:border-white/10 rounded-2xl px-4 py-2.5 shadow-xl text-center">
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <ShieldCheck size={12} className="text-emerald-500" strokeWidth={2.5} />
                 <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Anonymous & Secure</span>
@@ -445,7 +445,7 @@ const SegmentedHub = memo(({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -6 }}
                   transition={{ duration: 0.13, ease: 'easeOut' }}
-                  className="absolute right-0 z-99999 mt-2 w-64 rounded-2xl bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-xl border border-black/8 dark:border-white/10 shadow-2xl overflow-hidden"
+                  className="absolute right-0 z-99999 mt-2 w-64 rounded-2xl bg-white/95 dark:bg-[#28292d]/95 backdrop-blur-xl border border-black/8 dark:border-white/10 shadow-2xl overflow-hidden"
                   style={{ top: '100%' }}
                 >
                    {/* Zoom row */}

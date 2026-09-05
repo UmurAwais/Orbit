@@ -44,12 +44,12 @@ function createWindow() {
     height: 900,
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff',
-      symbolColor: nativeTheme.shouldUseDarkColors ? '#f5f5f7' : '#1d1d1f',
+      color: nativeTheme.shouldUseDarkColors ? '#35363a' : '#ffffff',
+      symbolColor: nativeTheme.shouldUseDarkColors ? '#e8eaed' : '#1d1d1f',
       height: 46
     },
     icon: path.join(__dirname, '../assets/orbit.png'),
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#35363a' : '#ffffff',
     show: false,
   });
 
@@ -113,11 +113,11 @@ function createWindow() {
   nativeTheme.on('updated', () => {
     const isDark = nativeTheme.shouldUseDarkColors;
     mainWindow.setTitleBarOverlay({
-      color: isDark ? '#000000' : '#ffffff',
-      symbolColor: isDark ? '#f5f5f7' : '#1d1d1f',
+      color: isDark ? '#35363a' : '#ffffff',
+      symbolColor: isDark ? '#e8eaed' : '#1d1d1f',
       height: 46
     });
-    mainWindow.setBackgroundColor(isDark ? '#000000' : '#ffffff');
+    mainWindow.setBackgroundColor(isDark ? '#35363a' : '#ffffff');
   });
 }
 

@@ -37,30 +37,31 @@
   --nexus-text: var(--orbit-text);
   --nexus-text-dim: #70757a;
   --nexus-accent: var(--orbit-accent);
-  --nexus-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --nexus-shadow: none;
 }
 
 .dark {
-  /* Dark Palette Overrides */
-  --orbit-bg: #000000;
-  --orbit-surface: #121212;
-  --orbit-accent: #6366f1; /* Indirect Indigo for better dark contrast */
-  --orbit-border: rgba(255, 255, 255, 0.15);
-  --orbit-card: rgba(255, 255, 255, 0.08);
-  --orbit-text: #FFFFFF;
-  --orbit-text-dim: rgba(255, 255, 255, 0.5);
+  /* Unified Traditional Dark Palette (Seamless #35363a canvas & header) */
+  --orbit-bg: #35363a;
+  --orbit-surface: #28282b;
+  --orbit-accent: #8ab4f8; /* Chrome dark blue accent */
+  --orbit-border: rgba(255, 255, 255, 0.1);
+  --orbit-card: rgba(255, 255, 255, 0.06);
+  --orbit-text: #e8eaed;
+  --orbit-text-dim: #9aa0a6;
 
-  /* Nexus Dark Overrides */
-  --nexus-bg: #000000;
-  --nexus-border: rgba(255, 255, 255, 0.15);
-  --nexus-hub-bg: #1c1c1e;
-  --nexus-tab-bg: #1c1c1e;
-  --nexus-tab-active: #2c2c2e;
-  --nexus-tab-hover: #2c2c2e;
-  --nexus-text: #FFFFFF;
-  --nexus-text-dim: #98989d;
-  --nexus-accent: #6366f1;
-  --nexus-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  /* Nexus Dark Overrides (Unified Seamless Header) */
+  --nexus-bg: #35363a;
+  --nexus-bg-alt: #43444a;
+  --nexus-border: rgba(255, 255, 255, 0.08);
+  --nexus-hub-bg: #28282b;
+  --nexus-tab-bg: rgba(255, 255, 255, 0.04);
+  --nexus-tab-active: #43444a;
+  --nexus-tab-hover: rgba(255, 255, 255, 0.08);
+  --nexus-text: #e8eaed;
+  --nexus-text-dim: #9aa0a6;
+  --nexus-accent: #8ab4f8;
+  --nexus-shadow: none;
 }
 
 :root {
@@ -123,7 +124,7 @@ body {
   height: 92px;
   background: var(--nexus-bg);
   border-bottom: 1px solid var(--nexus-border);
-  box-shadow: var(--nexus-shadow);
+  box-shadow: none;
   z-index: -1;
   pointer-events: auto;
 }
@@ -300,6 +301,19 @@ body {
   border-color: rgba(0,0,0,0.2) !important;
 }
 
+.dark .nexus-tab-nav-btn {
+  background: #292a2d !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f1f3f4 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.dark .nexus-tab-nav-btn:hover {
+  background: #35363a !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
 .nexus-tab-nav-btn.left {
   left: 4px;
 }
@@ -362,6 +376,7 @@ body {
 .dark .nexus-tab.active {
   background: var(--nexus-bg-alt);
   border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 
 /* Accent Indicator for Active Tab */
@@ -480,10 +495,10 @@ body {
 }
 
 .dark [data-orbit-tooltip]::after {
-  background: rgba(28, 28, 30, 0.85);
-  color: white;
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  background: rgba(41, 42, 45, 0.95);
+  color: #f1f3f4;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 }
 
 .no-drag {
@@ -874,12 +889,21 @@ body {
   color: var(--orbit-accent);
 }
 
+.dark .nt-brand-name {
+  color: #ffffff;
+}
+
 .nt-greeting-text {
   font-size: 14px;
   font-weight: 500;
   color: var(--orbit-text);
   opacity: 0.4;
   letter-spacing: -0.01em;
+}
+
+.dark .nt-greeting-text {
+  color: #9aa0a6;
+  opacity: 0.8;
 }
 
 /* ══════════════════════════════════════════
@@ -918,15 +942,29 @@ body {
 }
 
 .dark .nt-omnibox {
-  background: color-mix(in srgb, var(--orbit-surface) 65%, transparent);
-  box-shadow:
-    0 1px 0px rgba(255,255,255,0.04) inset,
-    0 4px 20px -6px rgba(0,0,0,0.25);
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.dark .nt-omnibox .nt-omnibox-input {
+  color: #1f1f1f;
+}
+
+.dark .nt-omnibox .nt-omnibox-input::placeholder {
+  color: #5f6368;
+  opacity: 0.85;
+}
+
+.dark .nt-omnibox .nt-omnibox-icon {
+  color: #5f6368;
+  opacity: 0.75;
 }
 
 .dark .nt-omnibox--focus {
-  border-color: var(--orbit-accent);
-  box-shadow: 0 1px 0px rgba(255,255,255,0.04) inset;
+  background: #ffffff;
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 4px rgba(138, 180, 248, 0.35), 0 6px 24px rgba(0, 0, 0, 0.3);
 }
 
 .nt-omnibox-icon {

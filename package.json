@@ -1,6 +1,7 @@
 {
   "name": "orbit",
   "version": "1.0.0",
+  "author": "Worcco",
   "description": "A custom desktop browser",
   "main": "electron/main.js",
   "type": "module",
