@@ -4,13 +4,14 @@ import { Sparkles, X, BookOpen, Send, Loader2, User, Trash2 } from 'lucide-react
 import Markdown from 'markdown-to-jsx';
 import orbitLogo from '../assets/orbit.png';
 
-const AISidekick = ({ isOpen, onClose, activeTab }) => {
+const AISidekick = ({ isOpen, onClose, activeTab, initialQuery }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [summaryData, setSummaryData] = useState(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const scrollRef = useRef(null);
+  const lastProcessedQuery = useRef('');
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -19,10 +20,17 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
   }, [messages, isLoading]);
 
   useEffect(() => {
-    if (isOpen && activeTab?.url !== 'about:blank' && !summaryData) {
+    if (isOpen && activeTab?.url !== 'about:blank' && !summaryData && !initialQuery) {
       handleSummarize();
     }
-  }, [isOpen, activeTab?.id]);
+  }, [isOpen, activeTab?.id, initialQuery]);
+
+  useEffect(() => {
+    if (isOpen && initialQuery && initialQuery.trim() && initialQuery.trim() !== lastProcessedQuery.current) {
+      lastProcessedQuery.current = initialQuery.trim();
+      handleSend(null, initialQuery.trim());
+    }
+  }, [isOpen, initialQuery]);
 
   const handleSummarize = async () => {
     if (!activeTab || activeTab.url === 'about:blank') return;
@@ -65,6 +73,7 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
   const clearChat = () => {
     setMessages([]);
     setSummaryData(null);
+    lastProcessedQuery.current = '';
   };
 
   const lastSentWidth = useRef(0);
@@ -92,7 +101,8 @@ const AISidekick = ({ isOpen, onClose, activeTab }) => {
               window.orbit.ipcRenderer.send('ui:sidekick-resize', 0);
             }
           }}
-          className="absolute right-0 top-0 bottom-0 h-full bg-[#fcfcfc] dark:bg-[#202124] border-l border-black/5 dark:border-white/8 flex flex-col overflow-hidden pointer-events-auto shadow-2xl z-9999"
+          className="absolute right-0 top-0 bottom-0 h-full bg-[#fcfcfc] dark:bg-[#202124] border-l border-black/5 dark:border-white/8 flex flex-col overflow-hidden pointer-events-auto shadow-2xl z-[5000]"
+          style={{ zIndex: 5000 }}
         >
           {/* Internal wrapper to prevent content squishing during width animation */}
           <div className="w-96 h-full flex flex-col shrink-0">

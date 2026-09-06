@@ -75,7 +75,7 @@ const TabSearch = ({
   };
 
   return (
-    <div className="relative pointer-events-auto z-3000" ref={containerRef}>
+    <div className="relative pointer-events-auto z-[70000]" style={{ zIndex: 70000 }} ref={containerRef}>
       <TooltipWrapper text="Search Tabs">
         <button 
           className={`h-9 w-9 rounded-xl hover:bg-orbit-card hover:shadow-sm flex items-center justify-center text-orbit-text-dim hover:text-orbit-text transition-all cursor-pointer ${isOpen ? 'bg-orbit-surface text-orbit-text shadow-sm' : ''}`} 
@@ -88,7 +88,8 @@ const TabSearch = ({
 
         {isOpen && (
           <div
-            className="absolute top-full left-0 mt-3 w-[320px] bg-orbit-surface/90 backdrop-blur-3xl rounded-xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5)] border border-orbit-border z-3000 overflow-hidden flex flex-col max-h-150 ring-1 ring-orbit-border"
+            className="absolute top-full left-0 mt-3 w-[320px] bg-orbit-surface/90 backdrop-blur-3xl rounded-xl shadow-[0_20px_60px_-10px_rgba(0,0,0,0.5)] border border-orbit-border z-[70001] overflow-hidden flex flex-col max-h-150 ring-1 ring-orbit-border"
+            style={{ zIndex: 70001 }}
           >
             <div className="p-4 border-b border-orbit-border bg-orbit-bg/50 backdrop-blur-md">
               <div className="relative flex items-center">

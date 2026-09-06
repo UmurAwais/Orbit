@@ -765,7 +765,7 @@ QUESTIONS_END`;
   // This is the ONLY working solution on Windows — setIgnoreMouseEvents(true) on
   // BaseWindow passes clicks to the OS desktop/taskbar causing minimize.
   // The page WebContentsView sits at y:80 and is directly reachable when uiView
-  // doesn't cover it. Expand back to full height for New Tab / Settings / Overview.
+  // doesn't cover it. Expand back to full height for New Tab / Settings / Overview / Tooltips.
   ipcMain.on('ui:set-ignore-mouse', (event, shouldPassThrough) => {
     if (!uiView || !mainWindow) return;
     const [width, height] = mainWindow.getContentSize();

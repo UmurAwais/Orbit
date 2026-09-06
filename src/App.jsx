@@ -84,9 +84,74 @@ const App = () => {
   const [isDownloadsPageOpen, setIsDownloadsPageOpen] = useState(false);
   const [isHubFocused, setIsHubFocused] = useState(false);
   const [isFindOpen, setIsFindOpen] = useState(false);
+  const [isAppMenuOpen, setIsAppMenuOpen] = useState(false);
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const headerLeaveTimerRef = useRef(null);
+
+  const handleHeaderEnter = useCallback(() => {
+    if (headerLeaveTimerRef.current) {
+      clearTimeout(headerLeaveTimerRef.current);
+      headerLeaveTimerRef.current = null;
+    }
+    setIsHeaderHovered(true);
+  }, []);
+
+  const handleHeaderLeave = useCallback(() => {
+    if (headerLeaveTimerRef.current) clearTimeout(headerLeaveTimerRef.current);
+    headerLeaveTimerRef.current = setTimeout(() => {
+      setIsHeaderHovered(false);
+    }, 100);
+  }, []);
+
   const [isUpdateReady, setIsUpdateReady] = useState(false);
   const [historyItems, setHistoryItems] = useState([]); // { url, title }
   const openDownloads = (val) => setIsDownloadsOpen(val);
+
+  const [omniboxSearch, setOmniboxSearch] = useState({ isSearching: false, query: '' });
+  const [newTabSearch, setNewTabSearch] = useState({ isSearching: false, query: '' });
+
+  const isSearchUrl = useCallback((url) => {
+    if (!url || url === 'about:blank') return false;
+    try {
+      const parsed = new URL(url);
+      const host = parsed.hostname.toLowerCase();
+      const path = parsed.pathname.toLowerCase();
+      const search = parsed.search.toLowerCase();
+
+      if (host.includes('google.') && (path === '/search' || search.includes('q='))) return true;
+      if (host.includes('bing.com') && (path === '/search' || search.includes('q='))) return true;
+      if (host.includes('duckduckgo.com') && search.includes('q=')) return true;
+      if (host.includes('yahoo.com') && (host.includes('search.') || search.includes('p='))) return true;
+      if (host.includes('search.brave.com')) return true;
+      if (host.includes('ecosia.org') && search.includes('q=')) return true;
+      if (host.includes('baidu.com') && (search.includes('wd=') || search.includes('word='))) return true;
+      if (host.includes('yandex.') && (path.includes('/search') || search.includes('text='))) return true;
+      if (host.includes('kagi.com/search') || host.includes('perplexity.ai/search')) return true;
+      if ((path.includes('/search') || path.includes('/results')) && (search.includes('q=') || search.includes('query=') || search.includes('search_query='))) return true;
+
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const extractSearchQuery = useCallback((url) => {
+    if (!url || url === 'about:blank') return '';
+    try {
+      const parsed = new URL(url);
+      return (
+        parsed.searchParams.get('q') ||
+        parsed.searchParams.get('query') ||
+        parsed.searchParams.get('search_query') ||
+        parsed.searchParams.get('p') ||
+        parsed.searchParams.get('wd') ||
+        parsed.searchParams.get('text') ||
+        ''
+      );
+    } catch {
+      return '';
+    }
+  }, []);
 
   const [pinnedExtensions, setPinnedExtensions] = useState(() => {
     const saved = localStorage.getItem("orbit-pinned-extensions");
@@ -215,6 +280,26 @@ const App = () => {
   );
   const isHome = activeTab?.url === "about:blank";
 
+  const isCurrentPageSearch = useMemo(() => {
+    return isSearchUrl(activeTab?.url);
+  }, [activeTab?.url, isSearchUrl]);
+
+  const shouldShowAskOrbit = useMemo(() => {
+    return (
+      isAISidekickOpen ||
+      omniboxSearch.isSearching ||
+      newTabSearch.isSearching ||
+      isCurrentPageSearch
+    );
+  }, [isAISidekickOpen, omniboxSearch.isSearching, newTabSearch.isSearching, isCurrentPageSearch]);
+
+  const currentSearchQuery = useMemo(() => {
+    if (omniboxSearch.isSearching && omniboxSearch.query) return omniboxSearch.query;
+    if (newTabSearch.isSearching && newTabSearch.query) return newTabSearch.query;
+    if (isCurrentPageSearch) return extractSearchQuery(activeTab?.url);
+    return '';
+  }, [omniboxSearch, newTabSearch, isCurrentPageSearch, activeTab?.url, extractSearchQuery]);
+
 
   // ── Critical Electron Fix: Mouse Click-Through ──────────────────────────
   // The React uiView is resized to 80px (header only) when browsing, so the
@@ -230,10 +315,12 @@ const App = () => {
       isDownloadsOpen ||
       isHubFocused ||
       isFindOpen ||
+      isAppMenuOpen ||
+      isHeaderHovered ||
       !!hoveredTabId ||
       !!tabContextMenu;
     window.orbit?.ipcRenderer?.send("ui:set-ignore-mouse", !isShowingOrbitUI);
-  }, [isHome, isOverview, isExtensionsOpen, isSettingsOpen, isAISidekickOpen, isDownloadsOpen, isHubFocused, isFindOpen, hoveredTabId, tabContextMenu]);
+  }, [isHome, isOverview, isExtensionsOpen, isSettingsOpen, isAISidekickOpen, isDownloadsOpen, isHubFocused, isFindOpen, isAppMenuOpen, isHeaderHovered, hoveredTabId, tabContextMenu]);
 
 
 
@@ -491,6 +578,13 @@ const App = () => {
       } else if (isCmd && e.key === 'l') {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('orbit:focus-url'));
+      } else if (isCmd && e.key.toLowerCase() === 'i') {
+        e.preventDefault();
+        setIsAISidekickOpen(prev => {
+          const next = !prev;
+          window.orbit?.ipcRenderer?.send('ui:toggle-sidekick', next);
+          return next;
+        });
       }
     };
     const handlePasswordPrompt = (data) => {
@@ -669,13 +763,17 @@ const App = () => {
     <div
       className={`w-full h-screen overflow-hidden relative transition-colors duration-200`}
     >
-      <div className="absolute top-0 left-0 right-0 h-20 drag-area z-0 pointer-events-none" />
-      <header className="nexus-chassis drag-area no-drag">
+      <div className="absolute top-0 left-0 right-0 h-[80px] drag-area z-0 pointer-events-none" />
+      <header 
+        className="nexus-chassis drag-area no-drag"
+        onMouseEnter={handleHeaderEnter}
+        onMouseLeave={handleHeaderLeave}
+      >
         <div className="nexus-chassis-bg" />
 
         {/* Row 1: Tab Overview + Horizontal Tabs Strip + Draggable Window Region + 140px Window Controls Spacer */}
         <div className="nexus-row nexus-top-row pointer-events-auto px-2 flex items-center drag-area">
-          <div className="flex items-center gap-1.5 shrink-0 no-drag mr-1">
+          <div className="flex items-center shrink-0 no-drag mr-1.5">
             <TooltipWrapper text="Show Tab Overview">
               <button
                 onClick={() => {
@@ -702,7 +800,6 @@ const App = () => {
                 </svg>
               </button>
             </TooltipWrapper>
-            <div className="w-px h-3.5 bg-nexus-border/20 shrink-0 mx-0.5" />
           </div>
 
           {/* Tab Strip Container (fit to open tabs only) */}
@@ -810,6 +907,26 @@ const App = () => {
           {/* Draggable empty titlebar area */}
           <div className="flex-1 min-w-8 h-full drag-area" />
 
+          {/* Ask Orbit AI - In Row 1 like Google Chrome / Gemini (Positioned before window controls) */}
+          <div className="no-drag flex items-center pr-2 shrink-0">
+            <button
+              onClick={() => {
+                const newState = !isAISidekickOpen;
+                setIsAISidekickOpen(newState);
+                window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
+              }}
+              className={`h-7 flex items-center gap-1.5 px-3 rounded-full transition-all duration-200 cursor-pointer border shrink-0 whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
+                isAISidekickOpen
+                  ? 'bg-white dark:bg-[#202124] border-orbit-accent/40 text-orbit-accent ring-2 ring-orbit-accent/20 shadow-sm'
+                  : 'bg-white dark:bg-[#202124] hover:bg-white dark:hover:bg-[#28292d] border-black/10 dark:border-white/12 hover:border-black/25 dark:hover:border-white/25 text-nexus-text hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)]'
+              }`}
+              title="Ask Orbit AI (Ctrl+I)"
+            >
+              <img src={orbitLogo} className="w-3.5 h-3.5 object-contain brightness-110 shrink-0" alt="Orbit Logo" />
+              <span className="text-[11.5px] font-bold tracking-tight whitespace-nowrap text-[#1d1d1f] dark:text-[#f0f0f2]">Ask Orbit</span>
+            </button>
+          </div>
+
           {/* 140px spacer to protect Windows native Minimize / Maximize / Close overlay */}
           <div className="w-[140px] h-full shrink-0 drag-area pointer-events-none" />
         </div>
@@ -817,7 +934,7 @@ const App = () => {
         {/* Row 2: Navigation Pod + Centered Omnibox / Search Hub + Action Pod */}
         <div className="nexus-row nexus-bottom-row pointer-events-auto px-3 flex items-center justify-between">
           {/* Left: Navigation Pod */}
-          <div className="flex-1 flex items-center justify-start gap-1 min-w-[200px] shrink-0 no-drag">
+          <div className="flex items-center justify-start gap-1 shrink-0 no-drag">
             <TooltipWrapper text="Click to go back">
               <button
                 onClick={() => window.orbit?.tabs?.goBack({ id: activeTab?.id })}
@@ -856,8 +973,8 @@ const App = () => {
             </TooltipWrapper>
           </div>
 
-          {/* Center: Search Omnibox (Centrally Balanced & Centered) */}
-          <div className="w-full max-w-[1100px] shrink min-w-0 px-2">
+          {/* Center: Search Omnibox (Atlas Style - Spans between Left & Right) */}
+          <div className="flex-1 max-w-[860px] mx-2 shrink min-w-0 flex justify-center items-center">
             <SegmentedHub
               activeTab={activeTab}
               onNavigate={handleNavigate}
@@ -868,11 +985,12 @@ const App = () => {
               onUpdateBookmarks={setBookmarks}
               onFocusChange={setIsHubFocused}
               historyItems={historyItems}
+              onSearchChange={setOmniboxSearch}
             />
           </div>
 
           {/* Right: Action Pod */}
-          <div className="flex-1 flex items-center justify-end gap-1.5 min-w-[200px] shrink-0 no-drag pl-1">
+          <div className="flex items-center justify-end gap-1.5 shrink-0 no-drag pl-1">
             {/* Downloads */}
             <TooltipWrapper text={isDownloading ? `Downloading (${totalDownloadProgress === -1 ? '...' : totalDownloadProgress + '%'})` : "Downloads"}>
               <button
@@ -980,18 +1098,6 @@ const App = () => {
               </button>
             </TooltipWrapper>
 
-            {/* Ask Orbit AI */}
-            <button
-              onClick={() => {
-                const newState = !isAISidekickOpen;
-                setIsAISidekickOpen(newState);
-                window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
-              }}
-              className={`h-7 flex items-center gap-1.5 px-3 rounded-full transition-all duration-300 cursor-pointer border ${isAISidekickOpen ? 'bg-orbit-accent/10 border-orbit-accent/20 text-orbit-accent' : 'bg-white dark:bg-[#28292d] border-black/10 dark:border-white/10 text-nexus-text hover:border-black/20 dark:hover:border-white/20'}`}
-            >
-              <img src={orbitLogo} className="w-3.5 h-3.5 object-contain brightness-110" alt="Orbit Logo" />
-              <span className="text-[11.5px] font-bold tracking-tight">Ask Orbit</span>
-            </button>
 
             {/* Main Menu (3-dots More options) */}
             <AppMenu
@@ -1003,6 +1109,12 @@ const App = () => {
               onOpenSettings={setIsSettingsOpen}
               onOpenDownloads={openDownloads}
               onOpenExtensions={setIsExtensionsOpen}
+              onOpenSidekick={() => {
+                const newState = !isAISidekickOpen;
+                setIsAISidekickOpen(newState);
+                window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
+              }}
+              onMenuOpenChange={setIsAppMenuOpen}
               isUpdateReady={isUpdateReady}
             />
           </div>
@@ -1016,7 +1128,7 @@ const App = () => {
         )}
       </header>
 
-      <main className="w-full h-[calc(100vh-80px)] mt-20 relative z-0 pointer-events-none">
+      <main className="w-full h-[calc(100vh-80px)] mt-[80px] relative z-0 pointer-events-none">
         {/* Only render UI panels when active — keeps the layer transparent for web content clicks */}
         <div
           className={`flex-1 h-full relative z-0 ${isHome || isOverview || isExtensionsOpen || isSettingsOpen || isDownloadsPageOpen
@@ -1055,6 +1167,7 @@ const App = () => {
                 onNavigate={handleNavigate}
                 bookmarks={bookmarks}
                 onUpdateBookmarks={setBookmarks}
+                onSearchChange={setNewTabSearch}
               />
             </div>
           )}
@@ -1067,6 +1180,7 @@ const App = () => {
             window.orbit.ipcRenderer.send('ui:toggle-sidekick', false);
           }}
           activeTab={activeTab}
+          initialQuery={currentSearchQuery}
         />
       </main>
 
@@ -1082,7 +1196,7 @@ const App = () => {
             left: 0,
             right: 384,
             bottom: 0,
-            zIndex: 5000,
+            zIndex: 1000,
             cursor: 'auto',
             background: 'transparent',
             pointerEvents: 'auto',
@@ -1121,7 +1235,10 @@ const App = () => {
       )}
 
       {passwordPrompt && (
-        <div className="fixed top-24 right-4 w-80 bg-white dark:bg-[#28292d] rounded-xl shadow-2xl border border-orbit-border z-3000 p-4 text-orbit-text">
+        <div 
+          className="fixed top-24 right-4 w-80 bg-white dark:bg-[#28282b] rounded-xl shadow-2xl border border-orbit-border p-4 text-orbit-text z-[85000]"
+          style={{ zIndex: 85000 }}
+        >
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 rounded-full bg-orbit-accent/10 flex items-center justify-center text-orbit-accent">
               <Key size={20} />
@@ -1169,7 +1286,7 @@ const App = () => {
                   position: "fixed",
                   left: previewPos.x,
                   top: previewPos.y,
-                  zIndex: 20000,
+                  zIndex: 95000,
                   pointerEvents: "none",
                 }}
                 className="w-[280px] overflow-hidden rounded-2xl bg-white/95 dark:bg-[#202124]/95 border border-black/10 dark:border-white/12 shadow-[0_24px_50px_-10px_rgba(0,0,0,0.3),0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[0_28px_60px_-10px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.08)] backdrop-blur-2xl flex flex-col p-2.5 gap-2"
@@ -1277,7 +1394,10 @@ const App = () => {
       )}
 
       {isUpdateReady && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-10000 w-100">
+        <div 
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-[90000] w-100"
+          style={{ zIndex: 90000 }}
+        >
           <div className="bg-white/40 dark:bg-[#202124]/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-4xl p-6 shadow-[0_30px_100px_rgba(0,0,0,0.3)] relative overflow-hidden group">
             {/* Liquid Highlight Effect */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#635BFF]/10 blur-[60px] rounded-full group-hover:translate-x-10 group-hover:translate-y-10 transition-transform duration-1000" />

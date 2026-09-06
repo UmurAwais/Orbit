@@ -18,9 +18,12 @@ export class ViewManager {
   // Must be called after adding ANY page WebContentsView, since addChildView()
   // puts the new view above all existing children.
   raiseUIView() {
-    if (this.uiView) {
+    if (this.uiView && this.mainWindow && this.mainWindow.contentView) {
       try {
-        // addChildView on an already-child view moves it to the END (top) of the stack
+        const children = this.mainWindow.contentView.children || [];
+        if (children.includes(this.uiView)) {
+          this.mainWindow.contentView.removeChildView(this.uiView);
+        }
         this.mainWindow.contentView.addChildView(this.uiView);
       } catch (e) {
         // ignore
@@ -679,7 +682,7 @@ export class ViewManager {
       try {
         const children = this.mainWindow.contentView.children || [];
         if (!children.includes(view)) {
-          this.mainWindow.contentView.addChildView(view);
+          this.mainWindow.contentView.addChildView(view, 0);
           view.setBackgroundColor('#ffffff');
           // CRITICAL: Always re-raise the React UI view after adding any page view.
           // In Electron's view stack, last-added = topmost layer.

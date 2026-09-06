@@ -22,7 +22,8 @@ const TabContextMenu = ({
     <AnimatePresence>
       {/* Invisible backdrop to dismiss menu on click outside */}
       <div
-        className="fixed inset-0 z-[29990] bg-transparent"
+        className="fixed inset-0 z-[90000] bg-transparent"
+        style={{ zIndex: 90000 }}
         onClick={onClose}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -39,7 +40,7 @@ const TabContextMenu = ({
           position: "fixed",
           left: posX,
           top: posY,
-          zIndex: 30000,
+          zIndex: 90001,
         }}
         onMouseDown={(e) => e.stopPropagation()}
         className="w-60 bg-white/95 dark:bg-[#28282b]/95 border border-black/10 dark:border-white/10 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.25)] p-1.5 backdrop-blur-2xl text-[13px] text-nexus-text flex flex-col font-medium select-none"

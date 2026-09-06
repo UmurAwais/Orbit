@@ -27,7 +27,7 @@ const BADGE_PROMPTS = [
   "What's on your mind?",
 ];
 
-const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
+const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks, onSearchChange }) => {
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
   const [selectedModel, setSelectedModel] = useState(AI_MODELS[0]);
@@ -41,6 +41,17 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
   const [displayedText, setDisplayedText] = useState(BADGE_PROMPTS[0]);
   const [promptIdx, setPromptIdx] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const isSearching = query.trim().length > 0;
+    onSearchChange?.({ isSearching, query: isSearching ? query.trim() : '' });
+  }, [query, onSearchChange]);
+
+  useEffect(() => {
+    return () => {
+      onSearchChange?.({ isSearching: false, query: '' });
+    };
+  }, [onSearchChange]);
 
   const inputRef = useRef(null);
   const modelMenuRef = useRef(null);
@@ -222,7 +233,8 @@ const NewTab = ({ onNavigate, bookmarks = [], onUpdateBookmarks }) => {
 
     setSuggestions([]);
     setFocused(false);
-  }, [query, selectedModel, attachments, isDeepSearch, onNavigate]);
+    onSearchChange?.({ isSearching: false, query: '' });
+  }, [query, selectedModel, attachments, isDeepSearch, onNavigate, onSearchChange]);
 
   const handleKey = (e) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setSelIdx(p => Math.min(p + 1, suggestions.length - 1)); }

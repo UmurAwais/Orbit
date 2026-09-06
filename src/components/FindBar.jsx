@@ -62,7 +62,8 @@ const FindBar = ({ activeTabId, onClose }) => {
 
   return (
     <div
-      className="absolute top-24 right-6 z-1000 no-drag"
+      className="absolute top-24 right-6 z-[70000] no-drag"
+      style={{ zIndex: 70000 }}
     >
       <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#28282b] border border-black/10 dark:border-white/10 rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
         <div className="flex items-center gap-2 border-r border-black/5 dark:border-white/5 pr-2 mr-1">
