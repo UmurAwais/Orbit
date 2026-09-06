@@ -764,7 +764,7 @@ const App = () => {
       className={`w-full h-screen overflow-hidden relative transition-colors duration-200`}
     >
       <div className="absolute top-0 left-0 right-0 h-[80px] drag-area z-0 pointer-events-none" />
-      <header 
+      <header
         className="nexus-chassis drag-area no-drag"
         onMouseEnter={handleHeaderEnter}
         onMouseLeave={handleHeaderLeave}
@@ -803,7 +803,7 @@ const App = () => {
           </div>
 
           {/* Tab Strip Container (fit to open tabs only) */}
-          <div className="flex items-center min-w-0 max-w-[calc(100vw-360px)] h-full no-drag">
+          <div className="flex items-end min-w-0 max-w-[calc(100vw-360px)] h-full no-drag">
             <div className="nexus-tabs-container">
               <button
                 className={`nexus-tab-nav-btn left no-drag ${showScrollLeft ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
@@ -869,7 +869,7 @@ const App = () => {
                       <div className="w-3.5 h-3.5 rounded-full bg-nexus-text/15 shrink-0 pointer-events-none" />
                     )}
                     {!tab.isPinned && (
-                      <span className="flex-1 truncate text-[11px] font-bold tracking-tight pointer-events-none">
+                      <span className="flex-1 truncate text-[11.5px] font-medium tracking-tight pointer-events-none">
                         {tab.title || "New Tab"}
                       </span>
                     )}
@@ -881,7 +881,7 @@ const App = () => {
                         }}
                         className="nexus-tab-close"
                       >
-                        <X size={10} strokeWidth={3} />
+                        <X size={11} strokeWidth={2.4} />
                       </button>
                     )}
                   </Reorder.Item>
@@ -897,7 +897,7 @@ const App = () => {
             {/* [+] New Tab button positioned directly adjacent to tabs */}
             <button
               onClick={() => handleAddTab()}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/8 dark:hover:bg-white/10 active:bg-black/15 dark:active:bg-white/15 text-nexus-text-dim hover:text-nexus-text transition-all duration-150 no-drag shrink-0 ml-0.5 cursor-pointer"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-black/8 dark:hover:bg-white/10 active:bg-black/15 dark:active:bg-white/15 text-nexus-text-dim hover:text-nexus-text transition-all duration-150 no-drag shrink-0 ml-1 mb-1 cursor-pointer"
               data-orbit-tooltip="New Tab"
             >
               <Plus size={15} strokeWidth={2.2} />
@@ -915,11 +915,10 @@ const App = () => {
                 setIsAISidekickOpen(newState);
                 window.orbit.ipcRenderer.send('ui:toggle-sidekick', newState);
               }}
-              className={`h-7 flex items-center gap-1.5 px-3 rounded-full transition-all duration-200 cursor-pointer border shrink-0 whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
-                isAISidekickOpen
+              className={`h-7 flex items-center gap-1.5 px-3 rounded-[9px] transition-all duration-200 cursor-pointer border shrink-0 whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${isAISidekickOpen
                   ? 'bg-white dark:bg-[#202124] border-orbit-accent/40 text-orbit-accent ring-2 ring-orbit-accent/20 shadow-sm'
                   : 'bg-white dark:bg-[#202124] hover:bg-white dark:hover:bg-[#28292d] border-black/10 dark:border-white/12 hover:border-black/25 dark:hover:border-white/25 text-nexus-text hover:shadow-[0_2px_8px_rgba(0,0,0,0.1)]'
-              }`}
+                }`}
               title="Ask Orbit AI (Ctrl+I)"
             >
               <img src={orbitLogo} className="w-3.5 h-3.5 object-contain brightness-110 shrink-0" alt="Orbit Logo" />
@@ -1235,7 +1234,7 @@ const App = () => {
       )}
 
       {passwordPrompt && (
-        <div 
+        <div
           className="fixed top-24 right-4 w-80 bg-white dark:bg-[#28282b] rounded-xl shadow-2xl border border-orbit-border p-4 text-orbit-text z-[85000]"
           style={{ zIndex: 85000 }}
         >
@@ -1394,7 +1393,7 @@ const App = () => {
       )}
 
       {isUpdateReady && (
-        <div 
+        <div
           className="fixed top-24 left-1/2 -translate-x-1/2 z-[90000] w-100"
           style={{ zIndex: 90000 }}
         >

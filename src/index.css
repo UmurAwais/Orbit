@@ -397,7 +397,7 @@ body {
 /* Nexus Tabs System - Orbit Signature Floating Pill Tabs */
 .nexus-tabs-container {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   position: relative;
   min-width: 0;
   max-width: calc(100vw - 380px);
@@ -409,8 +409,8 @@ body {
 
 .nexus-tabs-tray {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  align-items: flex-end;
+  gap: 2px;
   padding: 0 2px;
   min-width: 0;
   max-width: 100%;
@@ -472,23 +472,28 @@ body {
   right: 2px;
 }
 
+/* Connected Browser Tabs (Chromium / Atlas Style) */
 .nexus-tab {
-  height: 28px;
-  flex: 0 0 180px;
-  min-width: 180px;
-  max-width: 180px;
-  padding: 0 12px;
-  border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.04);
+  height: 34px;
+  flex: 0 1 240px;
+  width: 240px;
+  min-width: 76px;
+  max-width: 240px;
+  padding: 0 8px 0 10px;
+  border-top-left-radius: 9px;
+  border-top-right-radius: 9px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  background: transparent;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   cursor: default !important;
-  transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
+  transition: max-width 0.18s cubic-bezier(0.2, 0.9, 0.3, 1), min-width 0.18s cubic-bezier(0.2, 0.9, 0.3, 1), background 0.15s ease, color 0.15s ease;
   color: var(--nexus-text-dim);
   border: 1px solid transparent;
+  border-bottom: none;
   position: relative;
-  overflow: hidden;
   user-select: none !important;
 }
 
@@ -504,42 +509,70 @@ body {
 }
 
 .nexus-tab.pinned {
-  flex: 0 0 36px;
-  min-width: 36px;
-  max-width: 36px;
+  flex: 0 0 40px !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
   padding: 0;
   justify-content: center;
 }
 
+/* Inactive Tab Hover: Soft rounded top preview */
 .nexus-tab:hover:not(.active) {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.05);
   color: var(--nexus-text);
-  border-color: rgba(0, 0, 0, 0.06);
-}
-
-.dark .nexus-tab {
-  background: rgba(255, 255, 255, 0.05);
+  border-top-left-radius: 9px;
+  border-top-right-radius: 9px;
 }
 
 .dark .nexus-tab:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
 }
 
-/* Active State: Orbit Signature Floating Pill Card */
+/* Active Tab: Seamless flush connection with the lower toolbar */
 .nexus-tab.active {
-  background: #ffffff;
+  background: var(--nexus-toolbar-bg);
   color: var(--nexus-text);
+  border-top-left-radius: 9px;
+  border-top-right-radius: 9px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-bottom: none;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.04);
   z-index: 20;
 }
 
 .dark .nexus-tab.active {
-  background: #292a2d;
-  color: var(--nexus-text);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  background: var(--nexus-toolbar-bg);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-bottom: none;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Subtle vertical divider line between adjacent inactive tabs */
+.nexus-tab:not(.active):not(:hover)::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.dark .nexus-tab:not(.active):not(:hover)::after {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Hide divider if adjacent to active tab */
+.nexus-tab.active + .nexus-tab::after {
+  opacity: 0;
 }
 
 /* Label Styling */
@@ -550,7 +583,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
@@ -564,19 +597,20 @@ body {
 .nexus-tab-close {
   width: 18px;
   height: 18px;
-  border-radius: 4px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   color: inherit;
   flex-shrink: 0;
+  margin-left: 2px;
 }
 
 .nexus-tab.active .nexus-tab-close,
 .nexus-tab:hover .nexus-tab-close {
-  opacity: 0.6;
+  opacity: 0.65;
 }
 
 .nexus-tab-close:hover {
@@ -585,7 +619,7 @@ body {
 }
 
 .dark .nexus-tab-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* Orbit Premium Tooltip System - macOS 26 Glassmorphism */
